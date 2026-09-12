@@ -135,7 +135,7 @@ function cd(k){
   return r;
 }
 
-// V18.0.8 — canonical read-only day metrics for dossier/reconciliation/plugins.
+// V18.0.14 — canonical read-only day metrics for dossier/reconciliation/plugins.
 // Raw DB.days entries intentionally remain untouched; all derived legal metrics come from cd().
 window.mhCalcDay = function(k){
   try{return cd(k)||{amp:0,tte:0,pz:0,al:[],trav:0,seuil:0,idaj:0,ir:0,iru:0,rc:0,fer:0,dim:0,nuit:0}}

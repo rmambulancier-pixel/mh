@@ -1,6 +1,6 @@
 /* MesHeures V18 — sauvegarde locale renforcée, JSON versionné et restauration sûre */
 (function(){
-  const BACKUP_VERSION='18.0.13';
+  const BACKUP_VERSION='18.0.14';
   const PREFIX=LS+'_v18_backup_';
   const LEGACY_PREFIX=LS+'_v17_backup_';
 
@@ -97,7 +97,7 @@
         if(!confirm('Importer cette sauvegarde ? Les données actuelles seront remplacées par celles du fichier. Une copie de sécurité sera créée avant import.'))return;
         const safety=window.mhV17Backup('before-import');
         if(!safety.ok)throw new Error('Impossible de créer la sauvegarde de sécurité avant import.');
-        DB={...DB,...data,s:{...DEF,...DB.s,...(data.s||{})},per:{...DB.per,...(data.per||{})}};
+        DB={s:{...DEF,...(data.s||{})},days:{...(data.days||{})},cmp:{...(data.cmp||{})},periods:Array.isArray(data.periods)?data.periods:[],bul:{...(data.bul||{})},bulletins:Array.isArray(data.bulletins)?data.bulletins:[],romi:{...(data.romi||{})},per:{start:DEF.anchor,nb:1,...(data.per||{})},exp:data.exp??null,constats:Array.isArray(data.constats)?data.constats:[],events:Array.isArray(data.events)?data.events:[],reconciliation:Array.isArray(data.reconciliation)?data.reconciliation:[]};
         save();renderAll();
         alert('✅ Import réussi. '+keys.length+' bloc(s) de données restauré(s).');
       }catch(err){alert('❌ Import impossible : '+err.message)}
@@ -121,7 +121,7 @@
       if(!confirm('Restaurer ce point de sauvegarde ? Une copie de l’état actuel sera créée avant restauration.'))return false;
       const safety=window.mhV17Backup('before-restore');
       if(!safety.ok)throw new Error('Impossible de créer la sauvegarde de sécurité avant restauration.');
-      DB={...DB,...data,s:{...DEF,...DB.s,...(data.s||{})},per:{...DB.per,...(data.per||{})}};
+      DB={s:{...DEF,...(data.s||{})},days:{...(data.days||{})},cmp:{...(data.cmp||{})},periods:Array.isArray(data.periods)?data.periods:[],bul:{...(data.bul||{})},bulletins:Array.isArray(data.bulletins)?data.bulletins:[],romi:{...(data.romi||{})},per:{start:DEF.anchor,nb:1,...(data.per||{})},exp:data.exp??null,constats:Array.isArray(data.constats)?data.constats:[],events:Array.isArray(data.events)?data.events:[],reconciliation:Array.isArray(data.reconciliation)?data.reconciliation:[]};
       save();renderAll();alert('✅ Restauration terminée.');return true;
     }catch(e){alert('❌ Restauration impossible : '+e.message);return false;}
   };

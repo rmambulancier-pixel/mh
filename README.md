@@ -1,30 +1,18 @@
-
-## V18.0.13 — sauvegarde renforcée et restauration
-- Centre de sauvegarde local réellement actionnable depuis Réglages.
-- Points de restauration V18 versionnés, jusqu’à 5 conservés, avec compatibilité de lecture des anciens points V17.
-- Export JSON complet crée d’abord un point de sécurité.
-- Import JSON valide la structure, crée un point de sécurité avant remplacement et restaure les paramètres manquants depuis les valeurs existantes/DEF.
-- Restauration locale protégée par un point de sécurité préalable.
-- Affichage cohérent de la dernière sauvegarde.
-- Export chiffré AES-256-GCM/PBKDF2 conservé et versionné V18.0.13.
-- Aucun module métier, aucune journée, aucun bulletin, aucune fonctionnalité existante supprimés.
-
-## V18.0.13 — Integrity correction / Lot 8
-- Canonical derived-day adapter: dossier, reconciliation and plugins now obtain TTE, amplitude, pauses and alerts through `cd(k)` / `mhCalcDay(k)`; raw `DB.days` remains unchanged.
-- Dossier exports keyed dates and computed legal metrics instead of relying on non-existent derived fields inside raw days.
-- Monthly reconciliation uses the same canonical metrics and keeps the existing payroll engine untouched.
-- Built-in Statistics plugin counts alerts from `cd(k).al` and reports computed TTE/amplitude correctly.
-- Intelligence calculation cache reduces repeated historical recomputation.
-- Light theme receives a final compatibility cascade for legacy hard-coded dark surfaces.
-- No active feature or source file is intentionally removed.
-
-# MesHeures V18.0.13 — Android + PWA
+# MesHeures V18.0.14 — Android + PWA
 
 MesHeures est une application de suivi du temps de travail conçue pour le **transport sanitaire**, avec un focus sur le suivi des ambulanciers : saisie terrain, décompte par quatorzaine, projection, contrôle des amplitudes et du temps de travail, suivi de la paie, import de documents et sauvegardes locales.
 
-> **Version actuelle : V18.0.13 — versionCode Android 1812**
->
-> La V18 part de la base V17.0.1 validée et ajoute une couche d’intelligence locale : preuves, patterns récurrents, projection 12 semaines, alertes prédictives et dossier complet exportable.
+> **Version actuelle : V18.0.14 — versionCode Android 1814**
+
+## V18.0.14 — audit final et stabilisation
+
+- Export/import/backup Android routés vers le sélecteur natif « Enregistrer sous » du WebView.
+- Import et restauration remplacent proprement l’ensemble du modèle de données connu, avec valeurs par défaut pour les blocs absents.
+- Barre d’état et barre de navigation Android suivent le thème clair/sombre sélectionné, notamment sur les appareils récents comme le Pixel 10 Pro XL.
+- Métadonnées synchronisées : interface, manifest PWA, Service Worker, modules, Android et workflow CI en `18.0.14` / `versionCode 1814`.
+- Suppression d’un ancien CSS non référencé et renommage des modules actifs dont le nom portait un ancien numéro (`app-pay.js`, `app-v18.js`).
+- Contrôles statiques : 15 scripts actifs présents dans HTML et Service Worker, références de ressources valides, syntaxe JavaScript/CSS/HTML valide.
+- Aucune donnée métier ni fonctionnalité utilisateur supprimée.
 
 ## Fonctionnalités V18
 
@@ -173,7 +161,7 @@ app/src/main/
         ├── app-legal.js
         ├── app-projection.js
         ├── app-backup.js
-        └── app-v17.js
+        └── app-v18.js
 ```
 
 ## Android
@@ -259,7 +247,7 @@ Règle d’architecture : une extension peut **lire, analyser, afficher et propo
 
 ### V17.0.1
 - nettoyage dupliqué des exports JSON : un seul moteur V17 fait foi
-- suppression de l’ancien `pay-fix-v16.2.js` fantôme à la racine
+- suppression de l’ancien `pay-fix-v16.2.js` fantôme à la racine ; le correctif de paie actif est désormais `app-pay.js`
 - précache PWA complet incluant le correctif paie
 - démarrage du correctif paie dès `DOMContentLoaded` pour éviter une course d’affichage
 - version Android/PWA/cache synchronisée en 17.0.1
@@ -294,7 +282,7 @@ Projet personnel et outil de suivi. Les règles réglementaires affichées dans 
 - Bouton « Effacer tout » restauré avec confirmation explicite.
 - Mode Jour initialise systématiquement une date valide lors de l’ouverture de l’onglet.
 - Aucun module V18 métier supprimé ; les fichiers historiques éventuellement inactifs sont conservés hors du bundle actif.
-- Version synchronisée : Android `18.0.13` / `versionCode 1811`, PWA, Service Worker, manifest et interface.
+- Version synchronisée : Android `18.0.13` / `versionCode 1813`, PWA, Service Worker, manifest et interface.
 
 ## V18.0.13 — correctif interface, Jour et impression
 
@@ -304,7 +292,7 @@ Projet personnel et outil de suivi. Les règles réglementaires affichées dans 
 - Impression Android réparée via le moteur d'impression natif (`PrintManager`). Le navigateur/PWA conserve `window.print()`.
 - Impression du dossier complet routée vers l'impression native Android lorsqu'elle est disponible.
 - Vérification statique des boutons et des fonctions de navigation ; les actions existantes (saisie, planning, paie, audit, bulletins, ROMI1, réglages, sauvegardes, plugins, exports) sont conservées.
-- Version synchronisée : Android `18.0.13` / `versionCode 1811`, PWA, Service Worker et interface.
+- Version synchronisée : Android `18.0.13` / `versionCode 1813`, PWA, Service Worker et interface.
 
 ## V18.0.5 — Lot 6 : écosystème plugins
 - API plugins en lecture seule avec permissions explicites : `snapshot`, `days`, `pay`, `evidence`, `legal`.
@@ -324,4 +312,4 @@ Les plugins peuvent **lire, analyser, afficher et proposer**. Ils ne peuvent pas
 - Correction finale des surfaces héritées sombres en mode clair : tableaux Paie/Bulletin, vue Mois, cellules calendrier, totaux hebdomadaires, Planning, cartes dashboard, graphiques et navigation mobile.
 - Les couleurs métier Travail/CP/RC/Nuit/Alerte restent différenciées.
 - Aucune donnée ni fonctionnalité supprimée.
-- Version Android 18.0.13 / versionCode 1811, PWA, manifest, Service Worker et workflow synchronisés.
+- Version Android 18.0.13 / versionCode 1813, PWA, manifest, Service Worker et workflow synchronisés.

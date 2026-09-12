@@ -263,7 +263,23 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public String platform() { return "android"; }
 
-        @JavascriptInterface public String version() { return "18.0.13"; }
+        @JavascriptInterface public String version() { return "18.0.14"; }
+
+        @JavascriptInterface
+        public void setSystemBarsLight(boolean light) {
+            runOnUiThread(() -> {
+                try {
+                    androidx.core.view.WindowInsetsControllerCompat c =
+                        androidx.core.view.WindowCompat.getInsetsController(getWindow(), web);
+                    if (c != null) {
+                        c.setAppearanceLightStatusBars(light);
+                        c.setAppearanceLightNavigationBars(light);
+                    }
+                    getWindow().setStatusBarColor(light ? 0xFFF5F7F9 : 0xFF07100D);
+                    getWindow().setNavigationBarColor(light ? 0xFFF5F7F9 : 0xFF07100D);
+                } catch (Exception ignored) {}
+            });
+        }
 
         @JavascriptInterface
         public void saveLocalStorage(String json) {

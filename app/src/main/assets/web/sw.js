@@ -1,5 +1,5 @@
-const CACHE = 'mesheures-shell-v18.0.13';
-const SHELL = ['./', './index.html', './manifest.json', './icon.svg', './style/refonte.css?v=18.0.13', './scripts/app-core.js', './scripts/app-pwa.js', './scripts/app-ui.js', './scripts/app-parser.js', './scripts/app-plugins.js', './scripts/app.js', './scripts/app-projection.js', './scripts/app-legal.js', './scripts/app-backup.js', './scripts/app-v17.js', './scripts/app-intelligence.js', './scripts/app-evidence.js', './scripts/app-dossier.js', './scripts/app-reconciliation.js', './scripts/pay-fix-v16.2.js'];
+const CACHE = 'mesheures-shell-v18.0.14';
+const SHELL = ['./', './index.html', './manifest.json', './icon.svg', './style/refonte.css?v=18.0.14', './scripts/app-core.js', './scripts/app-pwa.js', './scripts/app-ui.js', './scripts/app-parser.js', './scripts/app-plugins.js', './scripts/app.js', './scripts/app-projection.js', './scripts/app-legal.js', './scripts/app-backup.js', './scripts/app-v18.js', './scripts/app-intelligence.js', './scripts/app-evidence.js', './scripts/app-dossier.js', './scripts/app-reconciliation.js', './scripts/app-pay.js'];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)).catch(() => {}).then(() => self.skipWaiting()));
