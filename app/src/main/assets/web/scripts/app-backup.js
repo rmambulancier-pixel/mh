@@ -1,6 +1,6 @@
 /* MesHeures V18 — sauvegarde locale renforcée, JSON versionné et restauration sûre */
 (function(){
-  const BACKUP_VERSION='18.0.18';
+  const BACKUP_VERSION='18.0.19';
   const PREFIX=LS+'_v18_backup_';
   const LEGACY_PREFIX=LS+'_v17_backup_';
 

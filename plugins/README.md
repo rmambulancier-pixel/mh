@@ -1,4 +1,4 @@
-# MesHeures Plugin SDK — V18.0.18
+# MesHeures Plugin SDK — V18.0.20
 
 Un fichier `.mhplugin` est un JSON contenant `format`, `manifest`, `html`, `css` et `script`.
 

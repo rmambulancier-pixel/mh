@@ -1,4 +1,4 @@
-/* MesHeures V18.0.18 — persistance locale + synchronisation widget Android. */
+/* MesHeures V18.0.20 — persistance locale + synchronisation widget Android. */
 function save(){
   try{localStorage.setItem(LS,JSON.stringify(DB))}
   catch(e){alert('Stockage plein : exportez vos données !\n'+e.message)}
@@ -23,19 +23,30 @@ function pushWidgetData(){
     }
 
     let periodMin=0,periodH25=0,periodH50=0,grossCents=null,netCents=null;
+    let payReady=false;
     try{
       const ps=DB.per||{}, start=ps.start||DB.s?.anchor||'2025-05-19';
       const nb=Math.max(2,Math.min(3,Math.round(Number(ps.nb)||2)));
       if(typeof calcPer==='function'&&typeof brutOf==='function'){
         const result=calcPer(start,nb), G=result.G||{};
-        periodMin=Math.round(G.tte||0);
-        periodH25=Math.round(G.h25||0);
-        periodH50=Math.round(G.h50||0);
-        const br=brutOf(G);
-        if(br&&Number.isFinite(Number(br.tot))){
-          grossCents=Math.round(Number(br.tot)*100);
-          const net=Number(br.tot)*Number(DB.s?.net||0)+Number(br.panIR||0)+Number(br.panIRU||0);
-          if(Number.isFinite(net))netCents=Math.round(net*100);
+        periodMin=Math.round(Number(G.tte)||0);
+        periodH25=Math.round(Number(G.h25)||0);
+        periodH50=Math.round(Number(G.h50)||0);
+        // Prefer the canonical summary exposed by the pay engine.
+        let sum=null;
+        try{sum=(typeof window.mhCurrentPaySummary==='function')?window.mhCurrentPaySummary():null}catch(e){sum=null}
+        if(sum&&Number.isFinite(Number(sum.grossEst))){
+          grossCents=Math.round(Number(sum.grossEst)*100);
+          if(Number.isFinite(Number(sum.netEst)))netCents=Math.round(Number(sum.netEst)*100);
+          payReady=true;
+        }else{
+          const br=brutOf(G);
+          if(br&&Number.isFinite(Number(br.tot))){
+            grossCents=Math.round(Number(br.tot)*100);
+            const net=Number(br.tot)*Number(DB.s?.net||0)+Number(br.panIR||0)+Number(br.panIRU||0);
+            if(Number.isFinite(net))netCents=Math.round(net*100);
+            payReady=Number.isFinite(grossCents)&&(netCents!==null);
+          }
         }
       }
     }catch(e){console.warn('Widget paie',e)}
@@ -76,7 +87,7 @@ function pushWidgetData(){
       tteSemaineMin:weekMin,ttePeriodeMin:periodMin,hs25PeriodeMin:periodH25,hs50PeriodeMin:periodH50,
       workCount:work,restCount:rest,cpCount:cp,malCount:mal,
       margeAvant46hMin:marginMin,alertesMois:m?(m.alerts||[]).length:0,
-      grossCents,netCents,netLabel:'Net estimé',paySource:(grossCents!==null||netCents!==null)?'MesHeures':'indisponible',updatedAt:Date.now()
+      grossCents,netCents,netLabel:'Net estimé',paySource:payReady?'MesHeures':'indisponible',payReady,updatedAt:Date.now()
     };
     window.MesHeuresAndroid.updateWidgetData(JSON.stringify(payload));
     return true;
@@ -86,7 +97,7 @@ function pushWidgetData(){
 /* Le WebView peut démarrer avant que toutes les couches de calcul soient prêtes.
    On retente brièvement : cela évite qu'un premier payload incomplet fige le widget. */
 function scheduleWidgetSync(){
-  const delays=[0,250,750,1500,3000,5000];
+  const delays=[0,250,750,1500,3000,5000,8000,12000];
   delays.forEach(ms=>setTimeout(()=>{try{pushWidgetData()}catch(e){}},ms));
 }
 window.mhForceWidgetSync=scheduleWidgetSync;

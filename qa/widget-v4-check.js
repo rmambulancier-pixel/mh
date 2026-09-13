@@ -8,4 +8,4 @@ const probe=core+`\nDB=${JSON.stringify(backup)}; result=(()=>{const r=calcPer(D
 vm.runInContext(probe,ctx); const coreResult=ctx.result;
 if(JSON.stringify(coreResult)!==JSON.stringify({tte:7325,hs25:960,hs50:1595,gross:2620.3916959999997,net:2129.3282647519995})) throw new Error('Moteur paie différent');
 if(!/calcPer\(start,nb\)/.test(pwa)||!/brutOf\(G\)/.test(pwa)||!/scheduleWidgetSync/.test(pwa)) throw new Error('Pont widget incomplet');
-console.log(JSON.stringify({ok:true,version:'18.0.18',core:coreResult},null,2));
+console.log(JSON.stringify({ok:true,version:'18.0.19',core:coreResult},null,2));
