@@ -10,87 +10,257 @@ permissions:
 
 jobs:
   build:
+    name: Build
     runs-on: ubuntu-latest
+
     steps:
+      # ─────────────────────────────────────────────
+      # CHECKOUT
+      # ─────────────────────────────────────────────
       - name: Checkout
         uses: actions/checkout@v4
 
+      # ─────────────────────────────────────────────
+      # VERSION CANONIQUE
+      # ─────────────────────────────────────────────
       - name: Read canonical release version
         shell: bash
         run: |
           set -euo pipefail
+
           VERSION=$(tr -d '\r\n' < VERSION)
           CODE=$(awk -F= '$1=="VERSION_CODE" {print $2}' version.properties | tr -d '\r\n')
+
           test -n "$VERSION"
           test -n "$CODE"
+
           echo "MESHEURES_VERSION=$VERSION" >> "$GITHUB_ENV"
           echo "MESHEURES_VERSION_CODE=$CODE" >> "$GITHUB_ENV"
 
+          echo "MesHeures version : $VERSION"
+          echo "Version code      : $CODE"
+
+      # ─────────────────────────────────────────────
+      # JAVA 17
+      # ─────────────────────────────────────────────
       - name: Set up JDK 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
 
+      # ─────────────────────────────────────────────
+      # GRADLE
+      # ─────────────────────────────────────────────
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
+      # ─────────────────────────────────────────────
+      # AUDIT RELEASE
+      # ─────────────────────────────────────────────
       - name: Static release audit
-        run: python3 qa/release-audit.py
+        shell: bash
+        run: |
+          set -euo pipefail
 
+          python3 qa/release-audit.py
+
+      # ─────────────────────────────────────────────
+      # AUDIT JAVASCRIPT
+      # ─────────────────────────────────────────────
       - name: JavaScript syntax audit
         shell: bash
         run: |
           set -euo pipefail
-          find app/src/main/assets/web/scripts -name '*.js' -print0 | while IFS= read -r -d '' f; do
+
+          find app/src/main/assets/web/scripts \
+            -name '*.js' \
+            -print0 |
+          while IFS= read -r -d '' f; do
+            echo "Checking: $f"
             node --check "$f"
           done
 
+          echo "JavaScript syntax audit: PASS"
+
+      # ─────────────────────────────────────────────
+      # SIGNATURE PERSISTANTE
+      # ─────────────────────────────────────────────
       - name: Prepare persistent signing key
         env:
           MESHEURES_KEYSTORE_B64: ${{ secrets.MESHEURES_KEYSTORE_B64 }}
         shell: bash
         run: |
           set -euo pipefail
-          # GitHub Actions does not allow the secrets context directly in an if condition.
-          # Keep the secret in env and decide inside the shell instead.
+
           if [[ -n "${MESHEURES_KEYSTORE_B64:-}" ]]; then
-            printf '%s' "$MESHEURES_KEYSTORE_B64" | base64 --decode > "$GITHUB_WORKSPACE/mesheures-release.keystore"
+            printf '%s' "$MESHEURES_KEYSTORE_B64" |
+              base64 --decode >
+              "$GITHUB_WORKSPACE/mesheures-release.keystore"
+
             test -s "$GITHUB_WORKSPACE/mesheures-release.keystore"
-            echo "MESHEURES_KEYSTORE=$GITHUB_WORKSPACE/mesheures-release.keystore" >> "$GITHUB_ENV"
+
+            echo "MESHEURES_KEYSTORE=$GITHUB_WORKSPACE/mesheures-release.keystore" \
+              >> "$GITHUB_ENV"
+
             echo "Persistent release signing key prepared."
+
           else
-            echo "No persistent signing key configured; building an unsigned release APK."
+            echo "No persistent signing key configured."
+            echo "Building an unsigned release APK."
           fi
 
+      # ─────────────────────────────────────────────
+      # BUILD APK
+      # ─────────────────────────────────────────────
       - name: Build release APK
         env:
           MESHEURES_STORE_PASSWORD: ${{ secrets.MESHEURES_STORE_PASSWORD }}
           MESHEURES_KEY_PASSWORD: ${{ secrets.MESHEURES_KEY_PASSWORD }}
           MESHEURES_KEY_ALIAS: ${{ secrets.MESHEURES_KEY_ALIAS }}
-        run: gradle :app:assembleRelease --no-daemon
+        shell: bash
+        run: |
+          set -euo pipefail
 
+          gradle :app:assembleRelease --no-daemon
+
+          APK="app/build/outputs/apk/release/app-release.apk"
+
+          test -s "$APK"
+
+          echo ""
+          echo "========================================"
+          echo " APK BUILD SUCCESSFUL"
+          echo "========================================"
+          echo "File: $APK"
+          ls -lh "$APK"
+          echo "========================================"
+
+      # ─────────────────────────────────────────────
+      # VERIFICATION APK
+      # ─────────────────────────────────────────────
       - name: Verify built APK
         shell: bash
         run: |
           set -euo pipefail
+
           APK="app/build/outputs/apk/release/app-release.apk"
+          BADGING="/tmp/apk-badging.txt"
+
+          # Vérification existence
           test -s "$APK"
-          AAPT=$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -1)
-          test -n "$AAPT"
-          "$AAPT" dump badging "$APK" | tee /tmp/apk-badging.txt
-          grep -F "versionCode='$MESHEURES_VERSION_CODE'" /tmp/apk-badging.txt
-          grep -F "versionName='$MESHEURES_VERSION'" /tmp/apk-badging.txt
-          grep -F "package: name='com.mesheures.app'" /tmp/apk-badging.txt
 
+          # Recherche de aapt2
+          AAPT2=$(find "$ANDROID_HOME/build-tools" \
+            -type f \
+            -name aapt2 |
+            sort -V |
+            tail -1)
+
+          test -n "$AAPT2"
+
+          echo "Using aapt2:"
+          echo "$AAPT2"
+
+          # Extraction metadata APK
+          if ! "$AAPT2" dump badging "$APK" > "$BADGING" 2>&1; then
+            echo ""
+            echo "========================================"
+            echo " ERROR: impossible d'inspecter l'APK"
+            echo "========================================"
+            cat "$BADGING"
+            exit 1
+          fi
+
+          echo ""
+          echo "========================================"
+          echo " APK METADATA"
+          echo "========================================"
+          cat "$BADGING"
+          echo "========================================"
+
+          # Package
+          if ! grep -Eq \
+            "package: name='com\.mesheures\.app'" \
+            "$BADGING"; then
+
+            echo "ERROR: package Android incorrect."
+            exit 1
+          fi
+
+          # Version code
+          if ! grep -Eq \
+            "versionCode='${MESHEURES_VERSION_CODE}'" \
+            "$BADGING"; then
+
+            echo "ERROR: versionCode incorrect."
+            echo "Expected: $MESHEURES_VERSION_CODE"
+            exit 1
+          fi
+
+          # Version name
+          if ! grep -Eq \
+            "versionName='${MESHEURES_VERSION}'" \
+            "$BADGING"; then
+
+            echo "ERROR: versionName incorrect."
+            echo "Expected: $MESHEURES_VERSION"
+            exit 1
+          fi
+
+          echo ""
+          echo "========================================"
+          echo " APK VERIFICATION: PASS"
+          echo "========================================"
+          echo "Package     : com.mesheures.app"
+          echo "Version     : $MESHEURES_VERSION"
+          echo "VersionCode : $MESHEURES_VERSION_CODE"
+          echo "========================================"
+
+      # ─────────────────────────────────────────────
+      # NOM RELEASE
+      # ─────────────────────────────────────────────
       - name: Publish versioned APK
-        run: cp app/build/outputs/apk/release/app-release.apk "MesHeures-APK-release-v${MESHEURES_VERSION}.apk"
+        shell: bash
+        run: |
+          set -euo pipefail
 
+          APK="app/build/outputs/apk/release/app-release.apk"
+          OUTPUT="MesHeures-APK-release-v${MESHEURES_VERSION}.apk"
+
+          test -s "$APK"
+
+          cp "$APK" "$OUTPUT"
+
+          test -s "$OUTPUT"
+
+          echo "Release APK:"
+          ls -lh "$OUTPUT"
+
+      # ─────────────────────────────────────────────
+      # SHA256
+      # ─────────────────────────────────────────────
+      - name: Generate APK checksum
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          APK="MesHeures-APK-release-v${MESHEURES_VERSION}.apk"
+
+          sha256sum "$APK" | tee "${APK}.sha256"
+
+          test -s "${APK}.sha256"
+
+      # ─────────────────────────────────────────────
+      # ARTIFACT
+      # ─────────────────────────────────────────────
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: MesHeures-APK-release-v${{ env.MESHEURES_VERSION }}
-          path: MesHeures-APK-release-v${{ env.MESHEURES_VERSION }}.apk
+          path: |
+            MesHeures-APK-release-v${{ env.MESHEURES_VERSION }}.apk
+            MesHeures-APK-release-v${{ env.MESHEURES_VERSION }}.apk.sha256
           if-no-files-found: error
