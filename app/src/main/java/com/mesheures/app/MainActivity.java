@@ -98,7 +98,7 @@ public class MainActivity extends Activity {
 
         web.loadUrl(HybridCore.ENTRY_URL);
 
-        // Legacy: the splash must never depend on window.onload or CDN completion.
+        // V18.1.0: the splash must never depend on window.onload or CDN completion.
         // WebView can execute this while deferred external resources are still pending.
         dismissSplashSoon();
 
@@ -151,10 +151,8 @@ public class MainActivity extends Activity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
-        // Keep the secure HybridCore policy: assets are served through WebViewAssetLoader.
-        // File/content URL access is intentionally disabled for the main WebView.
-        s.setAllowFileAccess(false);
-        s.setAllowContentAccess(false);
+        s.setAllowFileAccess(true);
+        s.setAllowContentAccess(true);
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setBuiltInZoomControls(false);
         s.setDisplayZoomControls(false);
@@ -185,7 +183,7 @@ public class MainActivity extends Activity {
                 restoreLocalStorage();
                 installAutoBackup();
                 webReady = true;
-                // Legacy: normal launch always lands on Accueil; widget deep-links remain explicit.
+                // V18.1: normal launch always lands on Accueil; widget deep-links remain explicit.
                 if (pendingDeepLink == null) {
                     web.evaluateJavascript("(function(){try{if(typeof tab==='function')tab('home');}catch(e){}})();", null);
                 }
@@ -267,7 +265,7 @@ public class MainActivity extends Activity {
     }
 
     private void saveWebViewStorage() {
-        if (web == null || !webReady) return;
+        if (web == null) return;
         String js =
             "(function(){try{var o={};"
           + "for(var i=0;i<localStorage.length;i++){"
@@ -335,7 +333,7 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public String capabilities() {
-            return "{\"version\":\"20.5.0\",\"nativeDashboard\":true,\"widgetBridge\":true,\"fileExport\":true,\"print\":true}";
+            return "{\"version\":\"20.3.0\",\"nativeDashboard\":true,\"widgetBridge\":true,\"fileExport\":true,\"print\":true,\"camera\":true}";
         }
 
         @JavascriptInterface
@@ -349,7 +347,7 @@ public class MainActivity extends Activity {
             });
         }
 
-        @JavascriptInterface public String version() { return "20.5.0"; }
+        @JavascriptInterface public String version() { return "20.3.0"; }
 
         @JavascriptInterface
         public void setSystemBarsLight(boolean light) {
@@ -479,5 +477,22 @@ public class MainActivity extends Activity {
             ));
         }
 
+        @JavascriptInterface
+        public void requestCamera() {
+            if (Build.VERSION.SDK_INT >= 23
+                    && checkSelfPermission(Manifest.permission.CAMERA)
+                    != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(new String[]{
+                    Manifest.permission.CAMERA
+                }, 78);
+            }
+        }
+
+        @JavascriptInterface
+        public boolean cameraGranted() {
+            return Build.VERSION.SDK_INT < 23
+                || checkSelfPermission(Manifest.permission.CAMERA)
+                    == PackageManager.PERMISSION_GRANTED;
+        }
     }
 }

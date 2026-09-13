@@ -1,4 +1,4 @@
-/* MesHeures V18 Paie — Paie / Quatorzaines
+/* MesHeures V17 Paie — Paie / Quatorzaines
  * Correctif autonome chargé après app.js.
  *
  * - 2 ou 3 quatorzaines, jamais 1
@@ -8,7 +8,7 @@
  * - contrôle automatique de cohérence de période
  * - détail transparent du brut estimé
  * - résumé copiable
- * - version d’interface synchronisée avec le socle V18
+ * - version affichée uniformément en V17.0.0 tant que le socle APK reste 16.2
  *
  * Aucun changement du moteur calcPer().
  */
@@ -44,9 +44,9 @@
   }
 
   function syncVersion() {
-    document.title = document.title.replace(/V16\.1(?:\.0)?|V16\.2(?:\.0)?|V17(?:\.0\.1)?/g, 'V20.3.0');
+    document.title = document.title.replace(/V16\.1(?:\.0)?|V16\.2(?:\.0)?/g, 'V16.2');
     const meta = document.querySelector('meta[name="application-version"]');
-    if (meta) meta.setAttribute('content','20.3.0');
+    if (meta) meta.setAttribute('content','16.2.0');
 
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     const nodes = [];
@@ -54,8 +54,8 @@
     nodes.forEach(n => {
       if (/V16\.1\.0|V16\.2\.0/.test(n.nodeValue || '')) {
         n.nodeValue = n.nodeValue
-          .replace(/V16\.1\.0/g,'V20.3.0')
-          .replace(/V16\.2\.0/g,'V20.3.0');
+          .replace(/V16\.1\.0/g,'V17.0.0')
+          .replace(/V16\.2\.0/g,'V17.0.0');
       }
     });
   }
@@ -177,7 +177,7 @@
       : '<tr><td colspan="3" class="mut">Détail indisponible.</td></tr>';
 
     panel.innerHTML = `
-      <h2>🧭 Contrôle paie · V18 Paie</h2>
+      <h2>🧭 Contrôle paie · V17 Paie</h2>
 
       <div class="al k">
         ✅ <b>${p.nb} quatorzaines</b> · ${short(p.start)} →
@@ -283,60 +283,40 @@
     window.renderPay = wrapped;
   }
 
-  // Le panel et syncVersion() réécrivent le DOM (innerHTML / nodeValue).
-  // Le MutationObserver ci-dessous observe justement ce DOM : sans garde,
-  // chaque réécriture redéclenche l'observer, qui réécrit à nouveau, etc.
-  // → boucle infinie qui sature le thread JS et fige l'app après quelques
-  // secondes. mhSafeRun coupe l'observation pendant qu'on écrit.
-  let mhObserverBusy = false;
-  function mhSafeRun(fn) {
-    if (mhObserverBusy) return;
-    mhObserverBusy = true;
-    try {
-      observer.disconnect();
-      fn();
-    } finally {
-      observer.observe(document.documentElement, {childList:true, subtree:true});
-      mhObserverBusy = false;
-    }
-  }
-
   function boot() {
     ensurePeriod();
     wrapRenderPay();
     bindInput();
-    mhSafeRun(() => {
-      updatePeriodLabel();
-      renderProPanel();
-      syncVersion();
-    });
+    updatePeriodLabel();
+    renderProPanel();
+    syncVersion();
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
-  else boot();
+  window.addEventListener('load', boot);
 
   const observer = new MutationObserver(() => {
     wrapRenderPay();
     bindInput();
     if (document.getElementById('pN')) {
-      mhSafeRun(() => {
-        updatePeriodLabel();
-        renderProPanel();
-        syncVersion();
-      });
+      updatePeriodLabel();
+      renderProPanel();
+      syncVersion();
     }
   });
   observer.observe(document.documentElement, {childList:true, subtree:true});
 
-  // L'ancien setInterval(...,1200) refaisait ce même travail toutes les
-  // 1,2 s en continu, ce qui aggravait la boucle ci-dessus. Le
-  // MutationObserver + wrapRenderPay() suffisent à garder le panel à jour ;
-  // il est retiré.
+  const timer = setInterval(() => {
+    wrapRenderPay();
+    bindInput();
+    if (document.getElementById('pN')) {
+      updatePeriodLabel();
+      renderProPanel();
+      syncVersion();
+    }
+  }, 1200);
 
   window.addEventListener('beforeunload', () => {
+    clearInterval(timer);
     observer.disconnect();
   });
 })();
-
-/* V20.3.0 — le résumé de paie canonique est exposé par app-core.js.
-   app-pay.js ne redéfinit volontairement aucune formule pour les surfaces secondaires. */

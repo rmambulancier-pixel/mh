@@ -1,4 +1,4 @@
-/* MesHeures — projection planning-aware */
+/* MesHeures V18 — projection planning-aware */
 (function(){
   function currentPeriodStart(){
     const anchor=DB?.s?.anchor||today();

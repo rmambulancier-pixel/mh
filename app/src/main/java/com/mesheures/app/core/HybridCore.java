@@ -1,24 +1,20 @@
 package com.mesheures.app.core;
 
 import android.content.Context;
-import android.net.Uri;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
 
-import androidx.webkit.ServiceWorkerClientCompat;
-import androidx.webkit.ServiceWorkerControllerCompat;
 import androidx.webkit.WebViewAssetLoader;
-import androidx.webkit.WebViewFeature;
 
 /**
- * MesHeures V20.5 Hybrid Core.
+ * MesHeures V20 — Hybrid Core.
  *
- * Android owns WebView plumbing and local asset delivery. The JavaScript layer
- * remains the single source of truth for hours, payroll, legal checks and data.
+ * Native shell owns WebView plumbing and asset delivery; the existing JavaScript
+ * application remains the single source of truth for business rules and UI.
+ * No payroll/legal calculation is duplicated here.
  */
 public final class HybridCore {
-    public static final String VERSION = "20.5.0";
     public static final String DOMAIN = "appassets.androidplatform.net";
     public static final String ENTRY_URL = "https://" + DOMAIN + "/assets/web/index.html";
 
@@ -31,7 +27,7 @@ public final class HybridCore {
                 .build();
     }
 
-    /** Handles normal WebView requests for packaged assets. */
+    /** Intercepts only the appassets origin; everything else follows WebView defaults. */
     public WebResourceResponse intercept(WebResourceRequest request) {
         if (request == null || request.getUrl() == null) return null;
         return assetLoader.shouldInterceptRequest(request.getUrl());
@@ -40,23 +36,7 @@ public final class HybridCore {
     /** Compatibility path for older WebView callback implementations. */
     public WebResourceResponse intercept(String url) {
         if (url == null) return null;
-        return assetLoader.shouldInterceptRequest(Uri.parse(url));
-    }
-
-    /**
-     * Service Worker requests do not necessarily travel through WebViewClient.
-     * Register the same asset loader with the WebView Service Worker controller
-     * when the installed WebView supports that feature.
-     */
-    private void configureServiceWorker() {
-        if (!WebViewFeature.isFeatureSupported(WebViewFeature.SERVICE_WORKER_BASIC_USAGE)) return;
-        ServiceWorkerControllerCompat controller = ServiceWorkerControllerCompat.getInstance();
-        controller.setServiceWorkerClient(new ServiceWorkerClientCompat() {
-            @Override
-            public WebResourceResponse shouldInterceptRequest(WebResourceRequest request) {
-                return intercept(request);
-            }
-        });
+        return assetLoader.shouldInterceptRequest(android.net.Uri.parse(url));
     }
 
     public boolean isAppAssetUrl(String url) {
@@ -68,10 +48,7 @@ public final class HybridCore {
         webView.getSettings().setJavaScriptEnabled(true);
         webView.getSettings().setDomStorageEnabled(true);
         webView.getSettings().setDatabaseEnabled(true);
-        webView.getSettings().setAllowFileAccess(false);
-        webView.getSettings().setAllowContentAccess(false);
-        webView.getSettings().setAllowFileAccessFromFileURLs(false);
-        webView.getSettings().setAllowUniversalAccessFromFileURLs(false);
-        configureServiceWorker();
+        webView.getSettings().setAllowFileAccess(true);
+        webView.getSettings().setAllowContentAccess(true);
     }
 }

@@ -1,44 +1,13 @@
-const CACHE = 'mesheures-shell-v20.5.0';
-const SHELL = [
-  './',
-  './index.html',
-  './manifest.json',
-  './icon.svg',
-  './icon-512.png',
-  './style/refonte.css?v=20.5.0',
-  './scripts/app-core.js',
-  './scripts/app-pwa.js',
-  './scripts/app-ui.js',
-  './scripts/app-parser.js',
-  './scripts/app-plugins.js',
-  './scripts/app.js',
-  './scripts/app-pay.js',
-  './scripts/app-projection.js',
-  './scripts/app-legal.js',
-  './scripts/app-backup.js',
-  './scripts/app-runtime.js',
-  './scripts/app-intelligence.js',
-  './scripts/app-evidence.js',
-  './scripts/app-dossier.js',
-  './scripts/app-reconciliation.js',
-  './scripts/app-hybrid.js'
-];
+const CACHE = 'mesheures-shell-v20.3.0';
+const SHELL = ['./', './index.html', './manifest.json', './icon.svg', './style/refonte.css?v=20.3.0', './scripts/app-core.js', './scripts/app-pwa.js', './scripts/app-ui.js', './scripts/app-parser.js', './scripts/app-plugins.js', './scripts/app.js', './scripts/app-projection.js', './scripts/app-legal.js', './scripts/app-backup.js', './scripts/app-v18.js', './scripts/app-intelligence.js', './scripts/app-evidence.js', './scripts/app-dossier.js', './scripts/app-reconciliation.js', './scripts/app-pay.js'];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE)
-      .then((cache) => cache.addAll(SHELL))
-      .then(() => self.skipWaiting())
-  );
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)).catch(() => {}).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys()
-      .then((keys) => Promise.all(
-        keys.filter((key) => key.startsWith('mesheures-shell-') && key !== CACHE)
-            .map((key) => caches.delete(key))
-      ))
+    caches.keys().then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
@@ -49,14 +18,14 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url);
   const sameOrigin = url.origin === self.location.origin;
 
-  // Application assets: network-first keeps the installed PWA fresh while
-  // the cache remains a real offline fallback.
+  // Les fichiers de l'application doivent toujours tenter le réseau en premier :
+  // cela évite qu'une ancienne version de GitHub Pages reste affichée plusieurs jours.
   if (sameOrigin) {
     event.respondWith(
       fetch(req).then((res) => {
         if (res && res.ok) {
           const copy = res.clone();
-          caches.open(CACHE).then((cache) => cache.put(req, copy)).catch(() => {});
+          caches.open(CACHE).then((cache) => cache.put(req, copy));
         }
         return res;
       }).catch(() => caches.match(req).then((cached) => cached || caches.match('./index.html')))
@@ -64,12 +33,12 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // External libraries (CDN): cache-first after their first successful load.
+  // Les bibliothèques CDN restent cache-first après leur premier chargement.
   event.respondWith(
     caches.match(req).then((cached) => cached || fetch(req).then((res) => {
       if (res && res.ok) {
         const copy = res.clone();
-        caches.open(CACHE).then((cache) => cache.put(req, copy)).catch(() => {});
+        caches.open(CACHE).then((cache) => cache.put(req, copy));
       }
       return res;
     }))
