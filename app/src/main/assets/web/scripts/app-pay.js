@@ -1,4 +1,4 @@
-/* MesHeures V18 Paie — Paie / Quatorzaines
+/* MesHeures Paie — Paie / Quatorzaines
  * Correctif autonome chargé après app.js.
  *
  * - 2 ou 3 quatorzaines, jamais 1
@@ -8,7 +8,7 @@
  * - contrôle automatique de cohérence de période
  * - détail transparent du brut estimé
  * - résumé copiable
- * - version d’interface synchronisée avec le socle V18
+ * - version d’interface synchronisée avec le socle actuel
  *
  * Aucun changement du moteur calcPer().
  */
@@ -44,9 +44,9 @@
   }
 
   function syncVersion() {
-    document.title = document.title.replace(/V16\.1(?:\.0)?|V16\.2(?:\.0)?|V17(?:\.0\.1)?/g, 'V20.4.0');
+    document.title = document.title.replace(/V16\.1(?:\.0)?|V16\.2(?:\.0)?|V17(?:\.0\.1)?/g, 'V20.5.0');
     const meta = document.querySelector('meta[name="application-version"]');
-    if (meta) meta.setAttribute('content','20.4.0');
+    if (meta) meta.setAttribute('content','20.5.0');
 
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     const nodes = [];
@@ -54,8 +54,8 @@
     nodes.forEach(n => {
       if (/V16\.1\.0|V16\.2\.0/.test(n.nodeValue || '')) {
         n.nodeValue = n.nodeValue
-          .replace(/V16\.1\.0/g,'V20.4.0')
-          .replace(/V16\.2\.0/g,'V20.4.0');
+          .replace(/V16\.1\.0/g,'V20.5.0')
+          .replace(/V16\.2\.0/g,'V20.5.0');
       }
     });
   }
@@ -177,7 +177,7 @@
       : '<tr><td colspan="3" class="mut">Détail indisponible.</td></tr>';
 
     panel.innerHTML = `
-      <h2>🧭 Contrôle paie · V18 Paie</h2>
+      <h2>🧭 Contrôle paie · Paie</h2>
 
       <div class="al k">
         ✅ <b>${p.nb} quatorzaines</b> · ${short(p.start)} →
@@ -338,5 +338,5 @@
   });
 })();
 
-/* V20.4.0 — le résumé de paie canonique est exposé par app-core.js.
+/* V20.5.0 — le résumé de paie canonique est exposé par app-core.js.
    app-pay.js ne redéfinit volontairement aucune formule pour les surfaces secondaires. */

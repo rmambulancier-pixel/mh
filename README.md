@@ -1,17 +1,19 @@
-# MesHeures — V20.4.0 Clean Release
+# MesHeures — V20.5.0 Mega Clean
 
-Version active unique : **20.4.0** · Android `versionCode 2040`.
+Version active unique : **20.5.0** · Android `versionCode 2050`.
 
 ## Architecture
-- JavaScript : moteur métier unique (heures, paie, contrôle et données).
-- Android : couche plateforme / WebView / fichiers / widget / impression / dashboard natif.
-- Hybrid Core : `WebViewAssetLoader` via `https://appassets.androidplatform.net/assets/web/index.html`.
-- Service Worker : cache versionné `mesheures-shell-v20.4.0`.
+- JavaScript : moteur métier unique (heures, paie, conformité, données).
+- Android : WebView, fichiers, widget et dashboard natif.
+- Hybrid Core : `WebViewAssetLoader` sur `https://appassets.androidplatform.net/...`.
+- Service Worker : cache versionné et interception native des assets.
+- Sauvegardes : stockage local, points de restauration, export/import et compatibilité historique.
 
-## Règle de version
-`VERSION` et `version.properties` sont les sources canoniques de release. Le build refuse une incohérence avant compilation et vérifie la version de l'APK après compilation.
+## Versioning
+`VERSION` + `version.properties` sont les sources canoniques. Le build Android lit ces valeurs au lieu de dupliquer le numéro dans Gradle. GitHub Actions vérifie la version de l'APK après compilation.
 
 ## Build
-Le workflow GitHub Actions produit uniquement `MesHeures-APK-release-v20.4.0` et vérifie `versionCode=2040`, `versionName=20.4.0` et `applicationId=com.mesheures.app`.
+Le workflow GitHub Actions lance d'abord `qa/release-audit.py`, puis le contrôle de syntaxe JavaScript, compile l'APK et vérifie `applicationId`, `versionName` et `versionCode` avant publication de l'artifact.
 
-Les fichiers et documents historiques sont archivés sous `docs/history/` ou `legacy/inactive/` et ne sont pas chargés par l'application.
+## Historique
+Les documents historiques sont archivés sous `docs/history/`. Les anciens fichiers de runtime ne sont pas chargés par l'application.

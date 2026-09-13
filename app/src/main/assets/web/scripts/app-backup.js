@@ -1,8 +1,9 @@
 /* MesHeures V20.4 — sauvegarde locale renforcée, JSON versionné et restauration sûre */
 (function(){
-  const BACKUP_VERSION='20.4.0';
-  const PREFIX=LS+'_v18_backup_';
-  const LEGACY_PREFIX=LS+'_v17_backup_';
+  const BACKUP_VERSION='20.5.0';
+  const PREFIX=LS+'_v20_5_backup_';
+  const LEGACY_PREFIX=LS+'_v18_backup_';
+  const LEGACY_V17_PREFIX=LS+'_v17_backup_';
 
   function cloneDB(){return JSON.parse(JSON.stringify(DB));}
   function snapshot(){
@@ -22,7 +23,7 @@
   }
   function listKeys(){
     return Object.keys(localStorage)
-      .filter(k=>k.indexOf(PREFIX)===0 || k.indexOf(LEGACY_PREFIX)===0)
+      .filter(k=>k.indexOf(PREFIX)===0 || k.indexOf(LEGACY_PREFIX)===0 || k.indexOf(LEGACY_V17_PREFIX)===0)
       .sort()
       .reverse();
   }
@@ -32,7 +33,7 @@
   }
   function stamp(){
     const now=new Date().toISOString();
-    localStorage.setItem(LS+'_v18_last',now);
+    localStorage.setItem(LS+'_v20_5_last',now);
     localStorage.setItem(LS+'_manualAt',now);
     return now;
   }
@@ -70,7 +71,7 @@
 
   window.mhV17BackupStatus=function(){
     const keys=listKeys();
-    let last=localStorage.getItem(LS+'_v18_last')||localStorage.getItem(LS+'_v17_last')||'';
+    let last=localStorage.getItem(LS+'_v20_5_last')||localStorage.getItem(LS+'_v18_last')||localStorage.getItem(LS+'_v17_last')||'';
     if(!last&&keys.length){
       try{last=JSON.parse(localStorage.getItem(keys[0]))?.createdAt||''}catch(e){}
     }
@@ -82,7 +83,7 @@
       const s=snapshot();s.reason='export';
       const result=window.mhV17Backup('export');
       if(!result.ok)throw new Error('Impossible de créer le point de sécurité avant export.');
-      const mode=window.mhDownloadFile('MesHeures-backup-V18-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(s,null,2),'application/json;charset=utf-8');
+      const mode=window.mhDownloadFile('MesHeures-backup-V20.5-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(s,null,2),'application/json;charset=utf-8');
       return !!mode;
     }catch(e){alert('❌ Export impossible : '+e.message);return false;}
   };
@@ -109,7 +110,7 @@
 
   window.mhV17ListBackups=function(){
     return listKeys().map(k=>{
-      try{const s=JSON.parse(localStorage.getItem(k));return {key:k,date:s.createdAt,version:s.version||'17.0.1',reason:s.reason||''};}
+      try{const s=JSON.parse(localStorage.getItem(k));return {key:k,date:s.createdAt,version:s.version||'20.5.0',reason:s.reason||''};}
       catch(e){return null;}
     }).filter(Boolean);
   };
@@ -126,5 +127,5 @@
     }catch(e){alert('❌ Restauration impossible : '+e.message);return false;}
   };
 
-  // Compatibilité avec les anciens points V17 : ils restent lisibles, mais les nouveaux points sont V18.
+  // Compatibilité avec les anciens points V17 : ils restent lisibles, mais les nouveaux points sont V20.5.
 })();

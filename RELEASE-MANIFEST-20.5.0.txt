@@ -1,0 +1,67 @@
+MesHeures V20.5.0 — Release Manifest
+VERSION=20.5.0
+VERSION_CODE=2050
+
+SHA-256
+afa001464d4a325d0d6ebca301611977bafa1395c46c9bd1f73468cd3a2019da  ./.github/workflows/build-apk.yml
+0e44b8224bde32ab3fd5e33166c963f5aeb7eb63b34b9c8b1b3811f28cad6317  ./CHANGELOG.md
+91a7c9400924d9c6d0e7f52b15243cb1ec601a7f3d5f5cdf4645d113456731c2  ./README.md
+4b09557d6e0960fca1683503c34e2ff391123d53aca950003d8d11d0362b5c4b  ./RELEASE-MANIFEST-20.5.0.txt
+77ba33d6df429dfc0bfc27faa0b8ed3fcc08c17b7b9b8af59be694e1dd539723  ./VERSION
+71a3e5848a120e4b74a311f62fbb203c2b0ca838b39832cbb5e6180bca952914  ./app/build.gradle
+71b4587d194ef859e2b548737568bf544b9bbd44de9f40dc67bfb9f1825dff03  ./app/proguard-rules.pro
+640aa61a3e7a40f39dd6800964f01bd001f35e114cdad300dbf14b10d4ef6041  ./app/src/main/AndroidManifest.xml
+02bbb2068243ba2a5fafeaf72de408220c90690e03f7c13c715dfb0341c026b7  ./app/src/main/assets/web/icon-512.png
+8b0376ad9cd1762781a819850c0389874452d88f0da9098b9d44c4da1ec08c21  ./app/src/main/assets/web/icon.svg
+5ca56c0f373f7d0efbc0a7430b3185792c61915f3c5356db7fe1f85e00ffc06e  ./app/src/main/assets/web/index.html
+dad4af6863e461dd9637a0fd3c43470135e9c62f6e3e4832835f11a788784d0b  ./app/src/main/assets/web/manifest.json
+2cf22eaadd37150001228ccc16fb49d683b548ec4c109a8150bf59590136e2db  ./app/src/main/assets/web/scripts/app-backup.js
+74e864906f0f5c4032746029278ee628c5fc42ebab0e2ebb246b5c0b15613d00  ./app/src/main/assets/web/scripts/app-core.js
+d49384b8256fc11e6a48d20eae9aea9dbcac8cc7d173d21cdd8b0acde0718458  ./app/src/main/assets/web/scripts/app-dossier.js
+e73b7b063347f87f6eeb10dd8e275072e2758c83cb77d509854f572baa03bd3c  ./app/src/main/assets/web/scripts/app-evidence.js
+f955c5382de52edf0a13418139bf957251dda669ef9eb3e77e2709263db3f468  ./app/src/main/assets/web/scripts/app-hybrid.js
+6d2fa9d967ff02bba2a70c0d9d2800330cc77768473f76579832c06bdfe78f65  ./app/src/main/assets/web/scripts/app-intelligence.js
+8574e1e7b9d9532f08c4bcf58c468322517c03b470204ecd4c4af902b025001c  ./app/src/main/assets/web/scripts/app-legal.js
+6a6abbe4535b1d935c5bb87d91be6a07988d5ae48f5f1ea3bfbaa45bc3897a6a  ./app/src/main/assets/web/scripts/app-parser.js
+4bdce7daa327aa2c24c61144ce49bc710bd51139c634d5f76bd5d68ee4805ccc  ./app/src/main/assets/web/scripts/app-pay.js
+a7610d958a59a4f786e877cd030052b2553c513441f19191d5c443537ad5c775  ./app/src/main/assets/web/scripts/app-plugins.js
+cc8ec6764277340541341e311b2e7319e9dde82a02b1d34ba505550a9121b329  ./app/src/main/assets/web/scripts/app-projection.js
+9c665d1cc1e6673196955efc7101d9dd3a86195a59fb3f06c1a9dd19dc428a4e  ./app/src/main/assets/web/scripts/app-pwa.js
+c0d947f9bf3e110bba2155fbe04f714f631a42df203b8c25ab4ba40b0d347676  ./app/src/main/assets/web/scripts/app-reconciliation.js
+a36abbbb7495f752c22a698e4bee1eb4eb3f24fcf49a52eefb101e6befd6b03c  ./app/src/main/assets/web/scripts/app-runtime.js
+4150b40c1ae3ebdf0727dbea543a48fb31302567e7eeb03a0c43558d1cc7802c  ./app/src/main/assets/web/scripts/app-ui.js
+c80de00ff74e5bdcd399083a88dcd7add79da9e2e531c2dca9ce9c87e3fa7a5a  ./app/src/main/assets/web/scripts/app.js
+6a7945cf03f6e6053b37665b243c91777d5ec23f5f4d79efa56ee7d5993c4135  ./app/src/main/assets/web/style/refonte.css
+a683a0d23754893a1112a7a52f44e6dd1c42e6f6cd2c60a6ffc5dc73185300af  ./app/src/main/assets/web/sw.js
+a0a91f23134772aba0cff81da94458fb00f97a90c3dc4966f412da1cef79d08d  ./app/src/main/java/com/mesheures/app/MainActivity.java
+1049dd2cc358b33ae481fe1c9307a92132d49214d22e49c9474b53642b9eb901  ./app/src/main/java/com/mesheures/app/core/HybridCore.java
+546ad8db32e0cfd7dd9b3206179649e2d750db19621dd254f739f70fcf0992be  ./app/src/main/java/com/mesheures/app/nativeui/NativeDashboardActivity.kt
+0c673f1a4a96871a96f960f24c23c40acd322a4c967ae3ec431d5708c8fafc3d  ./app/src/main/java/com/mesheures/app/widget/MhWidgetProvider.java
+c328720d567edbac068f38ed5e96d745df3d68f9f2f4c2e1c6da2c44873d34e5  ./app/src/main/res/drawable/ic_splash.xml
+02bbb2068243ba2a5fafeaf72de408220c90690e03f7c13c715dfb0341c026b7  ./app/src/main/res/drawable/icon_512.png
+c08d612ee7ba956554b4a9aad1fcd9029c153797fcea4b1fcbc04f6c3e5dcfcc  ./app/src/main/res/drawable/widget_add_bg.xml
+037d15a22831a740a42a035bbabda7856823bc097408f141fcaebee3feda5a10  ./app/src/main/res/drawable/widget_background.xml
+942853a0dc57c5ef323f3173b03ec7b2c1b0dc77c0dbde8c015d2d23472ebf9b  ./app/src/main/res/drawable/widget_dot.xml
+bfc8a0ce550e6a56a9a7694c6f56386582fa8122c0d955a3d7e267c009bbb72b  ./app/src/main/res/layout/widget_mesheures.xml
+a90cc64409bd35f2e8c0c6e6a3b33a019abe31fce91774ca728e6caffc18575a  ./app/src/main/res/values-night/widget_colors.xml
+dcf8621a5414c32c07e7acb019d29854e0ff93e920cca4c5eb39f6eef1e1df3b  ./app/src/main/res/values/colors.xml
+1ce3bb3016f851d902e1e1ac71c5dce7da8de011bef8ed5835b876f13868c8af  ./app/src/main/res/values/strings.xml
+da5624e56f3b9e1adce821c7c51ee832cc46cf7500f87b7313ccb08c5ca4bf11  ./app/src/main/res/values/themes.xml
+e25416e52fa8379718ee5cf610422821a45b8a656fd0bc8fda1efb280268142d  ./app/src/main/res/values/widget_colors.xml
+3007b0dad4be5858268807410039c9527f660507dc156284671d73952ca2694a  ./app/src/main/res/xml/file_paths.xml
+2cb1a37b156ca3d9ad5262a86ff934ff4ba12d54c4ba4bdf30a101f00a6e2571  ./app/src/main/res/xml/mh_widget_info.xml
+065bc3f534c404c1166f520a7a55bdabad0b9a315624bda175c0d168abf7d40d  ./build.gradle
+e6b436ff6a08da8b8c05e0e2fc1a7f40f41701bb506cd80fc2ddfd7b6e3b3b2b  ./gradle.properties
+ee67c9c88900b1808dd01b1accf31d565adf964027ac9766494dbcf9fd2ef326  ./legacy/inactive/README.md
+373f0bdaf417d84e6d4b8b7c04680c12cb97b0f04d29dda1c88ff8cf65f4ad5e  ./legacy/inactive/web/app-v17.js
+d242785ff74e1ed97721c0e9424c44e1c92a26dfc4c9c48776d3e51717c7098c  ./legacy/inactive/web/legal-v16.2.4.js
+500c0c730160d666a76e7eafd030db72ee2924211e61e63669819d06cbd0921c  ./legacy/inactive/web/pay-fix-v16.2.js
+bee062855664d433ada508584ec151628497e83a70fd7a99572700e9c762c8eb  ./legacy/inactive/web/style.css
+668afe1f1b7abdbdf5bfeb4c0ff23437b7104b95eda990870284f9761a582aee  ./plugins/template.mhplugin
+3aa94fa2a0db14f9cee2266c5ef95434c61107f476cf1a1f88d2034cb339515a  ./qa/release-audit.py
+b2880437e772fe74b4b6017f04f32a690e05a7277ebf33c79c08c502c477ffa6  ./qa/version-audit.py
+b7f47852e5db2e382addbc69aff5ff6455598b6db4ac4326292480c81ab8327a  ./qa/widget-v3-check.js
+a79670e245e17ac01784c85a195f11d467b87af8849daa6dc2a61847b09025c3  ./qa/widget-v4-check.js
+d5c4c7166ce1691419b130dcda59c250731e5a2b3f52eaab4de1d5db70d3f84e  ./qa/widget-v5-check.js
+b35d7defdae30c9d48299b53f619f10d27bd3d233d001446b6e7db86017762d9  ./settings.gradle
+9bdef53ef3e71819a41ed19f4a085ff0615af8acca86f20d1ed4f49b817d7fb5  ./version.properties

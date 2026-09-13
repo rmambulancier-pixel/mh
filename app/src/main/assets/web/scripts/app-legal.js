@@ -1,4 +1,4 @@
-/* MesHeures V18 — référentiel légal transport sanitaire, vérifié le 11/09/2026 */
+/* MesHeures — référentiel légal transport sanitaire, vérifié le 11/09/2026 */
 (function(){
   window.MH_LEGAL={
     version:'2026-09-11',
