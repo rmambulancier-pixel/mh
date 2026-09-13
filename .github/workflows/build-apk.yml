@@ -19,8 +19,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          VERSION=$(awk -F= '$1=="VERSION" {print $2}' VERSION)
-          CODE=$(awk -F= '$1=="VERSION_CODE" {print $2}' version.properties)
+          VERSION=$(tr -d '\r\n' < VERSION)
+          CODE=$(awk -F= '$1=="VERSION_CODE" {print $2}' version.properties | tr -d '\r\n')
           test -n "$VERSION"
           test -n "$CODE"
           echo "MESHEURES_VERSION=$VERSION" >> "$GITHUB_ENV"

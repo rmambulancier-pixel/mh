@@ -88,6 +88,7 @@ for phrase in [
 check('No stale release literal 20.4.0 in active Web tree', '20.4.0' not in combined)
 check('No stale release literal 20.3.0 in workflow', '20.3.0' not in workflow)
 check('Workflow derives release version', 'Read canonical release version' in workflow and 'GITHUB_ENV' in workflow and 'MESHEURES_VERSION' in workflow)
+check('Workflow reads plain VERSION file', 'tr -d \'\\r\\n\' < VERSION' in workflow or 'cat VERSION' in workflow)
 check('Workflow runs release audit', 'python3 qa/release-audit.py' in workflow)
 check('Workflow verifies built APK', 'dump badging' in workflow and 'MESHEURES_VERSION_CODE' in workflow and 'MESHEURES_VERSION' in workflow)
 check('Workflow artifact is versioned dynamically', 'MesHeures-APK-release-v${{ env.MESHEURES_VERSION }}' in workflow)
