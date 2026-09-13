@@ -44,9 +44,9 @@
   }
 
   function syncVersion() {
-    document.title = document.title.replace(/V16\.1(?:\.0)?|V16\.2(?:\.0)?|V17(?:\.0\.1)?/g, 'V18.0.14');
+    document.title = document.title.replace(/V16\.1(?:\.0)?|V16\.2(?:\.0)?|V17(?:\.0\.1)?/g, 'V18.0.15');
     const meta = document.querySelector('meta[name="application-version"]');
-    if (meta) meta.setAttribute('content','18.0.14');
+    if (meta) meta.setAttribute('content','18.0.15');
 
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     const nodes = [];
@@ -54,8 +54,8 @@
     nodes.forEach(n => {
       if (/V16\.1\.0|V16\.2\.0/.test(n.nodeValue || '')) {
         n.nodeValue = n.nodeValue
-          .replace(/V16\.1\.0/g,'V18.0.14')
-          .replace(/V16\.2\.0/g,'V18.0.14');
+          .replace(/V16\.1\.0/g,'V18.0.15')
+          .replace(/V16\.2\.0/g,'V18.0.15');
       }
     });
   }
@@ -337,3 +337,17 @@
     observer.disconnect();
   });
 })();
+
+/* V18.0.15 — source unique du net estimé exposée aux surfaces secondaires.
+   Le widget ne duplique pas la formule : il consomme uniquement ce résultat. */
+window.mhCurrentPaySummary=function(){
+  try{
+    if(typeof calcPer!=='function'||typeof brutOf!=='function'||!window.DB)return null;
+    const st=DB.per?.start||DB.s?.anchor||'2025-05-19';
+    const raw=Number(DB.per?.nb)||2;
+    const nb=Math.max(2,Math.min(3,Math.round(raw)));
+    const G=calcPer(st,nb).G, br=brutOf(G);
+    const netEst=br.tot*DB.s.net+br.panIR+br.panIRU;
+    return {grossEst:br.tot,netEst,hs25:G.h25,hs50:G.h50,tte:G.tte};
+  }catch(e){return null}
+};

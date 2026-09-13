@@ -29,6 +29,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 
+import com.mesheures.app.widget.MhWidgetProvider;
+
 public class MainActivity extends Activity {
 
     private WebView web;
@@ -43,6 +45,9 @@ public class MainActivity extends Activity {
     private static final String PREFS = "mesheures_android_backup";
     private static final String STORAGE_KEY = "local_storage_snapshot";
     private SharedPreferences backupPrefs;
+
+    private String pendingDeepLink;
+    private boolean webReady = false;
 
     @Override
     protected void onCreate(Bundle b) {
@@ -87,9 +92,38 @@ public class MainActivity extends Activity {
 
         web.loadUrl("file:///android_asset/web/index.html");
 
-        // V17: the splash must never depend on window.onload or CDN completion.
+        // V18.0.15: the splash must never depend on window.onload or CDN completion.
         // WebView can execute this while deferred external resources are still pending.
         dismissSplashSoon();
+
+        handleIntent(getIntent());
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleIntent(intent);
+    }
+
+    private void handleIntent(Intent intent) {
+        if (intent == null) return;
+        String link = intent.getStringExtra("mh_deeplink");
+        if (link == null) return;
+        pendingDeepLink = link;
+        tryConsumeDeepLink();
+    }
+
+    private void tryConsumeDeepLink() {
+        if (pendingDeepLink == null || !webReady || web == null) return;
+        String link = pendingDeepLink;
+        pendingDeepLink = null;
+        if ("jour".equals(link)) {
+            web.evaluateJavascript("(function(){try{"
+                + "var k=(typeof today==='function')?today():null;"
+                + "if(typeof mhOpenDay==='function'&&k)mhOpenDay(k);"
+                + "}catch(e){}})();", null);
+        }
     }
 
     private void dismissSplashSoon() {
@@ -128,6 +162,8 @@ public class MainActivity extends Activity {
                 dismissSplashSoon();
                 restoreLocalStorage();
                 installAutoBackup();
+                webReady = true;
+                tryConsumeDeepLink();
             }
         });
 
@@ -263,7 +299,7 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public String platform() { return "android"; }
 
-        @JavascriptInterface public String version() { return "18.0.14"; }
+        @JavascriptInterface public String version() { return "18.0.15"; }
 
         @JavascriptInterface
         public void setSystemBarsLight(boolean light) {
@@ -285,6 +321,16 @@ public class MainActivity extends Activity {
         public void saveLocalStorage(String json) {
             if (json == null) return;
             backupPrefs.edit().putString(STORAGE_KEY, json).apply();
+        }
+
+        @JavascriptInterface
+        public void updateWidgetData(String json) {
+            if (json == null) return;
+            SharedPreferences widgetPrefs = getSharedPreferences(MhWidgetProvider.PREFS, MODE_PRIVATE);
+            widgetPrefs.edit().putString(MhWidgetProvider.KEY_PAYLOAD, json).apply();
+            Intent refresh = new Intent(MainActivity.this, MhWidgetProvider.class);
+            refresh.setAction(MhWidgetProvider.ACTION_REFRESH);
+            sendBroadcast(refresh);
         }
 
         @JavascriptInterface

@@ -7,8 +7,8 @@ android {
         applicationId 'com.mesheures.app'
         minSdk 26
         targetSdk 35
-        versionCode 1814
-        versionName '18.0.14'
+        versionCode 1815
+        versionName '18.0.15'
     }
     signingConfigs {
         release {
