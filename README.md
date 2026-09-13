@@ -95,3 +95,6 @@ Correction de la synchronisation du widget : le payload de paie est produit dire
 
 ## V19.0.0 — Widget V8
 Le widget conserve le V6 validé et ajoute en bas : **solde RC** + **prochaine journée planifiée**. Aucun nouveau moteur de calcul n'est introduit.
+
+## V20 — Hybrid Core
+Le socle Android utilise désormais une couche `HybridCore` dédiée à `WebViewAssetLoader` et au chargement sécurisé des assets. Le moteur métier JavaScript reste inchangé.

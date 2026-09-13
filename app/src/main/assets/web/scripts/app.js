@@ -432,13 +432,17 @@ document.addEventListener('touchend',e=>{
   if(curTab==='jour'){dx<0?goDay(1):goDay(-1)}
   else if(curTab==='mois'){dx<0?goMonth(1):goMonth(-1)}
 });
-if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catch(()=>{});
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(reg=>{
+    try{window.mhServiceWorkerReady=!!reg;}catch(e){}
+  }).catch(e=>{try{console.warn('MesHeures SW indisponible',e)}catch(_){}});
+}
 
 /* ═══════════════════════════════════════════════
    V15 — INTELLIGENCE / SÉCURITÉ / MODE PRO
    Couche additive : ne modifie pas les règles de calcul historiques.
 ═══════════════════════════════════════════════ */
-const MH_V='19.0.0';
+const MH_V='20.0.0';
 
 function mhMonthStats(ym){
   const [y,m]=ym.split('-').map(Number), last=isoOf(new Date(y,m,0));
