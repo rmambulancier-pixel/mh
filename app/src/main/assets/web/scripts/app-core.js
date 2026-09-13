@@ -135,7 +135,7 @@ function cd(k){
   return r;
 }
 
-// V18.0.23 — canonical read-only day metrics for dossier/reconciliation/plugins.
+// V18.1.0 — canonical read-only day metrics for dossier/reconciliation/plugins.
 // Raw DB.days entries intentionally remain untouched; all derived legal metrics come from cd().
 window.mhCalcDay = function(k){
   try{return cd(k)||{amp:0,tte:0,pz:0,al:[],trav:0,seuil:0,idaj:0,ir:0,iru:0,rc:0,fer:0,dim:0,nuit:0}}
@@ -204,7 +204,7 @@ function brutOf(G){
   return{L,tot,panIR,panIRU,panIRUT};
 }
 
-/* V18.0.23 — source unique paie pour toutes les surfaces (Web/PWA/widget).
+/* V18.1.0 — source unique paie pour toutes les surfaces (Web/PWA/widget).
    Le calcul reste celui de calcPer() + brutOf(); aucune formule n'est dupliquée. */
 window.mhCurrentPaySummary=function(){
   try{

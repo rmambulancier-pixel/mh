@@ -1,9 +1,9 @@
-/* MesHeures V18.0.23 — constats, journal de preuves, chronologie, backup chiffré
+/* MesHeures V18.1.0 — constats, journal de preuves, chronologie, backup chiffré
    Optimisation : l'historique probatoire est calculé uniquement lorsqu'une donnée est modifiée.
 */
 (function(){
   'use strict';
-  const V='18.0.23';
+  const V='18.1.0';
   const NS='mhV18';
   let dataVersion=0;
   let cacheVersion=-1;
