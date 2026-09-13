@@ -1,30 +1,59 @@
 from pathlib import Path
-import sys
+import re, sys
+
 ROOT = Path(__file__).resolve().parents[1]
-V = (ROOT / 'VERSION').read_text(encoding='utf-8').strip()
-props = dict(line.split('=', 1) for line in (ROOT/'version.properties').read_text(encoding='utf-8').splitlines() if '=' in line)
-CODE = props['VERSION_CODE']
-checks=[]
-def check(name, ok): checks.append((name, bool(ok)))
-def text(p): return p.read_text(encoding='utf-8')
-build=text(ROOT/'app/build.gradle'); index=text(ROOT/'app/src/main/assets/web/index.html'); manifest=text(ROOT/'app/src/main/assets/web/manifest.json'); sw=text(ROOT/'app/src/main/assets/web/sw.js'); js=text(ROOT/'app/src/main/assets/web/scripts/app.js'); main=text(ROOT/'app/src/main/java/com/mesheures/app/MainActivity.java'); hybrid=text(ROOT/'app/src/main/java/com/mesheures/app/core/HybridCore.java'); workflow=text(ROOT/'.github/workflows/build-apk.yml')
-check('VERSION canonical', V == '20.4.0')
-check('VERSION_CODE canonical', CODE == '2040')
-check('Gradle versionCode', f'versionCode {CODE}' in build)
-check('Gradle versionName', f"versionName '{V}'" in build)
-check('JS MH_V', f"MH_V='{V}'" in js)
-check('HTML meta', f'application-version" content="{V}"' in index)
-check('HTML visible', f'V{V}' in index)
-check('Manifest version', f'"version": "{V}"' in manifest)
-check('SW cache', f'mesheures-shell-v{V}' in sw)
-check('Bridge version', f'\\"version\\":\\"{V}\\"' in main and f'return "{V}"' in main)
-check('Secure WebView entry', 'ENTRY_URL = "https://" + DOMAIN + "/assets/web/index.html"' in hybrid and 'HybridCore.ENTRY_URL' in main)
-check('Workflow version', f'Build MesHeures APK V{V}' in workflow and f'v{V}' in workflow)
-check('Workflow APK verification', 'dump badging' in workflow and f"versionCode='{CODE}'" in workflow and f"versionName='{V}'" in workflow)
-ACTIVE_WEB = ROOT / 'app/src/main/assets/web'
-OLD_ACTIVE = ('app-v17.js','app-v18.js','app-v19.js','legal-v16.2.4.js','pay-fix-v16.2.js')
-check('No old active runtime filenames', not any((ACTIVE_WEB / n).exists() or (ACTIVE_WEB / 'scripts' / n).exists() for n in OLD_ACTIVE))
-check('No old release label in workflow', 'v18.1.0' not in workflow and 'V20.3.0' not in workflow)
-for name, ok in checks: print(('PASS' if ok else 'FAIL') + ': ' + name)
-if not all(ok for _,ok in checks): sys.exit(1)
-print(f'VERSION AUDIT: PASS — MesHeures V{V} / versionCode {CODE}')
+
+def read(path):
+    return path.read_text(encoding='utf-8')
+
+def props(path):
+    out = {}
+    for line in read(path).splitlines():
+        if '=' in line:
+            k, v = line.split('=', 1)
+            out[k.strip()] = v.strip()
+    return out
+
+version = read(ROOT / 'VERSION').strip()
+version_props = props(ROOT / 'version.properties')
+code = version_props.get('VERSION_CODE', '')
+
+checks = []
+def check(name, ok):
+    checks.append((name, bool(ok)))
+
+build = read(ROOT / 'app/build.gradle')
+index = read(ROOT / 'app/src/main/assets/web/index.html')
+manifest = read(ROOT / 'app/src/main/assets/web/manifest.json')
+sw = read(ROOT / 'app/src/main/assets/web/sw.js')
+js = read(ROOT / 'app/src/main/assets/web/scripts/app.js')
+main = read(ROOT / 'app/src/main/java/com/mesheures/app/MainActivity.java')
+hybrid = read(ROOT / 'app/src/main/java/com/mesheures/app/core/HybridCore.java')
+workflow = read(ROOT / '.github/workflows/build-apk.yml')
+
+check('VERSION canonical', bool(re.fullmatch(r'\d+\.\d+\.\d+', version)))
+check('VERSION_CODE canonical', code.isdigit() and int(code) > 0)
+check('Version metadata aligned', version_props.get('VERSION') == version)
+check('Gradle reads canonical version', "file('../version.properties')" in build and 'releaseVersion' in build and 'releaseCode' in build)
+check('Gradle uses canonical variables', 'versionCode releaseCode' in build and 'versionName releaseVersion' in build)
+check('JS MH_V', f"const MH_V='{version}'" in js)
+check('HTML meta', f'application-version" content="{version}"' in index)
+check('HTML visible', f'>V{version}<' in index)
+check('Manifest version', f'"version": "{version}"' in manifest)
+check('SW cache', f'mesheures-shell-v{version}' in sw)
+check('Bridge version', f'VERSION = "{version}"' in hybrid and f'return "{version}"' in main)
+check('Secure WebView entry', 'WebViewAssetLoader' in hybrid and 'ENTRY_URL = "https://" + DOMAIN + "/assets/web/index.html"' in hybrid)
+check('Workflow uses release audit', 'python3 qa/release-audit.py' in workflow)
+check('Workflow dynamic version', 'MESHEURES_VERSION' in workflow and 'MESHEURES_VERSION_CODE' in workflow)
+check('Workflow APK verification', 'dump badging' in workflow and 'versionCode' in workflow and 'versionName' in workflow)
+
+active_web = ROOT / 'app/src/main/assets/web'
+old_active = ('app-v17.js','app-v18.js','app-v19.js','legal-v16.2.4.js','pay-fix-v16.2.js')
+check('No old active runtime filenames', not any((active_web / n).exists() or (active_web / 'scripts' / n).exists() for n in old_active))
+
+for name, ok in checks:
+    print(('PASS' if ok else 'FAIL') + ': ' + name)
+
+if not all(ok for _, ok in checks):
+    sys.exit(1)
+print(f'VERSION AUDIT: PASS — MesHeures V{version} / versionCode {code}')

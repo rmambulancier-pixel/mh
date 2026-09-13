@@ -1,4 +1,4 @@
-name: Build MesHeures APK V20.4.0
+name: Build MesHeures APK
 
 on:
   push:
@@ -11,13 +11,20 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      MESHEURES_VERSION: "20.4.0"
-      MESHEURES_VERSION_CODE: "2040"
-      MESHEURES_HAS_SIGNING_KEY: ${{ secrets.MESHEURES_KEYSTORE_B64 != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Read canonical release version
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION=$(awk -F= '$1=="VERSION" {print $2}' VERSION)
+          CODE=$(awk -F= '$1=="VERSION_CODE" {print $2}' version.properties)
+          test -n "$VERSION"
+          test -n "$CODE"
+          echo "MESHEURES_VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "MESHEURES_VERSION_CODE=$CODE" >> "$GITHUB_ENV"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -30,52 +37,54 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Static version + runtime audit
-        run: python3 qa/version-audit.py
+      - name: Static release audit
+        run: python3 qa/release-audit.py
 
       - name: JavaScript syntax audit
+        shell: bash
         run: |
-          set -e
+          set -euo pipefail
           find app/src/main/assets/web/scripts -name '*.js' -print0 | while IFS= read -r -d '' f; do
             node --check "$f"
           done
 
       - name: Prepare persistent signing key
-        if: env.MESHEURES_HAS_SIGNING_KEY == 'true'
+        if: ${{ secrets.MESHEURES_KEYSTORE_B64 != '' }}
         env:
-          MESHEURES_KEYSTORE: ${{ github.workspace }}/mesheures-release.keystore
           MESHEURES_KEYSTORE_B64: ${{ secrets.MESHEURES_KEYSTORE_B64 }}
+        shell: bash
         run: |
-          set -e
-          printf '%s' "$MESHEURES_KEYSTORE_B64" | base64 --decode > "$MESHEURES_KEYSTORE"
-          test -s "$MESHEURES_KEYSTORE"
+          set -euo pipefail
+          printf '%s' "$MESHEURES_KEYSTORE_B64" | base64 --decode > "$GITHUB_WORKSPACE/mesheures-release.keystore"
+          test -s "$GITHUB_WORKSPACE/mesheures-release.keystore"
+          echo "MESHEURES_KEYSTORE=$GITHUB_WORKSPACE/mesheures-release.keystore" >> "$GITHUB_ENV"
 
       - name: Build release APK
         env:
-          MESHEURES_KEYSTORE: ${{ secrets.MESHEURES_KEYSTORE_B64 != '' && format('{0}/mesheures-release.keystore', github.workspace) || '' }}
           MESHEURES_STORE_PASSWORD: ${{ secrets.MESHEURES_STORE_PASSWORD }}
           MESHEURES_KEY_PASSWORD: ${{ secrets.MESHEURES_KEY_PASSWORD }}
           MESHEURES_KEY_ALIAS: ${{ secrets.MESHEURES_KEY_ALIAS }}
         run: gradle :app:assembleRelease --no-daemon
 
-      - name: Verify built APK version
+      - name: Verify built APK
+        shell: bash
         run: |
-          set -e
+          set -euo pipefail
           APK="app/build/outputs/apk/release/app-release.apk"
           test -s "$APK"
           AAPT=$(find "$ANDROID_HOME/build-tools" -type f -name aapt | sort -V | tail -1)
           test -n "$AAPT"
           "$AAPT" dump badging "$APK" | tee /tmp/apk-badging.txt
-          grep -F "versionCode='2040'" /tmp/apk-badging.txt
-          grep -F "versionName='20.4.0'" /tmp/apk-badging.txt
+          grep -F "versionCode='$MESHEURES_VERSION_CODE'" /tmp/apk-badging.txt
+          grep -F "versionName='$MESHEURES_VERSION'" /tmp/apk-badging.txt
           grep -F "package: name='com.mesheures.app'" /tmp/apk-badging.txt
 
       - name: Publish versioned APK
-        run: cp app/build/outputs/apk/release/app-release.apk "MesHeures-APK-release-v20.4.0.apk"
+        run: cp app/build/outputs/apk/release/app-release.apk "MesHeures-APK-release-v${MESHEURES_VERSION}.apk"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: MesHeures-APK-release-v20.4.0
-          path: MesHeures-APK-release-v20.4.0.apk
+          name: MesHeures-APK-release-v${{ env.MESHEURES_VERSION }}
+          path: MesHeures-APK-release-v${{ env.MESHEURES_VERSION }}.apk
           if-no-files-found: error
