@@ -92,7 +92,7 @@ public class MainActivity extends Activity {
 
         web.loadUrl("file:///android_asset/web/index.html");
 
-        // V18.0.15: the splash must never depend on window.onload or CDN completion.
+        // V18.0.16: the splash must never depend on window.onload or CDN completion.
         // WebView can execute this while deferred external resources are still pending.
         dismissSplashSoon();
 
@@ -299,7 +299,7 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public String platform() { return "android"; }
 
-        @JavascriptInterface public String version() { return "18.0.15"; }
+        @JavascriptInterface public String version() { return "18.0.16"; }
 
         @JavascriptInterface
         public void setSystemBarsLight(boolean light) {

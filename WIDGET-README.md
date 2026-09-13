@@ -1,12 +1,19 @@
-# MesHeures V18.0.15 — Widget Android
+# MesHeures V18.0.16 — Widget Android
 
-Widget natif ajouté au socle V18.0.14. Il affiche uniquement un cache JSON produit par le WebView.
+Widget natif ajouté au socle V18.0.16. Il affiche uniquement un cache JSON produit par le WebView.
+
+## V18.0.16 — Widget V2
+
+Le widget affiche désormais le mois complet, la progression, les statuts, TTE, HS, paie, marge 46 h et alertes. Le net privilégie le bulletin réel du mois lorsqu’il existe, sinon l’estimation de la période courante.
 
 ## Données affichées
 - TTE du jour
+- TTE du mois
 - TTE de la semaine
 - TTE de la quatorzaine courante
-- Net estimé de la période courante, issu de la même formule que la page Paie
+- HS 25 % / HS 50 % de la période courante
+- Brut et net (bulletin réel du mois si disponible, sinon estimation)
+- Travail / Repos / Congé / Maladie
 - Marge avant 46 h / 12 semaines
 - Nombre d’alertes du mois
 - Date de dernière synchronisation

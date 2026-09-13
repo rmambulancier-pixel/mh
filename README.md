@@ -1,10 +1,10 @@
-# MesHeures V18.0.15 — Android + PWA
+# MesHeures V18.0.16 — Android + PWA
 
-> **Version actuelle : V18.0.15 — Android versionCode 1815**
+> **Version actuelle : V18.0.16 — Android versionCode 1816**
 
-## V18.0.15 — Widget Android intégré
+## V18.0.16 — Widget Android intégré
 
-Cette version part du socle V18.0.14 audité et ajoute le widget Android sans réintroduire les anciennes couches/fichiers fantômes.
+Cette version part du socle V18.0.16 audité et ajoute le widget Android sans réintroduire les anciennes couches/fichiers fantômes.
 
 ### Widget
 - Widget Android natif `MesHeures` pour le Pixel 10 Pro XL et les launchers Android récents.
@@ -64,5 +64,5 @@ Le keystore n'est jamais inclus dans le dépôt.
 - XML Android vérifiés comme XML bien formés.
 - Manifest et fichiers JSON vérifiés.
 - Références des scripts vérifiées par rapport aux fichiers réellement présents.
-- Version runtime synchronisée en `18.0.15` / `versionCode 1815`.
+- Version runtime synchronisée en `18.0.16` / `versionCode 1816`.
 - Compilation Android finale à effectuer par le workflow GitHub Actions du dépôt.

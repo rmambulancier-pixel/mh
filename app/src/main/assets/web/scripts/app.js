@@ -438,7 +438,7 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('./sw.js').catc
    V15 — INTELLIGENCE / SÉCURITÉ / MODE PRO
    Couche additive : ne modifie pas les règles de calcul historiques.
 ═══════════════════════════════════════════════ */
-const MH_V='18.0.15';
+const MH_V='18.0.16';
 
 function mhMonthStats(ym){
   const [y,m]=ym.split('-').map(Number), last=isoOf(new Date(y,m,0));
@@ -596,7 +596,7 @@ function renderPay(){
   if(proNet)proNet.textContent=EUR(tot*DB.s.net);
   if(proHours)proHours.textContent=F(G.h25+G.h50);
 
-  // V18.0.15 : le champ « Écart bulletin » ne doit plus confondre
+  // V18.0.16 : le champ « Écart bulletin » ne doit plus confondre
   // l'absence de saisie RC de la quatorzaine avec l'absence de bulletin.
   // Les bulletins sont mensuels et une quatorzaine peut chevaucher deux mois.
   // On recherche donc les bulletins dont le mois intersecte réellement la période.
@@ -714,7 +714,7 @@ function mhDecoratePages(){
   });
 }
 
-if($('mhVersion'))$('mhVersion').textContent='V18.0.15';
+if($('mhVersion'))$('mhVersion').textContent='V18.0.16';
 mhDecoratePages();
 mhAutoBackup();
 setTimeout(()=>{try{renderAll()}catch(e){console.error('V15 render',e)}},0);
