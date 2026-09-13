@@ -3,14 +3,13 @@ VERSION=20.5.0
 VERSION_CODE=2050
 
 SHA-256
-afa001464d4a325d0d6ebca301611977bafa1395c46c9bd1f73468cd3a2019da  ./.github/workflows/build-apk.yml
+3308af67fdc6575801a2a0aae291b1d98a00a72e210454624d2818335b8625fc  ./.github/workflows/build-apk.yml
 0e44b8224bde32ab3fd5e33166c963f5aeb7eb63b34b9c8b1b3811f28cad6317  ./CHANGELOG.md
 91a7c9400924d9c6d0e7f52b15243cb1ec601a7f3d5f5cdf4645d113456731c2  ./README.md
-4b09557d6e0960fca1683503c34e2ff391123d53aca950003d8d11d0362b5c4b  ./RELEASE-MANIFEST-20.5.0.txt
 77ba33d6df429dfc0bfc27faa0b8ed3fcc08c17b7b9b8af59be694e1dd539723  ./VERSION
 71a3e5848a120e4b74a311f62fbb203c2b0ca838b39832cbb5e6180bca952914  ./app/build.gradle
 71b4587d194ef859e2b548737568bf544b9bbd44de9f40dc67bfb9f1825dff03  ./app/proguard-rules.pro
-640aa61a3e7a40f39dd6800964f01bd001f35e114cdad300dbf14b10d4ef6041  ./app/src/main/AndroidManifest.xml
+d80e6f7809652ee3da2e1ca11a36a654eb999fc3f2918189b6a4d915a41b2bfd  ./app/src/main/AndroidManifest.xml
 02bbb2068243ba2a5fafeaf72de408220c90690e03f7c13c715dfb0341c026b7  ./app/src/main/assets/web/icon-512.png
 8b0376ad9cd1762781a819850c0389874452d88f0da9098b9d44c4da1ec08c21  ./app/src/main/assets/web/icon.svg
 5ca56c0f373f7d0efbc0a7430b3185792c61915f3c5356db7fe1f85e00ffc06e  ./app/src/main/assets/web/index.html
@@ -33,7 +32,7 @@ a36abbbb7495f752c22a698e4bee1eb4eb3f24fcf49a52eefb101e6befd6b03c  ./app/src/main
 c80de00ff74e5bdcd399083a88dcd7add79da9e2e531c2dca9ce9c87e3fa7a5a  ./app/src/main/assets/web/scripts/app.js
 6a7945cf03f6e6053b37665b243c91777d5ec23f5f4d79efa56ee7d5993c4135  ./app/src/main/assets/web/style/refonte.css
 a683a0d23754893a1112a7a52f44e6dd1c42e6f6cd2c60a6ffc5dc73185300af  ./app/src/main/assets/web/sw.js
-a0a91f23134772aba0cff81da94458fb00f97a90c3dc4966f412da1cef79d08d  ./app/src/main/java/com/mesheures/app/MainActivity.java
+4edf660c574cc14ee293ba8fed2668fc6317071eb203113030bddb2aa673e6dd  ./app/src/main/java/com/mesheures/app/MainActivity.java
 1049dd2cc358b33ae481fe1c9307a92132d49214d22e49c9474b53642b9eb901  ./app/src/main/java/com/mesheures/app/core/HybridCore.java
 546ad8db32e0cfd7dd9b3206179649e2d750db19621dd254f739f70fcf0992be  ./app/src/main/java/com/mesheures/app/nativeui/NativeDashboardActivity.kt
 0c673f1a4a96871a96f960f24c23c40acd322a4c967ae3ec431d5708c8fafc3d  ./app/src/main/java/com/mesheures/app/widget/MhWidgetProvider.java
@@ -51,6 +50,16 @@ e25416e52fa8379718ee5cf610422821a45b8a656fd0bc8fda1efb280268142d  ./app/src/main
 3007b0dad4be5858268807410039c9527f660507dc156284671d73952ca2694a  ./app/src/main/res/xml/file_paths.xml
 2cb1a37b156ca3d9ad5262a86ff934ff4ba12d54c4ba4bdf30a101f00a6e2571  ./app/src/main/res/xml/mh_widget_info.xml
 065bc3f534c404c1166f520a7a55bdabad0b9a315624bda175c0d168abf7d40d  ./build.gradle
+69ff2f0043e28fab6fad0dcdcdbb0d907882ce87759904496315e7017f62659e  ./docs/history/V17-README.md
+24cfa76e3a7c35a927c57c658b74e3f067e63fcb064e01c04744f588e0ff0fe0  ./docs/history/V18-LOT1.md
+2f5a19a7aa13c150d54855ad77653fc33fa13c41f6c0aea16c603cdd1ac8918f  ./docs/history/V18.0.10-BULLETIN-SYNTHESIS.md
+411f2ec892e97d90b905f5c821649c3a99432b59628dda339cf577a6347c1e1e  ./docs/history/V18.0.7-REGRESSION.md
+3ab8c282a9eddbe54c69626e4d03704fb1df9092dc8c7eec51487f7076d3db29  ./docs/history/V18.0.8-REGRESSION.md
+b3394f2d56af3416fc837a77ee8c815c498eb96a853c69bda7f8839d4657b65d  ./docs/history/V20-HYBRID-CORE.md
+f360e52f93299854d1812172f4bc7202bfeb2ea64c4db60fe01a6cfa4741ed71  ./docs/history/V20.3-HYBRID-CORE-2.md
+96baec82211864c599f606dcb32364d7cbc7f8479a28ba6356267f3c99e0a61a  ./docs/history/WIDGET-README.md
+9bcca2a77440cb5f49ccd20b6e2a434e741ccfb0d4f71f38c55b818221981bba  ./docs/history/web/README.md
+d1c1bd5d2addb0a24fcd0e82b0f276eda36fa4e26de7157d104a1b01ac7bd13c  ./docs/history/web/REFONTE.md
 e6b436ff6a08da8b8c05e0e2fc1a7f40f41701bb506cd80fc2ddfd7b6e3b3b2b  ./gradle.properties
 ee67c9c88900b1808dd01b1accf31d565adf964027ac9766494dbcf9fd2ef326  ./legacy/inactive/README.md
 373f0bdaf417d84e6d4b8b7c04680c12cb97b0f04d29dda1c88ff8cf65f4ad5e  ./legacy/inactive/web/app-v17.js
@@ -58,10 +67,12 @@ d242785ff74e1ed97721c0e9424c44e1c92a26dfc4c9c48776d3e51717c7098c  ./legacy/inact
 500c0c730160d666a76e7eafd030db72ee2924211e61e63669819d06cbd0921c  ./legacy/inactive/web/pay-fix-v16.2.js
 bee062855664d433ada508584ec151628497e83a70fd7a99572700e9c762c8eb  ./legacy/inactive/web/style.css
 668afe1f1b7abdbdf5bfeb4c0ff23437b7104b95eda990870284f9761a582aee  ./plugins/template.mhplugin
-3aa94fa2a0db14f9cee2266c5ef95434c61107f476cf1a1f88d2034cb339515a  ./qa/release-audit.py
-b2880437e772fe74b4b6017f04f32a690e05a7277ebf33c79c08c502c477ffa6  ./qa/version-audit.py
+ca16e515615caacb2575efcdd379c3b5d011643c41bf1ffd5e7fb7d6bc51b2c6  ./qa/release-audit.py
+d0595246886558c702947075ccb2fd7e45f93061e43f60bddbca77d56b514082  ./qa/version-audit.py
 b7f47852e5db2e382addbc69aff5ff6455598b6db4ac4326292480c81ab8327a  ./qa/widget-v3-check.js
 a79670e245e17ac01784c85a195f11d467b87af8849daa6dc2a61847b09025c3  ./qa/widget-v4-check.js
 d5c4c7166ce1691419b130dcda59c250731e5a2b3f52eaab4de1d5db70d3f84e  ./qa/widget-v5-check.js
 b35d7defdae30c9d48299b53f619f10d27bd3d233d001446b6e7db86017762d9  ./settings.gradle
 9bdef53ef3e71819a41ed19f4a085ff0615af8acca86f20d1ed4f49b817d7fb5  ./version.properties
+
+NOTE: RELEASE-MANIFEST-20.5.0.txt intentionally excludes its own hash because a self-hash is self-referential.

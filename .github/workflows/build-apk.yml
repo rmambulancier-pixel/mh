@@ -49,15 +49,21 @@ jobs:
           done
 
       - name: Prepare persistent signing key
-        if: ${{ secrets.MESHEURES_KEYSTORE_B64 != '' }}
         env:
           MESHEURES_KEYSTORE_B64: ${{ secrets.MESHEURES_KEYSTORE_B64 }}
         shell: bash
         run: |
           set -euo pipefail
-          printf '%s' "$MESHEURES_KEYSTORE_B64" | base64 --decode > "$GITHUB_WORKSPACE/mesheures-release.keystore"
-          test -s "$GITHUB_WORKSPACE/mesheures-release.keystore"
-          echo "MESHEURES_KEYSTORE=$GITHUB_WORKSPACE/mesheures-release.keystore" >> "$GITHUB_ENV"
+          # GitHub Actions does not allow the secrets context directly in an if condition.
+          # Keep the secret in env and decide inside the shell instead.
+          if [[ -n "${MESHEURES_KEYSTORE_B64:-}" ]]; then
+            printf '%s' "$MESHEURES_KEYSTORE_B64" | base64 --decode > "$GITHUB_WORKSPACE/mesheures-release.keystore"
+            test -s "$GITHUB_WORKSPACE/mesheures-release.keystore"
+            echo "MESHEURES_KEYSTORE=$GITHUB_WORKSPACE/mesheures-release.keystore" >> "$GITHUB_ENV"
+            echo "Persistent release signing key prepared."
+          else
+            echo "No persistent signing key configured; building an unsigned release APK."
+          fi
 
       - name: Build release APK
         env:

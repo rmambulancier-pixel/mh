@@ -46,6 +46,8 @@ check('Secure WebView entry', 'WebViewAssetLoader' in hybrid and 'ENTRY_URL = "h
 check('Workflow uses release audit', 'python3 qa/release-audit.py' in workflow)
 check('Workflow dynamic version', 'MESHEURES_VERSION' in workflow and 'MESHEURES_VERSION_CODE' in workflow)
 check('Workflow APK verification', 'dump badging' in workflow and 'versionCode' in workflow and 'versionName' in workflow)
+check('Workflow no invalid secrets if', 'secrets.' not in workflow.split('if:', 1)[1].split('env:', 1)[0] if 'if:' in workflow else True)
+check('Main WebView access remains hardened', 'setAllowFileAccess(true)' not in main and 'setAllowContentAccess(true)' not in main)
 
 active_web = ROOT / 'app/src/main/assets/web'
 old_active = ('app-v17.js','app-v18.js','app-v19.js','legal-v16.2.4.js','pay-fix-v16.2.js')

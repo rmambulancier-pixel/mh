@@ -151,8 +151,10 @@ public class MainActivity extends Activity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
-        s.setAllowFileAccess(true);
-        s.setAllowContentAccess(true);
+        // Keep the secure HybridCore policy: assets are served through WebViewAssetLoader.
+        // File/content URL access is intentionally disabled for the main WebView.
+        s.setAllowFileAccess(false);
+        s.setAllowContentAccess(false);
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setBuiltInZoomControls(false);
         s.setDisplayZoomControls(false);
@@ -333,7 +335,7 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public String capabilities() {
-            return "{\"version\":\"20.5.0\",\"nativeDashboard\":true,\"widgetBridge\":true,\"fileExport\":true,\"print\":true,\"camera\":true}";
+            return "{\"version\":\"20.5.0\",\"nativeDashboard\":true,\"widgetBridge\":true,\"fileExport\":true,\"print\":true}";
         }
 
         @JavascriptInterface
@@ -477,22 +479,5 @@ public class MainActivity extends Activity {
             ));
         }
 
-        @JavascriptInterface
-        public void requestCamera() {
-            if (Build.VERSION.SDK_INT >= 23
-                    && checkSelfPermission(Manifest.permission.CAMERA)
-                    != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(new String[]{
-                    Manifest.permission.CAMERA
-                }, 78);
-            }
-        }
-
-        @JavascriptInterface
-        public boolean cameraGranted() {
-            return Build.VERSION.SDK_INT < 23
-                || checkSelfPermission(Manifest.permission.CAMERA)
-                    == PackageManager.PERMISSION_GRANTED;
-        }
     }
 }
