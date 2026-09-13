@@ -15,7 +15,7 @@ import com.mesheures.app.R;
 
 import org.json.JSONObject;
 
-/** MesHeures V8 widget: ultra-safe RemoteViews mirror. No legal/pay calculations run here. */
+/** MesHeures V4 widget: display-only cache. No legal/pay calculations run here. */
 public class MhWidgetProvider extends AppWidgetProvider {
     public static final String PREFS = "mh_widget";
     public static final String KEY_PAYLOAD = "payload";
@@ -82,23 +82,26 @@ public class MhWidgetProvider extends AppWidgetProvider {
         }
 
         v.setTextViewText(R.id.widget_month, month+"  ·  J"+day+"/"+days);
-        v.setTextViewText(R.id.widget_progress_text, progressBar(day, days));
-        v.setTextViewText(R.id.widget_work, work+"\nTravail");
-        v.setTextViewText(R.id.widget_rest, rest+"\nRepos");
-        v.setTextViewText(R.id.widget_cp, cp+"\nCongé");
-        v.setTextViewText(R.id.widget_mal, mal+"\nMaladie");
-        v.setTextViewText(R.id.widget_tte_day, tteDay+"\nTTE jour");
-        v.setTextViewText(R.id.widget_tte_month, tteMonth+"\nTTE mois");
-        v.setTextViewText(R.id.widget_hs25, hs25+"\nHS25");
-        v.setTextViewText(R.id.widget_hs50, hs50+"\nHS50");
-        v.setTextViewText(R.id.widget_gross, gross+"\nBrut");
-        v.setTextViewText(R.id.widget_net, net+"\n"+netLabel);
+        v.setProgressBar(R.id.widget_progress,days,Math.max(0,Math.min(days,day)),false);
+        v.setTextViewText(R.id.widget_work, String.valueOf(work));
+        v.setTextViewText(R.id.widget_rest, String.valueOf(rest));
+        v.setTextViewText(R.id.widget_cp, String.valueOf(cp));
+        v.setTextViewText(R.id.widget_mal, String.valueOf(mal));
+        v.setTextViewText(R.id.widget_tte_day, tteDay);
+        v.setTextViewText(R.id.widget_tte_month, tteMonth);
+        v.setTextViewText(R.id.widget_week, week);
+        v.setTextViewText(R.id.widget_period, period);
+        v.setTextViewText(R.id.widget_hs25, hs25);
+        v.setTextViewText(R.id.widget_hs50, hs50);
+        v.setTextViewText(R.id.widget_gross, gross);
+        v.setTextViewText(R.id.widget_net, net);
+        v.setTextViewText(R.id.widget_net_label, netLabel);
         v.setTextViewText(R.id.widget_today, today);
-        v.setTextViewText(R.id.widget_rc, rcBalance+"\nSolde RC");
+        v.setTextViewText(R.id.widget_rc, rcBalance);
         v.setTextViewText(R.id.widget_next_day, nextDay);
         v.setTextViewText(R.id.widget_next_hours, nextHours);
         v.setTextViewText(R.id.widget_status, status);
-        v.setTextViewText(R.id.widget_period, "Semaine "+week+" · 14j "+period);
+        v.setInt(R.id.widget_dot,"setColorFilter",dot);
 
         Intent open=new Intent(context,MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent openPi=PendingIntent.getActivity(context,widgetId,open,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
@@ -109,11 +112,6 @@ public class MhWidgetProvider extends AppWidgetProvider {
         PendingIntent addPi=PendingIntent.getActivity(context,widgetId+10000,add,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
         v.setOnClickPendingIntent(R.id.widget_add,addPi);
         manager.updateAppWidget(widgetId,v);
-    }
-
-    private static String progressBar(int day, int days){
-        int n=16; int filled=(int)Math.round((Math.max(0,Math.min(days,day))*n)/(double)Math.max(1,days));
-        StringBuilder b=new StringBuilder(); for(int i=0;i<n;i++) b.append(i<filled?"━":"─"); return b.toString();
     }
 
     private static String typeLabel(String t){

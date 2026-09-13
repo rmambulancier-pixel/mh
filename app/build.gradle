@@ -7,8 +7,8 @@ android {
         applicationId 'com.mesheures.app'
         minSdk 26
         targetSdk 35
-        versionCode 1830
-        versionName '18.1.0'
+        versionCode 1823
+        versionName '18.0.23'
     }
     signingConfigs {
         release {
@@ -27,9 +27,7 @@ android {
     buildTypes {
         release {
             if (System.getenv('MESHEURES_KEYSTORE')) signingConfig signingConfigs.release
-            minifyEnabled true
-            shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            minifyEnabled false
         }
     }
 }

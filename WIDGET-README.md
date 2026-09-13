@@ -1,30 +1,29 @@
-# MesHeures V18.1.0 — Widget V8 stable
+# MesHeures V18.0.23 — Widget V7.1
 
-Widget Android natif conçu pour Pixel Launcher / Pixel 10 Pro XL.
-
-## Correctif V8
-- Remplacement de la RemoteView précédente par une hiérarchie volontairement conservatrice : LinearLayout + TextView + ImageView uniquement.
-- Suppression du ProgressBar XML et des opérations de tint dynamiques qui pouvaient faire échouer l'inflation RemoteViews sur certains hôtes.
-- Taille par défaut portée à 4 cellules verticales afin que tout le contenu soit réellement affiché.
-- Le widget affiche toujours une vue de secours même si aucun payload n'est encore disponible.
-- Le calcul reste 100 % côté MesHeures ; Android ne recalcule ni paie ni règles légales.
+Widget Android natif, miroir du moteur MesHeures côté WebView.
 
 ## Affichage
-- mois / progression
-- travail / repos / congé / maladie
+- mois et progression
+- Travail / Repos / Congé / Maladie
 - TTE jour / mois / semaine / quatorzaine
-- HS25 / HS50
-- brut / net estimé ou réel
-- marge 46 h / alertes
+- HS 25 % / HS 50 %
+- brut et net estimé/réel lorsqu'exposé par MesHeures
+- marge avant 46 h et nombre d'alertes
 - solde RC
-- prochaine journée planifiée
+- prochaine journée réellement planifiée
 
 ## Actions
-- Appui sur le widget : Accueil MesHeures.
-- `+` : saisie du jour.
+- Appui sur le widget : ouvre MesHeures sur l'accueil.
+- `+` : ouvre directement la saisie du jour.
+
+## Architecture
+Le widget Android ne recalcule ni TTE, ni heures supplémentaires, ni paie, ni règles légales. Il lit uniquement le payload JSON produit par MesHeures et conservé en SharedPreferences.
+
+## V7.1 — compatibilité RemoteViews
+La zone basse a été volontairement simplifiée pour éviter les attributs XML non nécessaires et les poids fractionnaires. Le contenu reste identique fonctionnellement.
 
 ## Version
-- Application : V18.1.0
-- Android versionCode : 1830
-- Widget : V8 stable
-- Cible testée conceptuellement : Pixel 10 Pro XL / Pixel Launcher
+- Application : V18.0.23
+- versionCode : 1823
+- Widget : V7.1
+- Cible : Pixel 10 Pro XL / Pixel Launcher
