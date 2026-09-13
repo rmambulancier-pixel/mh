@@ -1,4 +1,4 @@
-/* MesHeures V18.0.21 — persistance locale + synchronisation widget Android. */
+/* MesHeures V18.0.22 — persistance locale + synchronisation widget Android. */
 function save(){
   try{localStorage.setItem(LS,JSON.stringify(DB))}
   catch(e){alert('Stockage plein : exportez vos données !\n'+e.message)}
@@ -59,6 +59,30 @@ function pushWidgetData(){
       if(b&&Number.isFinite(Number(b.net)))netCents=Math.round(Number(b.net)*100);
     }catch(e){console.warn('Widget bulletin',e)}
 
+    let rcSoldeMin=0;
+    try{
+      const keys=Object.keys(DB.romi||{}).filter(k=>DB.romi[k]&&Number.isFinite(Number(DB.romi[k].rcSolde))).sort();
+      if(keys.length) rcSoldeMin=Math.round(Number(DB.romi[keys[keys.length-1]].rcSolde)*60);
+      if(!rcSoldeMin && typeof calcPer==='function' && typeof gb==='function'){
+        const ps=DB.per||{}, start=ps.start||DB.s?.anchor||k, nb=Math.max(2,Math.min(3,Math.round(Number(ps.nb)||2)));
+        const G=calcPer(start,nb).G||{}, B=gb(start), d25=Math.max((Number(G.h25)||0)/60-(Number(B.p25)||0),0), d50=Math.max((Number(G.h50)||0)/60-(Number(B.p50)||0),0);
+        rcSoldeMin=Math.round(((Number(B.rcOld)||0)+d25*1.25+d50*1.5)*60);
+      }
+    }catch(e){console.warn('Widget RC',e)}
+
+    let nextDayLabel='Aucune journée planifiée', nextDayHours='';
+    try{
+      for(let i=1;i<=180;i++){
+        const nk=addD(k,i), d=DB.days?.[nk];
+        if(!d || d.t==='REPOS') continue;
+        const labels={T:'Travail',NUIT:'Nuit',CP:'Congé payé',MAL:'Maladie',RC:'Repos compensateur',REPOS:'Repos'};
+        const parts=nk.split('-');
+        nextDayLabel=`${parts[2]}/${parts[1]} · ${labels[d.t]||d.t||'Journée'}`;
+        if(d.t==='T' || d.t==='NUIT') nextDayHours=(d.deb&&d.fin)?`${d.deb} → ${d.fin}`:'';
+        break;
+      }
+    }catch(e){console.warn('Widget planning',e)}
+
     let marginMin=null;
     try{
       const intel=(typeof window.mhV18IntelligenceData==='function')?window.mhV18IntelligenceData():null;
@@ -87,7 +111,8 @@ function pushWidgetData(){
       tteSemaineMin:weekMin,ttePeriodeMin:periodMin,hs25PeriodeMin:periodH25,hs50PeriodeMin:periodH50,
       workCount:work,restCount:rest,cpCount:cp,malCount:mal,
       margeAvant46hMin:marginMin,alertesMois:m?(m.alerts||[]).length:0,
-      grossCents,netCents,netLabel:'Net estimé',paySource:payReady?'MesHeures':'indisponible',payReady,updatedAt:Date.now()
+      grossCents,netCents,netLabel:'Net estimé',paySource:payReady?'MesHeures':'indisponible',payReady,
+      rcSoldeMin,nextDayLabel,nextDayHours,updatedAt:Date.now()
     };
     window.MesHeuresAndroid.updateWidgetData(JSON.stringify(payload));
     return true;

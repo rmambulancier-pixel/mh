@@ -43,9 +43,10 @@ public class MhWidgetProvider extends AppWidgetProvider {
 
         String month="MesHeures", tteDay="—", tteMonth="—", week="—", period="—";
         String hs25="—", hs50="—", gross="—", net="—", netLabel="Net estimé";
-        String status="Synchronise MesHeures", today="Aujourd'hui";
+        String status="Synchronise MesHeures", today="Aujourd'hui", rcBalance="—", nextDay="Aucune journée planifiée", nextHours="";
         int work=0,rest=0,cp=0,mal=0,alerts=0,day=0,days=30;
         int margin=Integer.MIN_VALUE;
+        int rcMinutes=0;
         int dot=Color.parseColor("#68737D");
 
         if(raw!=null){
@@ -64,6 +65,10 @@ public class MhWidgetProvider extends AppWidgetProvider {
                 if(o.has("grossCents")&&!o.isNull("grossCents"))gross=formatMoneyCents(o.optInt("grossCents",0));
                 if(o.has("netCents")&&!o.isNull("netCents"))net=formatMoneyCents(o.optInt("netCents",0));
                 netLabel=o.optString("netLabel","Net estimé");
+                rcMinutes=o.optInt("rcSoldeMin",0);
+                rcBalance=rcMinutes>0?formatMinutes(rcMinutes):"0h00";
+                nextDay=o.optString("nextDayLabel","Aucune journée planifiée");
+                nextHours=o.optString("nextDayHours","");
                 String type=o.optString("todayType","REPOS");
                 today=typeLabel(type)+" · "+tteDay;
                 if(o.has("margeAvant46hMin")&&!o.isNull("margeAvant46hMin")){
@@ -92,6 +97,9 @@ public class MhWidgetProvider extends AppWidgetProvider {
         v.setTextViewText(R.id.widget_net, net);
         v.setTextViewText(R.id.widget_net_label, netLabel);
         v.setTextViewText(R.id.widget_today, today);
+        v.setTextViewText(R.id.widget_rc, rcBalance);
+        v.setTextViewText(R.id.widget_next_day, nextDay);
+        v.setTextViewText(R.id.widget_next_hours, nextHours);
         v.setTextViewText(R.id.widget_status, status);
         v.setInt(R.id.widget_dot,"setColorFilter",dot);
 
