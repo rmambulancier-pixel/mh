@@ -1,6 +1,6 @@
-/* MesHeures V18 — sauvegarde locale renforcée, JSON versionné et restauration sûre */
+/* MesHeures V20.4 — sauvegarde locale renforcée, JSON versionné et restauration sûre */
 (function(){
-  const BACKUP_VERSION='20.3.0';
+  const BACKUP_VERSION='20.4.0';
   const PREFIX=LS+'_v18_backup_';
   const LEGACY_PREFIX=LS+'_v17_backup_';
 

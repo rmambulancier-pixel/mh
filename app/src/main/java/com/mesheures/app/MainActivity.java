@@ -333,7 +333,7 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public String capabilities() {
-            return "{\"version\":\"20.3.0\",\"nativeDashboard\":true,\"widgetBridge\":true,\"fileExport\":true,\"print\":true,\"camera\":true}";
+            return "{\"version\":\"20.4.0\",\"nativeDashboard\":true,\"widgetBridge\":true,\"fileExport\":true,\"print\":true,\"camera\":true}";
         }
 
         @JavascriptInterface
@@ -347,7 +347,7 @@ public class MainActivity extends Activity {
             });
         }
 
-        @JavascriptInterface public String version() { return "20.3.0"; }
+        @JavascriptInterface public String version() { return "20.4.0"; }
 
         @JavascriptInterface
         public void setSystemBarsLight(boolean light) {
