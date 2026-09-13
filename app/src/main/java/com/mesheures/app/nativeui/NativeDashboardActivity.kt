@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.mesheures.app.MainActivity
+import com.mesheures.app.widget.MhWidgetProvider
 import org.json.JSONObject
 import kotlinx.coroutines.delay
 import java.util.Locale
@@ -65,13 +66,10 @@ class NativeDashboardActivity : ComponentActivity() {
     }
 
     companion object {
-        const val PREFS = "mesheures_widget"
-        const val KEY_PAYLOAD = "payload"
-
         fun readPayload(context: Context): JSONObject {
             return try {
-                val raw = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-                    .getString(KEY_PAYLOAD, "{}").orEmpty()
+                val raw = context.getSharedPreferences(MhWidgetProvider.PREFS, Context.MODE_PRIVATE)
+                    .getString(MhWidgetProvider.KEY_PAYLOAD, "{}").orEmpty()
                 JSONObject(raw)
             } catch (_: Exception) { JSONObject() }
         }
