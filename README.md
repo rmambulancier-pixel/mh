@@ -1,19 +1,44 @@
-# MesHeures — V20.5.0 Mega Clean
+# MesHeures — V20.5.0
 
-Version active unique : **20.5.0** · Android `versionCode 2050`.
+## Version
+- Android `versionName`: **20.5.0**
+- Android `versionCode`: **2050**
+- Web runtime: **20.5.0**
+- Service Worker cache: `mesheures-shell-v20.5.0`
 
-## Architecture
-- JavaScript : moteur métier unique (heures, paie, conformité, données).
-- Android : WebView, fichiers, widget et dashboard natif.
-- Hybrid Core : `WebViewAssetLoader` sur `https://appassets.androidplatform.net/...`.
-- Service Worker : cache versionné et interception native des assets.
-- Sauvegardes : stockage local, points de restauration, export/import et compatibilité historique.
+## Base
+Cette version conserve le moteur métier et l'organisation de la V20.3.0 Hybrid Core 2. Les évolutions V20.4/V20.5 sont intégrées de façon additive : elles ne remplacent pas les règles de calcul historiques.
 
-## Versioning
-`VERSION` + `version.properties` sont les sources canoniques. Le build Android lit ces valeurs au lieu de dupliquer le numéro dans Gradle. GitHub Actions vérifie la version de l'APK après compilation.
+## Évolutions V20.4 / V20.5
+- sauvegarde locale renforcée avec compatibilité des anciens formats ;
+- protections du cycle de vie avant accès au WebView ;
+- Hybrid Core Android avec `WebViewAssetLoader` ;
+- interception native du Service Worker via AndroidX WebKit lorsque disponible ;
+- durcissement des accès `file://` / `content://` ;
+- Service Worker applicatif versionné ;
+- navigation mobile, projection, conformité et dashboard hybride ;
+- version canonique unique via `VERSION` et `version.properties` ;
+- contrôles QA de release et vérification de l'APK.
 
-## Build
-Le workflow GitHub Actions lance d'abord `qa/release-audit.py`, puis le contrôle de syntaxe JavaScript, compile l'APK et vérifie `applicationId`, `versionName` et `versionCode` avant publication de l'artifact.
+## Fonctionnalités conservées
+- suivi des journées et temps de travail ;
+- paie, heures supplémentaires et contrôles légaux ;
+- rapprochement et import de documents ;
+- sauvegardes et restauration ;
+- export / impression ;
+- widget Android et deep-links ;
+- dashboard natif Compose ;
+- système de plugins.
 
-## Historique
-Les documents historiques sont archivés sous `docs/history/`. Les anciens fichiers de runtime ne sont pas chargés par l'application.
+## Organisation
+```text
+app/          Application Android et WebView
+plugins/      SDK / modèle de plugins
+qa/           Audits et contrôles qualité
+tests/        Tests et références
+legacy/       Éléments historiques explicitement isolés
+docs/         Documentation historique
+.github/      CI GitHub Actions
+```
+
+**Règle de maintenance :** un seul README actif à la racine. Les fichiers runtime historiques ne sont jamais chargés depuis l'arborescence Web active.
