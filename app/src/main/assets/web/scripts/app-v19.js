@@ -1,7 +1,7 @@
 /* MesHeures V19 — Hybrid Core.
    UI bridge only: all métier/calculation logic remains in the canonical JS engine. */
 (function(){
-  const V='19.0.0';
+  const V='20.3.0';
   function bridge(){return window.MesHeuresAndroid||null}
   function capabilities(){
     try{

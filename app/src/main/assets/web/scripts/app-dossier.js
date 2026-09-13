@@ -1,7 +1,7 @@
-/* MesHeures V19.0.0 — Lot 3 : dossier complet, empreinte d'intégrité et export probatoire */
+/* MesHeures V20.3.0 — Lot 3 : dossier complet, empreinte d'intégrité et export probatoire */
 (function(){
   'use strict';
-  const VERSION='19.0.0';
+  const VERSION='20.3.0';
   const esc0=window.esc||((s)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
   const euro=window.EUR||((n)=>Number(n||0).toLocaleString('fr-FR',{style:'currency',currency:'EUR'}));
   const fmt=window.F||((n)=>{const m=Number(n||0);return Math.floor(m/60)+'h'+String(Math.round(m%60)).padStart(2,'0')});
@@ -74,7 +74,7 @@
   }
   function render(){
     const target=document.getElementById('s-audit')||document.body;if(document.getElementById('mhV18Dossier'))return;
-    const sec=document.createElement('section');sec.id='mhV18Dossier';sec.innerHTML=`<div class="card mh-v18-card"><h2>📁 Dossier complet V19.0.0</h2><p class="mut">Regroupe l'historique, les constats, les événements, les bulletins et l'intelligence locale dans un export unique.</p><div class="row"><button onclick="mhV18ExportDossier()">⬇️ Export dossier JSON</button><button class="g" onclick="mhV18PrintDossier()">🖨️ Dossier imprimable / PDF</button></div><div id="mhV18DossierHash" class="mut" style="margin-top:8px"></div></div>`;target.appendChild(sec);refreshHash();
+    const sec=document.createElement('section');sec.id='mhV18Dossier';sec.innerHTML=`<div class="card mh-v18-card"><h2>📁 Dossier complet V20.3.0</h2><p class="mut">Regroupe l'historique, les constats, les événements, les bulletins et l'intelligence locale dans un export unique.</p><div class="row"><button onclick="mhV18ExportDossier()">⬇️ Export dossier JSON</button><button class="g" onclick="mhV18PrintDossier()">🖨️ Dossier imprimable / PDF</button></div><div id="mhV18DossierHash" class="mut" style="margin-top:8px"></div></div>`;target.appendChild(sec);refreshHash();
   }
   async function refreshHash(){try{const h=await digestText(compact(snapshot()));const el=document.getElementById('mhV18DossierHash');if(el)el.textContent='Empreinte actuelle SHA-256 : '+h}catch(e){}}
   window.mhV18ExportDossier=()=>makeDossier(false);

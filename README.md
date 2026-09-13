@@ -1,9 +1,9 @@
-# MesHeures — V19.0.0 Hybrid Core
+# MesHeures — V20.3.0 Hybrid Core 2
 
 ## Objectif
 V19 démarre la migration hybride sans réécrire le moteur métier. Les calculs, données et règles existants restent dans le moteur JavaScript canonique. Android devient la couche plateforme : bridge, widget, fichiers, impression, caméra et premier écran natif Compose.
 
-## V19.0.0 livré
+## V20.3.0 livré
 - **Version Android : 19.0.0 / versionCode 1900**
 - **Dashboard natif Jetpack Compose** accessible depuis Accueil dans l’application Android.
 - Le dashboard natif lit le même payload partagé que le widget : aucune duplication du moteur de calcul.
@@ -21,7 +21,7 @@ V19 ne remplace pas `calcPer`, `brutOf`, le stockage DB ni les fonctions histori
 ## Build
 Le build release GitHub Actions utilise les secrets de signature persistante : `MESHEURES_KEYSTORE_B64`, `MESHEURES_KEY_PASSWORD`, `MESHEURES_STORE_PASSWORD`, `MESHEURES_KEY_ALIAS`.
 
-> **Version actuelle : V19.0.0 — Android versionCode 1900**
+> **Version actuelle : V20.3.0 — Android versionCode 2030**
 
 ## V19.0.0 — Widget Android V3 intégré
 

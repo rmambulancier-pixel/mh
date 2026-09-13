@@ -212,16 +212,24 @@ public class MainActivity extends Activity {
             "(function(){"
           + "if(window.__mesHeuresBackupInstalled)return;"
           + "window.__mesHeuresBackupInstalled=true;"
-          + "function save(){try{var o={};"
+          + "var timer=null,last=null;"
+          + "function snapshot(){var o={};"
           + "for(var i=0;i<localStorage.length;i++){"
           + "var k=localStorage.key(i);o[k]=localStorage.getItem(k);}"
-          + "if(window.MesHeuresAndroid)"
-          + "window.MesHeuresAndroid.saveLocalStorage(JSON.stringify(o));"
+          + "return JSON.stringify(o); }"
+          + "function save(force){try{if(!window.MesHeuresAndroid)return;"
+          + "var json=snapshot();if(!force&&json===last)return;"
+          + "last=json;window.MesHeuresAndroid.saveLocalStorage(json);"
           + "}catch(e){}}"
-          + "setTimeout(save,3000);setInterval(save,30000);"
+          + "function schedule(){clearTimeout(timer);timer=setTimeout(function(){save(false);},500);}"
+          + "var st=localStorage.setItem,rm=localStorage.removeItem,cl=localStorage.clear;"
+          + "localStorage.setItem=function(){var r=st.apply(this,arguments);schedule();return r;};"
+          + "localStorage.removeItem=function(){var r=rm.apply(this,arguments);schedule();return r;};"
+          + "localStorage.clear=function(){var r=cl.apply(this,arguments);schedule();return r;};"
+          + "setTimeout(function(){save(true);},3000);"
           + "document.addEventListener('visibilitychange',function(){"
-          + "if(document.visibilityState==='hidden')save();});"
-          + "window.addEventListener('pagehide',save);})();";
+          + "if(document.visibilityState==='hidden')save(true);});"
+          + "window.addEventListener('pagehide',function(){save(true);});})();";
         web.evaluateJavascript(js, null);
     }
 
@@ -325,7 +333,7 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public String capabilities() {
-            return "{\"version\":\"19.0.0\",\"nativeDashboard\":true,\"widgetBridge\":true,\"fileExport\":true,\"print\":true,\"camera\":true}";
+            return "{\"version\":\"20.3.0\",\"nativeDashboard\":true,\"widgetBridge\":true,\"fileExport\":true,\"print\":true,\"camera\":true}";
         }
 
         @JavascriptInterface
@@ -339,7 +347,7 @@ public class MainActivity extends Activity {
             });
         }
 
-        @JavascriptInterface public String version() { return "19.0.0"; }
+        @JavascriptInterface public String version() { return "20.3.0"; }
 
         @JavascriptInterface
         public void setSystemBarsLight(boolean light) {
