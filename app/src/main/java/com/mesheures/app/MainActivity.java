@@ -19,6 +19,8 @@ import java.nio.charset.StandardCharsets;
 import android.webkit.JavascriptInterface;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -28,6 +30,7 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.webkit.WebViewAssetLoader;
 
 import com.mesheures.app.widget.MhWidgetProvider;
 
@@ -41,6 +44,12 @@ public class MainActivity extends Activity {
     private String pendingExportName;
     private String pendingExportMime;
     private StringBuilder pendingExportContent;
+
+    // V19.1: l'app se sert sur https://appassets.androidplatform.net au lieu de file://
+    // afin que le service worker (assets/web/sw.js) puisse s'enregistrer : les Service
+    // Workers exigent un contexte sécurisé, que file:// ne fournit pas dans WebView.
+    private static final String ASSET_LOADER_DOMAIN = "appassets.androidplatform.net";
+    private WebViewAssetLoader assetLoader;
 
     private static final String PREFS = "mesheures_android_backup";
     private static final String STORAGE_KEY = "local_storage_snapshot";
@@ -90,7 +99,7 @@ public class MainActivity extends Activity {
             }, 77);
         }
 
-        web.loadUrl("file:///android_asset/web/index.html");
+        web.loadUrl("https://" + ASSET_LOADER_DOMAIN + "/assets/web/index.html");
 
         // V18.1.0: the splash must never depend on window.onload or CDN completion.
         // WebView can execute this while deferred external resources are still pending.
@@ -149,7 +158,17 @@ public class MainActivity extends Activity {
         s.setDisplayZoomControls(false);
         s.setSupportZoom(false);
 
+        assetLoader = new WebViewAssetLoader.Builder()
+            .setDomain(ASSET_LOADER_DOMAIN)
+            .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+            .build();
+
         web.setWebViewClient(new WebViewClient() {
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                return assetLoader.shouldInterceptRequest(request.getUrl());
+            }
+
             @Override
             public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
                 super.onPageStarted(view, url, favicon);
