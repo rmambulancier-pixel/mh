@@ -1,0 +1,11 @@
+const fs=require('fs'), vm=require('vm');
+const backup=JSON.parse(fs.readFileSync('/mnt/data/MesHeures-backup-V18-2026-09-13.json','utf8')).data;
+const core=fs.readFileSync('app/src/main/assets/web/scripts/app-core.js','utf8');
+const pwa=fs.readFileSync('app/src/main/assets/web/scripts/app-pwa.js','utf8');
+const ctx={window:{},console,Date,Math,JSON,Number,String,Array,Object,Set,Map,parseFloat,parseInt,Intl};
+ctx.window=ctx; vm.createContext(ctx);
+const probe=core+`\nDB=${JSON.stringify(backup)}; result=(()=>{const r=calcPer(DB.per.start,DB.per.nb),G=r.G,b=brutOf(G);return {tte:G.tte,hs25:G.h25,hs50:G.h50,gross:b.tot,net:b.tot*DB.s.net+b.panIR+b.panIRU}})();`;
+vm.runInContext(probe,ctx); const coreResult=ctx.result;
+if(JSON.stringify(coreResult)!==JSON.stringify({tte:7325,hs25:960,hs50:1595,gross:2620.3916959999997,net:2129.3282647519995})) throw new Error('Moteur paie différent');
+if(!/calcPer\(start,nb\)/.test(pwa)||!/brutOf\(G\)/.test(pwa)||!/scheduleWidgetSync/.test(pwa)) throw new Error('Pont widget incomplet');
+console.log(JSON.stringify({ok:true,version:'18.0.18',core:coreResult},null,2));

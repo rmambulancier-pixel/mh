@@ -1,4 +1,4 @@
-/* MesHeures V18.0.17 — persistance locale + synchronisation widget Android. */
+/* MesHeures V18.0.18 — persistance locale + synchronisation widget Android. */
 function save(){
   try{localStorage.setItem(LS,JSON.stringify(DB))}
   catch(e){alert('Stockage plein : exportez vos données !\n'+e.message)}
@@ -9,31 +9,44 @@ function save(){
    existantes. Aucun calcul légal ou paie n'est réimplémenté côté Android. */
 function pushWidgetData(){
   try{
-    if(!window.MesHeuresAndroid||typeof window.MesHeuresAndroid.updateWidgetData!=='function')return;
-    const k=(typeof today==='function')?today():null;
-    if(!k)return;
-    const ym=k.slice(0,7);
+    if(!window.MesHeuresAndroid||typeof window.MesHeuresAndroid.updateWidgetData!=='function')return false;
+    if(typeof DB==='undefined'||typeof today!=='function')return false;
+    const k=today(), ym=k.slice(0,7);
     const r=(typeof cd==='function')?cd(k):null;
     const m=(typeof mhMonthStats==='function')?mhMonthStats(ym):null;
 
+    // SOURCE UNIQUE : le moteur MesHeures. Android ne recalcule rien.
     let weekMin=0;
     if(typeof mono==='function'&&typeof cd==='function'){
       const ws=mono(k);
       for(let x=ws;x<=addD(ws,6);x=addD(x,1))weekMin+=Math.round(cd(x)?.tte||0);
     }
 
-    let periodMin=0,periodH25=0,periodH50=0;
+    let periodMin=0,periodH25=0,periodH50=0,grossCents=null,netCents=null;
     try{
-      const ps=DB.per||{};
-      const start=ps.start||DB.s.anchor;
-      const nb=Math.max(2,Math.min(3,Number(ps.nb)||2));
-      if(typeof calcPer==='function'){
-        const pg=calcPer(start,nb).G||{};
-        periodMin=Math.round(pg.tte||0);
-        periodH25=Math.round(pg.h25||0);
-        periodH50=Math.round(pg.h50||0);
+      const ps=DB.per||{}, start=ps.start||DB.s?.anchor||'2025-05-19';
+      const nb=Math.max(2,Math.min(3,Math.round(Number(ps.nb)||2)));
+      if(typeof calcPer==='function'&&typeof brutOf==='function'){
+        const result=calcPer(start,nb), G=result.G||{};
+        periodMin=Math.round(G.tte||0);
+        periodH25=Math.round(G.h25||0);
+        periodH50=Math.round(G.h50||0);
+        const br=brutOf(G);
+        if(br&&Number.isFinite(Number(br.tot))){
+          grossCents=Math.round(Number(br.tot)*100);
+          const net=Number(br.tot)*Number(DB.s?.net||0)+Number(br.panIR||0)+Number(br.panIRU||0);
+          if(Number.isFinite(net))netCents=Math.round(net*100);
+        }
       }
-    }catch(e){}
+    }catch(e){console.warn('Widget paie',e)}
+
+    // Si un bulletin du mois courant existe, le réel prime sur l'estimation.
+    try{
+      const bs=Array.isArray(DB.bulletins)?DB.bulletins.filter(b=>b&&String(b.mois||'')===ym):[];
+      const b=bs.length?bs[bs.length-1]:null;
+      if(b&&Number.isFinite(Number(b.brut)))grossCents=Math.round(Number(b.brut)*100);
+      if(b&&Number.isFinite(Number(b.net)))netCents=Math.round(Number(b.net)*100);
+    }catch(e){console.warn('Widget bulletin',e)}
 
     let marginMin=null;
     try{
@@ -41,53 +54,44 @@ function pushWidgetData(){
       if(intel&&intel.projection&&typeof intel.projection.margin==='number')marginMin=Math.round(intel.projection.margin);
     }catch(e){}
 
-    // Comptage mensuel : aucune règle de paie ici, uniquement les types déjà enregistrés.
     let work=0,rest=0,cp=0,mal=0;
     try{
-      const last=isoOf(new Date(Number(k.slice(0,4)),Number(k.slice(5,7)),0));
-      for(let d=ym+'-01';d<=last;d=addD(d,1)){
-        const day=DB.days[d];
-        if(!day)continue;
-        if(day.t==='T'||day.t==='NUIT')work++;
-        else if(day.t==='CP')cp++;
-        else if(day.t==='MAL')mal++;
+      const last=lastDayOfMonth(ym);
+      for(let i=1;i<=last;i++){
+        const d=DB.days[ym+'-'+String(i).padStart(2,'0')];
+        if(!d)continue;
+        if(d.t==='T'||d.t==='NUIT')work++;
+        else if(d.t==='CP')cp++;
+        else if(d.t==='MAL')mal++;
         else rest++;
       }
     }catch(e){}
 
-    // Si un bulletin du mois courant existe, le widget privilégie le réel.
-    // Sinon il affiche l'estimation de la période de paie courante.
-    let grossCents=null,netCents=null,netLabel='Net estimé';
-    try{
-      const bs=(DB.bulletins||[]).filter(b=>b&&String(b.mois||'')===ym);
-      const b=bs.length?bs[bs.length-1]:null;
-      if(b&&Number.isFinite(Number(b.brut)))grossCents=Math.round(Number(b.brut)*100);
-      if(b&&Number.isFinite(Number(b.net))){netCents=Math.round(Number(b.net)*100);netLabel='Net payé';}
-    }catch(e){}
-    if(netCents===null){
-      try{
-        const pay=(typeof window.mhCurrentPaySummary==='function')?window.mhCurrentPaySummary():null;
-        if(pay&&Number.isFinite(pay.grossEst))grossCents=Math.round(pay.grossEst*100);
-        if(pay&&Number.isFinite(pay.netEst))netCents=Math.round(pay.netEst*100);
-      }catch(e){}
-    }
-
     const type=DB.days[k]?.t||'REPOS';
     const payload={
-      dateISO:k,monthLabel:(['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'][Number(k.slice(5,7))-1]||ym)+' '+k.slice(0,4),
-      dayIndex:Number(k.slice(8)),monthDays:Number(lastDayOfMonth(ym)),
-      todayType:type,
-      tteJourMin:r?Math.round(r.tte||0):0,
-      tteMoisMin:m?Math.round(m.tte||0):0,
-      tteSemaineMin:weekMin,ttePeriodeMin:periodMin,
-      hs25PeriodeMin:periodH25,hs50PeriodeMin:periodH50,
+      dateISO:k,
+      monthLabel:(['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'][Number(k.slice(5,7))-1]||ym)+' '+k.slice(0,4),
+      dayIndex:Number(k.slice(8)),monthDays:Number(lastDayOfMonth(ym)),todayType:type,
+      tteJourMin:r?Math.round(r.tte||0):0,tteMoisMin:m?Math.round(m.tte||0):0,
+      tteSemaineMin:weekMin,ttePeriodeMin:periodMin,hs25PeriodeMin:periodH25,hs50PeriodeMin:periodH50,
       workCount:work,restCount:rest,cpCount:cp,malCount:mal,
       margeAvant46hMin:marginMin,alertesMois:m?(m.alerts||[]).length:0,
-      grossCents,netCents,netLabel,updatedAt:Date.now()
+      grossCents,netCents,netLabel:'Net estimé',paySource:(grossCents!==null||netCents!==null)?'MesHeures':'indisponible',updatedAt:Date.now()
     };
     window.MesHeuresAndroid.updateWidgetData(JSON.stringify(payload));
-  }catch(e){console.warn('Widget MesHeures',e)}
+    return true;
+  }catch(e){console.warn('Widget MesHeures',e);return false}
 }
+
+/* Le WebView peut démarrer avant que toutes les couches de calcul soient prêtes.
+   On retente brièvement : cela évite qu'un premier payload incomplet fige le widget. */
+function scheduleWidgetSync(){
+  const delays=[0,250,750,1500,3000,5000];
+  delays.forEach(ms=>setTimeout(()=>{try{pushWidgetData()}catch(e){}},ms));
+}
+window.mhForceWidgetSync=scheduleWidgetSync;
+window.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')scheduleWidgetSync()});
+window.addEventListener('pageshow',scheduleWidgetSync);
 
 function lastDayOfMonth(ym){
   const [y,m]=String(ym).split('-').map(Number);
@@ -110,5 +114,5 @@ function load(){
       DB.reconciliation=Array.isArray(r.reconciliation)?r.reconciliation:[];
     }
   }catch(e){console.warn('Chargement local impossible',e)}
-  setTimeout(pushWidgetData,350);
+  scheduleWidgetSync();
 }

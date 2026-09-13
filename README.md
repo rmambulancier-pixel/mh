@@ -1,10 +1,10 @@
-# MesHeures V18.0.17 — Android + PWA
+# MesHeures V18.0.18 — Android + PWA
 
-> **Version actuelle : V18.0.17 — Android versionCode 1817**
+> **Version actuelle : V18.0.18 — Android versionCode 1818**
 
-## V18.0.17 — Widget Android V3 intégré
+## V18.0.18 — Widget Android V3 intégré
 
-Cette version part du socle V18.0.17 audité et ajoute le widget Android sans réintroduire les anciennes couches/fichiers fantômes.
+Cette version part du socle V18.0.18 audité et ajoute le widget Android sans réintroduire les anciennes couches/fichiers fantômes.
 
 ### Widget
 - Widget Android natif `MesHeures` pour le Pixel 10 Pro XL et les launchers Android récents.
@@ -64,5 +64,9 @@ Le keystore n'est jamais inclus dans le dépôt.
 - XML Android vérifiés comme XML bien formés.
 - Manifest et fichiers JSON vérifiés.
 - Références des scripts vérifiées par rapport aux fichiers réellement présents.
-- Version runtime synchronisée en `18.0.17` / `versionCode 1817`.
+- Version runtime synchronisée en `18.0.18` / `versionCode 1818`.
 - Compilation Android finale à effectuer par le workflow GitHub Actions du dépôt ; aucun SDK Android local n’est supposé disponible dans ce kit.
+
+
+## V18.0.18 — Widget V4
+Correction de la synchronisation du widget : le payload de paie est produit directement par le moteur MesHeures, synchronisé avec retries, puis écrit/rafraîchi de façon atomique côté Android.

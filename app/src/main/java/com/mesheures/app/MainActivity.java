@@ -92,7 +92,7 @@ public class MainActivity extends Activity {
 
         web.loadUrl("file:///android_asset/web/index.html");
 
-        // V18.0.17: the splash must never depend on window.onload or CDN completion.
+        // V18.0.18: the splash must never depend on window.onload or CDN completion.
         // WebView can execute this while deferred external resources are still pending.
         dismissSplashSoon();
 
@@ -299,7 +299,7 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public String platform() { return "android"; }
 
-        @JavascriptInterface public String version() { return "18.0.17"; }
+        @JavascriptInterface public String version() { return "18.0.18"; }
 
         @JavascriptInterface
         public void setSystemBarsLight(boolean light) {
@@ -325,12 +325,16 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface
         public void updateWidgetData(String json) {
-            if (json == null) return;
-            SharedPreferences widgetPrefs = getSharedPreferences(MhWidgetProvider.PREFS, MODE_PRIVATE);
-            widgetPrefs.edit().putString(MhWidgetProvider.KEY_PAYLOAD, json).apply();
-            Intent refresh = new Intent(MainActivity.this, MhWidgetProvider.class);
-            refresh.setAction(MhWidgetProvider.ACTION_REFRESH);
-            sendBroadcast(refresh);
+            if (json == null || json.length() > 64_000) return;
+            // Toujours écrire puis rafraîchir sur le thread UI : le provider lit
+            // exactement le payload qui vient d'être calculé par MesHeures.
+            runOnUiThread(() -> {
+                try {
+                    SharedPreferences widgetPrefs = getSharedPreferences(MhWidgetProvider.PREFS, MODE_PRIVATE);
+                    widgetPrefs.edit().putString(MhWidgetProvider.KEY_PAYLOAD, json).commit();
+                    MhWidgetProvider.refreshAll(MainActivity.this);
+                } catch (Exception ignored) {}
+            });
         }
 
         @JavascriptInterface

@@ -15,7 +15,7 @@ import com.mesheures.app.R;
 
 import org.json.JSONObject;
 
-/** MesHeures V2 widget: display-only cache. No legal/pay calculations run here. */
+/** MesHeures V4 widget: display-only cache. No legal/pay calculations run here. */
 public class MhWidgetProvider extends AppWidgetProvider {
     public static final String PREFS = "mh_widget";
     public static final String KEY_PAYLOAD = "payload";
