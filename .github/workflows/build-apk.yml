@@ -14,18 +14,19 @@ jobs:
     env:
       MESHEURES_VERSION: "20.4.0"
       MESHEURES_VERSION_CODE: "2040"
+      MESHEURES_HAS_SIGNING_KEY: ${{ secrets.MESHEURES_KEYSTORE_B64 != '' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v6
+        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@v6
+        uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
 
@@ -40,14 +41,18 @@ jobs:
           done
 
       - name: Prepare persistent signing key
-        if: ${{ secrets.MESHEURES_KEYSTORE_B64 != '' }}
+        if: env.MESHEURES_HAS_SIGNING_KEY == 'true'
         env:
           MESHEURES_KEYSTORE: ${{ github.workspace }}/mesheures-release.keystore
-        run: echo "${{ secrets.MESHEURES_KEYSTORE_B64 }}" | base64 --decode > "$MESHEURES_KEYSTORE"
+          MESHEURES_KEYSTORE_B64: ${{ secrets.MESHEURES_KEYSTORE_B64 }}
+        run: |
+          set -e
+          printf '%s' "$MESHEURES_KEYSTORE_B64" | base64 --decode > "$MESHEURES_KEYSTORE"
+          test -s "$MESHEURES_KEYSTORE"
 
       - name: Build release APK
         env:
-          MESHEURES_KEYSTORE: ${{ github.workspace }}/mesheures-release.keystore
+          MESHEURES_KEYSTORE: ${{ secrets.MESHEURES_KEYSTORE_B64 != '' && format('{0}/mesheures-release.keystore', github.workspace) || '' }}
           MESHEURES_STORE_PASSWORD: ${{ secrets.MESHEURES_STORE_PASSWORD }}
           MESHEURES_KEY_PASSWORD: ${{ secrets.MESHEURES_KEY_PASSWORD }}
           MESHEURES_KEY_ALIAS: ${{ secrets.MESHEURES_KEY_ALIAS }}
@@ -69,7 +74,7 @@ jobs:
         run: cp app/build/outputs/apk/release/app-release.apk "MesHeures-APK-release-v20.4.0.apk"
 
       - name: Upload APK
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v4
         with:
           name: MesHeures-APK-release-v20.4.0
           path: MesHeures-APK-release-v20.4.0.apk

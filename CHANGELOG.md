@@ -1,3 +1,11 @@
+# MesHeures Changelog
+
+## 20.4.0
+
+- Clean release pipeline and version lock (2040).
+- GitHub Actions workflow validation fixed.
+- Hybrid Core / WebViewAssetLoader retained.
+
 # Changelog
 
 ## V20.4.0
