@@ -1,8 +1,8 @@
-# MesHeures V18.0.16 — Widget Android
+# MesHeures V18.0.17 — Widget Android
 
-Widget natif ajouté au socle V18.0.16. Il affiche uniquement un cache JSON produit par le WebView.
+Widget natif ajouté au socle V18.0.17. Il affiche uniquement un cache JSON produit par le WebView.
 
-## V18.0.16 — Widget V2
+## V18.0.17 — Widget V3 : source de vérité paie
 
 Le widget affiche désormais le mois complet, la progression, les statuts, TTE, HS, paie, marge 46 h et alertes. Le net privilégie le bulletin réel du mois lorsqu’il existe, sinon l’estimation de la période courante.
 
@@ -30,3 +30,11 @@ Le widget utilise un format moyen 4×2, redimensionnable horizontalement et vert
 
 ## Limite de test
 Le code a été contrôlé statiquement et les scripts JavaScript passent `node --check`. La compilation Android finale est exécutée par GitHub Actions avec le SDK Android du runner.
+
+
+### Correctif V3
+- Le résumé brut/net est maintenant exposé par `app-core.js`, après `calcPer()` et `brutOf()`, avant le chargement des couches secondaires.
+- `app-pwa.js` consomme cette source unique ; Android n'effectue aucun calcul de paie.
+- Le bulletin réel du mois courant reste prioritaire lorsqu'il existe ; sinon le widget affiche l'estimation de la période de paie active.
+- Le widget est repoussé au démarrage une fois toutes les couches V18 chargées, afin d'éviter un cache incomplet.
+- Les données du widget restent un miroir du moteur MesHeures : pas de recalcul AmbuTrack.

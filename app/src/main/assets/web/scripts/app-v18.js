@@ -1,7 +1,7 @@
 /* MesHeures V18 — interface, projection, conformité et migrations.
    Le préfixe mhV17 est conservé uniquement comme namespace de compatibilité avec les données/UI V17. */
 (function(){
-  const V='18.0.16';
+  const V='18.0.17';
   function migrate(){
     DB.s=DB.s||{};
     if(DB.s.taux===14.02)DB.s.taux=14.20;
@@ -50,7 +50,7 @@
     const status=window.mhV17BackupStatus?.()||{count:list.length,last:''};
     const box=document.createElement('div');box.className='mh-v17-overlay';
     box.innerHTML=`<div class="mh-v17-dialog">
-      <div class="mh-v17-sheet-head"><b>💾 Sauvegarde renforcée V18.0.16</b><button class="g" onclick="this.closest('.mh-v17-overlay').remove()">✕</button></div>
+      <div class="mh-v17-sheet-head"><b>💾 Sauvegarde renforcée V18.0.17</b><button class="g" onclick="this.closest('.mh-v17-overlay').remove()">✕</button></div>
       <div class="al i"><b>${status.count}</b> point(s) local(aux) conservé(s) · ${status.last?'dernier : '+new Date(status.last).toLocaleString('fr-FR'):'aucun point encore créé'}<br>Les nouveaux points sont conservés localement. Un export JSON permet une copie hors du téléphone.</div>
       <div class="row">
         <button onclick="const r=mhV17Backup('manual');if(r.ok){alert('✅ Point de restauration créé.');this.closest('.mh-v17-overlay').remove();mhV17BackupPanel()}else alert('❌ '+r.error)">💾 Créer un point maintenant</button>
@@ -77,7 +77,7 @@
   function patchRender(){
     if(window.__mhV17Render)return;window.__mhV17Render=true;const old=window.renderAll;window.renderAll=function(){old();addReg();legalCard();injectHome();renderProjection();};
   }
-  function boot(){migrate();theme(DB.s.theme);if(document.getElementById('mhVersion'))document.getElementById('mhVersion').textContent='V18.0.16';buildNav();patchHome();patchRender();addReg();legalCard();injectHome();setTimeout(()=>{try{renderAll()}catch(e){console.error(e)}},0);}
+  function boot(){migrate();theme(DB.s.theme);if(document.getElementById('mhVersion'))document.getElementById('mhVersion').textContent='V18.0.17';buildNav();patchHome();patchRender();addReg();legalCard();injectHome();setTimeout(()=>{try{renderAll();if(typeof pushWidgetData==='function')pushWidgetData()}catch(e){console.error(e)}},0);}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
   window.matchMedia('(prefers-color-scheme: light)').addEventListener?.('change',()=>{if(DB.s.theme==='auto')theme('auto')});
 })();

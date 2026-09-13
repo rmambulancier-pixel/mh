@@ -135,7 +135,7 @@ function cd(k){
   return r;
 }
 
-// V18.0.16 — canonical read-only day metrics for dossier/reconciliation/plugins.
+// V18.0.17 — canonical read-only day metrics for dossier/reconciliation/plugins.
 // Raw DB.days entries intentionally remain untouched; all derived legal metrics come from cd().
 window.mhCalcDay = function(k){
   try{return cd(k)||{amp:0,tte:0,pz:0,al:[],trav:0,seuil:0,idaj:0,ir:0,iru:0,rc:0,fer:0,dim:0,nuit:0}}
@@ -203,6 +203,20 @@ function brutOf(G){
   const panIR=G.ir*S.ir, panIRU=G.iru*S.iru, panIRUT=G.iru*S.irT;
   return{L,tot,panIR,panIRU,panIRUT};
 }
+
+/* V18.0.17 — source unique paie pour toutes les surfaces (Web/PWA/widget).
+   Le calcul reste celui de calcPer() + brutOf(); aucune formule n'est dupliquée. */
+window.mhCurrentPaySummary=function(){
+  try{
+    if(typeof calcPer!=='function'||typeof brutOf!=='function'||typeof DB==='undefined')return null;
+    const st=DB.per?.start||DB.s?.anchor||'2025-05-19';
+    const raw=Number(DB.per?.nb)||2;
+    const nb=Math.max(2,Math.min(3,Math.round(raw)));
+    const result=calcPer(st,nb),G=result.G,br=brutOf(G);
+    const netEst=br.tot*DB.s.net+br.panIR+br.panIRU;
+    return {grossEst:br.tot,netEst,hs25:G.h25,hs50:G.h50,tte:G.tte,start:st,nb};
+  }catch(e){return null}
+};
 
 function minutesNuit(a,b,S){
   const nd=P(S.nuitDeb),nf=P(S.nuitFin);
