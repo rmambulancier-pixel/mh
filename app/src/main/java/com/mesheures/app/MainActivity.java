@@ -92,7 +92,7 @@ public class MainActivity extends Activity {
 
         web.loadUrl("file:///android_asset/web/index.html");
 
-        // V18.0.23: the splash must never depend on window.onload or CDN completion.
+        // V18.1.0: the splash must never depend on window.onload or CDN completion.
         // WebView can execute this while deferred external resources are still pending.
         dismissSplashSoon();
 
@@ -163,6 +163,10 @@ public class MainActivity extends Activity {
                 restoreLocalStorage();
                 installAutoBackup();
                 webReady = true;
+                // V18.1: normal launch always lands on Accueil; widget deep-links remain explicit.
+                if (pendingDeepLink == null) {
+                    web.evaluateJavascript("(function(){try{if(typeof tab==='function')tab('home');}catch(e){}})();", null);
+                }
                 tryConsumeDeepLink();
             }
         });
@@ -299,7 +303,23 @@ public class MainActivity extends Activity {
 
         @JavascriptInterface public String platform() { return "android"; }
 
-        @JavascriptInterface public String version() { return "18.0.23"; }
+        @JavascriptInterface
+        public String capabilities() {
+            return "{\"version\":\"19.0.0\",\"nativeDashboard\":true,\"widgetBridge\":true,\"fileExport\":true,\"print\":true,\"camera\":true}";
+        }
+
+        @JavascriptInterface
+        public void openNativeDashboard() {
+            runOnUiThread(() -> {
+                try {
+                    startActivity(new Intent(MainActivity.this, com.mesheures.app.nativeui.NativeDashboardActivity.class));
+                } catch (Exception e) {
+                    Toast.makeText(c, "Dashboard natif indisponible", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        @JavascriptInterface public String version() { return "19.0.0"; }
 
         @JavascriptInterface
         public void setSystemBarsLight(boolean light) {

@@ -1,10 +1,31 @@
-# MesHeures V18.0.23 — Android + PWA
+# MesHeures — V19.0.0 Hybrid Core
 
-> **Version actuelle : V18.0.23 — Android versionCode 1821**
+## Objectif
+V19 démarre la migration hybride sans réécrire le moteur métier. Les calculs, données et règles existants restent dans le moteur JavaScript canonique. Android devient la couche plateforme : bridge, widget, fichiers, impression, caméra et premier écran natif Compose.
 
-## V18.0.23 — Widget Android V3 intégré
+## V19.0.0 livré
+- **Version Android : 19.0.0 / versionCode 1900**
+- **Dashboard natif Jetpack Compose** accessible depuis Accueil dans l’application Android.
+- Le dashboard natif lit le même payload partagé que le widget : aucune duplication du moteur de calcul.
+- Bridge Android exposant les capacités de la plateforme et l’ouverture du dashboard natif.
+- Conservation du widget, des exports, sauvegardes, impression, caméra et deep-links existants.
+- R8 + shrinkResources conservés.
+- Même applicationId et même signature : mise à jour in-place depuis V18.1 si la version V18.1 installée utilise déjà la clé de release persistante.
 
-Cette version part du socle V18.0.23 audité et ajoute le widget Android sans réintroduire les anciennes couches/fichiers fantômes.
+## Architecture
+`JavaScript = moteur métier` · `Android/Kotlin = plateforme` · `Compose = UI native progressive` · `Bridge = liaison`
+
+## Non-régression
+V19 ne remplace pas `calcPer`, `brutOf`, le stockage DB ni les fonctions historiques de paie. Le nouveau dashboard est consommateur du payload calculé par l’application.
+
+## Build
+Le build release GitHub Actions utilise les secrets de signature persistante : `MESHEURES_KEYSTORE_B64`, `MESHEURES_KEY_PASSWORD`, `MESHEURES_STORE_PASSWORD`, `MESHEURES_KEY_ALIAS`.
+
+> **Version actuelle : V19.0.0 — Android versionCode 1900**
+
+## V19.0.0 — Widget Android V3 intégré
+
+Cette version part du socle V19.0.0 audité et ajoute le widget Android sans réintroduire les anciennes couches/fichiers fantômes.
 
 ### Widget
 - Widget Android natif `MesHeures` pour le Pixel 10 Pro XL et les launchers Android récents.
@@ -64,13 +85,13 @@ Le keystore n'est jamais inclus dans le dépôt.
 - XML Android vérifiés comme XML bien formés.
 - Manifest et fichiers JSON vérifiés.
 - Références des scripts vérifiées par rapport aux fichiers réellement présents.
-- Version runtime synchronisée en `18.0.23` / `versionCode 1821`.
+- Version runtime synchronisée en `19.0.0` / `versionCode 1900`.
 - Compilation Android finale à effectuer par le workflow GitHub Actions du dépôt ; aucun SDK Android local n’est supposé disponible dans ce kit.
 
 
-## V18.0.23 — Widget V5
+## V19.0.0 — Widget V5
 Correction de la synchronisation du widget : le payload de paie est produit directement par le moteur MesHeures, synchronisé avec retries, puis écrit/rafraîchi de façon atomique côté Android.
 
 
-## V18.0.23 — Widget V7
+## V19.0.0 — Widget V8
 Le widget conserve le V6 validé et ajoute en bas : **solde RC** + **prochaine journée planifiée**. Aucun nouveau moteur de calcul n'est introduit.
