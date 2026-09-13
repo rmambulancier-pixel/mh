@@ -44,9 +44,9 @@
   }
 
   function syncVersion() {
-    document.title = document.title.replace(/V16\.1(?:\.0)?|V16\.2(?:\.0)?|V17(?:\.0\.1)?/g, 'V18.0.20');
+    document.title = document.title.replace(/V16\.1(?:\.0)?|V16\.2(?:\.0)?|V17(?:\.0\.1)?/g, 'V18.0.21');
     const meta = document.querySelector('meta[name="application-version"]');
-    if (meta) meta.setAttribute('content','18.0.19');
+    if (meta) meta.setAttribute('content','18.0.21');
 
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
     const nodes = [];
@@ -54,8 +54,8 @@
     nodes.forEach(n => {
       if (/V16\.1\.0|V16\.2\.0/.test(n.nodeValue || '')) {
         n.nodeValue = n.nodeValue
-          .replace(/V16\.1\.0/g,'V18.0.20')
-          .replace(/V16\.2\.0/g,'V18.0.20');
+          .replace(/V16\.1\.0/g,'V18.0.21')
+          .replace(/V16\.2\.0/g,'V18.0.21');
       }
     });
   }
@@ -338,5 +338,5 @@
   });
 })();
 
-/* V18.0.20 — le résumé de paie canonique est exposé par app-core.js.
+/* V18.0.21 — le résumé de paie canonique est exposé par app-core.js.
    app-pay.js ne redéfinit volontairement aucune formule pour les surfaces secondaires. */
