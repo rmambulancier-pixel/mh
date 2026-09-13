@@ -4,6 +4,11 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.compose'
 }
 
+def versionProps = new Properties()
+file('../version.properties').withInputStream { versionProps.load(it) }
+def releaseVersion = versionProps['VERSION']
+def releaseCode = versionProps['VERSION_CODE'].toInteger()
+
 android {
     namespace 'com.mesheures.app'
     compileSdk 35
@@ -21,8 +26,8 @@ android {
         applicationId 'com.mesheures.app'
         minSdk 26
         targetSdk 35
-        versionCode 2030
-        versionName '20.3.0'
+        versionCode releaseCode
+        versionName releaseVersion
     }
     signingConfigs {
         release {

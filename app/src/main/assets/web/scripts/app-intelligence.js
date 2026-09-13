@@ -1,6 +1,6 @@
-/* MesHeures V20.3.0 — intelligence locale : intelligence locale, patterns, projection 12 semaines, alertes */
+/* MesHeures V20.5.0 — intelligence locale : intelligence locale, patterns, projection 12 semaines, alertes */
 (function(){
-  const V='20.3.0';
+  const V='20.5.0';
   const LEGAL_WEEK=46*60;
   const WORK=['T','NUIT'];
   let calcCache=new Map(), calcSig='';
@@ -107,7 +107,7 @@
     const host=document.getElementById('mhV18Intelligence');if(!host)return;
     const p=projection12(),ps=patterns();
     const cls=p.margin<0?'bad':p.projectedAvg>LEGAL_WEEK?'bad':p.unknownDays?'warn':'ok';
-    host.innerHTML=`<div class="card mh-v18-intel"><h2>🧠 Intelligence V18 <span class="sub">analyse locale</span></h2>
+    host.innerHTML=`<div class="card mh-v18-intel"><h2>🧠 Intelligence <span class="sub">analyse locale</span></h2>
       <div class="mh-v18-kpis"><div><b>${F(Math.round(p.avg))}</b><span>moyenne actuelle / semaine</span></div><div><b class="${cls}">${F(Math.round(p.margin))}</b><span>marge avant 46 h</span></div><div><b>${F(Math.round(p.projectedAvg))}</b><span>trajectoire simulée</span></div></div>
       <div class="mh-v18-intel-bar"><i style="width:${Math.min(100,Math.max(0,p.avg/LEGAL_WEEK*100)).toFixed(1)}%"></i></div>
       <div class="mh-v18-intel-note">12 semaines glissantes · ${p.plannedDays} journée(s) future(s) planifiée(s) · ${p.unknownDays} journée(s) future(s) inconnue(s).${p.firstRisk?` ⚠️ Risque détecté vers le ${shortY(p.firstRisk)}.`:' Aucun dépassement projeté sur les journées futures connues.'}</div>
@@ -136,7 +136,7 @@
   }
   function boot(){
     patch();inject();
-    setTimeout(()=>{try{inject();render();}catch(e){console.warn('V18 intelligence',e)}},500);
+    setTimeout(()=>{try{inject();render();}catch(e){console.warn('intelligence',e)}},500);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })();
