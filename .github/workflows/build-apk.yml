@@ -1,0 +1,102 @@
+name: Build MesHeures APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mesheures-build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Read canonical release version
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION=$(tr -d '\r\n' < VERSION)
+          CODE=$(awk -F= '$1=="VERSION_CODE" {print $2}' version.properties | tr -d '\r\n')
+          test -n "$VERSION"
+          test -n "$CODE"
+          echo "MESHEURES_VERSION=$VERSION" >> "$GITHUB_ENV"
+          echo "MESHEURES_VERSION_CODE=$CODE" >> "$GITHUB_ENV"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '9.3.1'
+
+      - name: Static release audit
+        run: python3 qa/release-audit.py
+
+      - name: Performance architecture audit
+        run: python3 qa/performance-audit.py
+
+      - name: JavaScript syntax audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          find app/src/main/assets/web/scripts -name '*.js' -print0 | while IFS= read -r -d '' f; do
+            node --check "$f"
+          done
+
+      - name: Prepare persistent signing key
+        env:
+          MESHEURES_KEYSTORE_B64: ${{ secrets.MESHEURES_KEYSTORE_B64 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${MESHEURES_KEYSTORE_B64:-}" ]]; then
+            printf '%s' "$MESHEURES_KEYSTORE_B64" | base64 --decode > "$GITHUB_WORKSPACE/mesheures-release.keystore"
+            test -s "$GITHUB_WORKSPACE/mesheures-release.keystore"
+            echo "MESHEURES_KEYSTORE=$GITHUB_WORKSPACE/mesheures-release.keystore" >> "$GITHUB_ENV"
+            echo "Persistent release signing key prepared."
+          else
+            echo "No persistent signing key configured; building an unsigned release APK."
+          fi
+
+      - name: Build release APK
+        env:
+          MESHEURES_STORE_PASSWORD: ${{ secrets.MESHEURES_STORE_PASSWORD }}
+          MESHEURES_KEY_PASSWORD: ${{ secrets.MESHEURES_KEY_PASSWORD }}
+          MESHEURES_KEY_ALIAS: ${{ secrets.MESHEURES_KEY_ALIAS }}
+        run: gradle :app:assembleRelease --no-daemon
+
+      - name: Verify built APK
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK="app/build/outputs/apk/release/app-release.apk"
+          test -s "$APK"
+          AAPT2=$(find "$ANDROID_HOME/build-tools" -type f -name aapt2 | sort -V | tail -1)
+          test -n "$AAPT2"
+          echo "Using aapt2: $AAPT2"
+          "$AAPT2" dump badging "$APK" | tee /tmp/apk-badging.txt
+          grep -F "versionCode='$MESHEURES_VERSION_CODE'" /tmp/apk-badging.txt
+          grep -F "versionName='$MESHEURES_VERSION'" /tmp/apk-badging.txt
+          grep -F "package: name='com.mesheures.app'" /tmp/apk-badging.txt
+
+      - name: Publish versioned APK
+        run: cp app/build/outputs/apk/release/app-release.apk "MesHeures-APK-release-v${MESHEURES_VERSION}.apk"
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MesHeures-APK-release-v${{ env.MESHEURES_VERSION }}
+          path: MesHeures-APK-release-v${{ env.MESHEURES_VERSION }}.apk
+          if-no-files-found: error
