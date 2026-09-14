@@ -32,7 +32,6 @@ jobs:
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
-        uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
@@ -41,7 +40,6 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '9.3.1'
-          gradle-version: '8.9'
 
       - name: Static release audit
         run: python3 qa/release-audit.py
@@ -63,8 +61,6 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          # GitHub Actions does not allow the secrets context directly in an if condition.
-          # Keep the secret in env and decide inside the shell instead.
           if [[ -n "${MESHEURES_KEYSTORE_B64:-}" ]]; then
             printf '%s' "$MESHEURES_KEYSTORE_B64" | base64 --decode > "$GITHUB_WORKSPACE/mesheures-release.keystore"
             test -s "$GITHUB_WORKSPACE/mesheures-release.keystore"
