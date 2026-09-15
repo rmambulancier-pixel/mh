@@ -1,7 +1,7 @@
 /* MesHeures V23 — new cockpit, timeline analytics and tactile navigation. */
 (function(){
   'use strict';
-  const V='23.0.0';
+  const V='24.0.0';
   const PAGES=['home','jour','mois','paie','analyse'];
   let touchX=null,touchY=null,touchTarget=null;
   let fresh=!!window.MH_V23_FRESH;
@@ -10,7 +10,7 @@
   const fmtMin=m=>{m=Math.max(0,Math.round(Number(m)||0));return `${Math.floor(m/60)}h${String(m%60).padStart(2,'0')}`};
   const shortDate=k=>k?new Date(k+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}):'';
   const todayKey=()=>typeof today==='function'?today():new Date().toISOString().slice(0,10);
-  const validKeys=()=>Object.keys(DB?.days||{}).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
+  const validKeys=()=>Object.keys(window.DB?.days||{}).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
   const pastKeys=()=>validKeys().filter(k=>k<=todayKey());
 
   function activeIndex(){const t=typeof curTab==='string'?curTab:'home';return PAGES.indexOf(t)}
@@ -121,10 +121,10 @@
 
   function boot(){
     ensureAnalysis();patchTab();buildNav();patchTouch();
-    const v=$('mhVersion');if(v)v.textContent='V23.0.0';
+    const v=$('mhVersion');if(v)v.textContent='V24.0.0';
     const title=document.querySelector('.dash-greeting');if(title)title.textContent='Tableau de bord';
     const hs=$('homeBackupStatus');if(hs){hs.textContent='';hs.style.display='none'}
-    document.title='MesHeures V23.0.0';
+    document.title='MesHeures V24.0.0';
     setTimeout(()=>{setNav();loadLatestDefault()},40);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();

@@ -337,7 +337,7 @@ public class MainActivity extends ComponentActivity {
 
         @JavascriptInterface
         public String capabilities() {
-            return "{\"version\":\"23.0.0\",\"nativeDashboard\":true,\"widgetBridge\":true,\"fileExport\":true,\"print\":true}";
+            return "{\"version\":\"24.0.0\",\"nativeDashboard\":true,\"widgetBridge\":true,\"fileExport\":true,\"print\":true}";
         }
 
         @JavascriptInterface
@@ -351,7 +351,7 @@ public class MainActivity extends ComponentActivity {
             });
         }
 
-        @JavascriptInterface public String version() { return "23.0.0"; }
+        @JavascriptInterface public String version() { return "24.0.0"; }
 
         @JavascriptInterface
         public void setSystemBarsLight(boolean light) {

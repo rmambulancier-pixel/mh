@@ -32,7 +32,7 @@ backup = text(SCRIPTS / 'app-backup.js')
 
 check('Canonical VERSION', bool(re.fullmatch(r'\d+\.\d+\.\d+', version)))
 check('Canonical VERSION_CODE', code.isdigit())
-check('Release target', version == '23.0.0' and code == '2300')
+check('Release target', version == '24.0.0' and code == '2400')
 check('Gradle reads canonical version', "file('../version.properties')" in build and 'releaseVersion' in build and 'releaseCode' in build)
 check('Gradle does not hardcode release number', "versionName '20.5.0'" not in build and 'versionCode 2050' not in build)
 check('Manifest web version', f'"version": "{version}"' in manifest)
@@ -46,7 +46,8 @@ check('Service Worker native interception', 'ServiceWorkerControllerCompat' in h
 check('File access hardened', 'setAllowFileAccess(false)' in hybrid and 'setAllowContentAccess(false)' in hybrid and 'setAllowFileAccess(true)' not in main and 'setAllowContentAccess(true)' not in main)
 check('Lifecycle backup guard', 'if (web == null || !webReady) return;' in main)
 check('No legacy full-storage interval', 'setInterval(save, 30000)' not in main and 'setInterval(save,30000)' not in main)
-check('Backup namespace current', "LS+'_v23_backup_'" in backup and "BACKUP_VERSION='23.0.0'" in backup)
+check('Backup namespace current', "LS+'_v24_backup_'" in backup and "BACKUP_VERSION='24.0.0'" in backup)
+check('V23 backup compatibility', "LS+'_v23_backup_'" in backup)
 check('Legacy backup compatibility', "LS+'_v18_backup_'" in backup and "LS+'_v17_backup_'" in backup)
 
 # Every local script referenced by index must exist and be cached by the SW.
@@ -101,6 +102,12 @@ check('No WebView database API', 'setDatabaseEnabled(true)' not in main and 'set
 check('Android 17 target', 'compileSdk 37' in build and 'targetSdk 37' in build)
 check('V21 Application bootstrap', 'MesHeuresApplication' in main or 'MesHeuresApplication' in (ROOT / 'app/src/main/java/com/mesheures/app/MesHeuresApplication.java').read_text(encoding='utf-8'))
 
+check('V24 script referenced', './scripts/app-v24.js' in index and (SCRIPTS/'app-v24.js').exists())
+check('V24 stylesheet referenced', './style/v24.css' in index and (WEB/'style/v24.css').exists())
+check('V24 smooth swipe engine', 'requestAnimationFrame' in text(SCRIPTS/'app-v24.js') and 'pointermove' in text(SCRIPTS/'app-v24.js'))
+check('V24 shared store facade', 'window.MHStore' in text(SCRIPTS/'app-v24.js'))
+check('V24 live day cockpit', 'mhV24DaySummary' in text(SCRIPTS/'app-v24.js'))
+check('V24 universal search', 'mhV24OpenSearch' in text(SCRIPTS/'app-v24.js'))
 for name, ok, detail in checks:
     print(('PASS' if ok else 'FAIL') + ': ' + name + (f' — {detail}' if detail and not ok else ''))
 

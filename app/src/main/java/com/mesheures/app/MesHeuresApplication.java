@@ -3,7 +3,7 @@ package com.mesheures.app;
 import android.app.Application;
 import androidx.webkit.ProcessGlobalConfig;
 
-/** V23 WebView process bootstrap. */
+/** V24 WebView process bootstrap. */
 public final class MesHeuresApplication extends Application {
     @Override public void onCreate() {
         try {
