@@ -1,6 +1,6 @@
 /* MesHeures V20.4 — sauvegarde locale renforcée, JSON versionné et restauration sûre */
 (function(){
-  const BACKUP_VERSION='24.0.0';
+  const BACKUP_VERSION='24.2.0';
   const PREFIX=LS+'_v24_backup_';
   const PREV_PREFIX=LS+'_v23_backup_';
   const LEGACY_PREFIX=LS+'_v18_backup_';
@@ -111,7 +111,7 @@
 
   window.mhV17ListBackups=function(){
     return listKeys().map(k=>{
-      try{const s=JSON.parse(localStorage.getItem(k));return {key:k,date:s.createdAt,version:s.version||'24.0.0',reason:s.reason||''};}
+      try{const s=JSON.parse(localStorage.getItem(k));return {key:k,date:s.createdAt,version:s.version||'24.2.0',reason:s.reason||''};}
       catch(e){return null;}
     }).filter(Boolean);
   };

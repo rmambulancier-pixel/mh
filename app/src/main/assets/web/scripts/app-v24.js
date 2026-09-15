@@ -1,7 +1,7 @@
 /* MesHeures V24 — Fluid Core: navigation, store facade, live dashboard and search. */
 (function(){
   'use strict';
-  const V='24.0.0';
+  const V='24.2.0';
   const PAGES=['home','jour','mois','paie','analyse'];
   const PAGE_LABELS={home:'Accueil',jour:'Saisie',mois:'Planning',paie:'Paie',analyse:'Analyse'};
   const $=id=>document.getElementById(id);

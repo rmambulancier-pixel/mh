@@ -1,4 +1,4 @@
-/* MesHeures V24.0.0 — persistance locale + synchronisation widget Android. */
+/* MesHeures V24.2.0 — persistance locale + synchronisation widget Android. */
 function save(){
   try{localStorage.setItem(LS,JSON.stringify(DB))}
   catch(e){alert('Stockage plein : exportez vos données !\n'+e.message)}

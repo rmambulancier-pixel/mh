@@ -1,7 +1,7 @@
-/* MesHeures V24.0.0 — interface, projection, conformité et migrations.
+/* MesHeures V24.2.0 — interface, projection, conformité et migrations.
    Le préfixe mhV17 est conservé uniquement comme namespace de compatibilité avec les données/UI V17. */
 (function(){
-  const V='24.0.0';
+  const V='24.2.0';
   function migrate(){
     DB.s=DB.s||{};
     if(DB.s.taux===14.02)DB.s.taux=14.20;
@@ -24,7 +24,7 @@
     const nav=document.createElement('nav');nav.id='mhV17Nav';nav.className='mh-v17-nav';
     nav.innerHTML=`<button onclick="tab('home')">⌂<span>Accueil</span></button><button onclick="tab('jour')">＋<span>Saisie</span></button><button onclick="tab('mois')">▣<span>Planning</span></button><button onclick="tab('paie')">€<span>Paie</span></button><button onclick="mhV17Menu()">☰<span>Outils</span></button>`;
     document.body.appendChild(nav);
-    const menu=document.createElement('div');menu.id='mhV17Menu';menu.className='mh-v17-menu';menu.innerHTML=`<div class="mh-v17-sheet"><div class="mh-v17-sheet-head"><b>MesHeures V24.0.0</b><button class="g" onclick="mhV17Menu()">✕</button></div><div class="mh-v17-tools"><button onclick="tab('audit');mhV17Menu()">🛡️ Audit</button><button onclick="tab('bul');mhV17Menu()">📄 Bulletin</button><button onclick="tab('romi');mhV17Menu()">📋 ROMI1</button><button onclick="mhV17Legal();mhV17Menu()">⚖️ Contrôle légal</button><button onclick="tab('reg');mhV17Menu()">⚙️ Réglages</button><button onclick="mhV17BackupPanel();mhV17Menu()">💾 Sauvegardes</button></div><div class="mh-v17-theme"><b>Apparence</b><div><button onclick="mhV17Theme('auto')">📱 Auto</button><button onclick="mhV17Theme('dark')">🌙 Sombre</button><button onclick="mhV17Theme('light')">☀️ Clair</button></div></div></div>`;document.body.appendChild(menu);
+    const menu=document.createElement('div');menu.id='mhV17Menu';menu.className='mh-v17-menu';menu.innerHTML=`<div class="mh-v17-sheet"><div class="mh-v17-sheet-head"><b>MesHeures V24.2.0</b><button class="g" onclick="mhV17Menu()">✕</button></div><div class="mh-v17-tools"><button onclick="tab('audit');mhV17Menu()">🛡️ Audit</button><button onclick="tab('bul');mhV17Menu()">📄 Bulletin</button><button onclick="tab('romi');mhV17Menu()">📋 ROMI1</button><button onclick="mhV17Legal();mhV17Menu()">⚖️ Contrôle légal</button><button onclick="tab('reg');mhV17Menu()">⚙️ Réglages</button><button onclick="mhV17BackupPanel();mhV17Menu()">💾 Sauvegardes</button></div><div class="mh-v17-theme"><b>Apparence</b><div><button onclick="mhV17Theme('auto')">📱 Auto</button><button onclick="mhV17Theme('dark')">🌙 Sombre</button><button onclick="mhV17Theme('light')">☀️ Clair</button></div></div></div>`;document.body.appendChild(menu);
   }
   window.mhV17Menu=function(){document.getElementById('mhV17Menu')?.classList.toggle('on')};
   window.mhV17Theme=theme;
@@ -50,7 +50,7 @@
     const status=window.mhV17BackupStatus?.()||{count:list.length,last:''};
     const box=document.createElement('div');box.className='mh-v17-overlay';
     box.innerHTML=`<div class="mh-v17-dialog">
-      <div class="mh-v17-sheet-head"><b>💾 Sauvegarde renforcée V24.0.0</b><button class="g" onclick="this.closest('.mh-v17-overlay').remove()">✕</button></div>
+      <div class="mh-v17-sheet-head"><b>💾 Sauvegarde renforcée V24.2.0</b><button class="g" onclick="this.closest('.mh-v17-overlay').remove()">✕</button></div>
       <div class="al i"><b>${status.count}</b> point(s) local(aux) conservé(s) · ${status.last?'dernier : '+new Date(status.last).toLocaleString('fr-FR'):'aucun point encore créé'}<br>Les nouveaux points sont conservés localement. Un export JSON permet une copie hors du téléphone.</div>
       <div class="row">
         <button onclick="const r=mhV17Backup('manual');if(r.ok){alert('✅ Point de restauration créé.');this.closest('.mh-v17-overlay').remove();mhV17BackupPanel()}else alert('❌ '+r.error)">💾 Créer un point maintenant</button>
@@ -77,7 +77,7 @@
   function patchRender(){
     if(window.__mhV17Render)return;window.__mhV17Render=true;const old=window.renderAll;window.renderAll=function(){old();addReg();legalCard();injectHome();renderProjection();};
   }
-  function boot(){migrate();theme(DB.s.theme);if(document.getElementById('mhVersion'))document.getElementById('mhVersion').textContent='V24.0.0';buildNav();patchHome();patchRender();addReg();legalCard();injectHome();setTimeout(()=>{try{tab('home');if(typeof pushWidgetData==='function')pushWidgetData()}catch(e){console.error(e)}},0);}
+  function boot(){migrate();theme(DB.s.theme);if(document.getElementById('mhVersion'))document.getElementById('mhVersion').textContent='V24.2.0';buildNav();patchHome();patchRender();addReg();legalCard();injectHome();setTimeout(()=>{try{tab('home');if(typeof pushWidgetData==='function')pushWidgetData()}catch(e){console.error(e)}},0);}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
   window.matchMedia('(prefers-color-scheme: light)').addEventListener?.('change',()=>{if(DB.s.theme==='auto')theme('auto')});
 })();

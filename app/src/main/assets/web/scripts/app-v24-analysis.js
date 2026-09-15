@@ -1,7 +1,7 @@
 /* MesHeures V24 — new cockpit, timeline analytics and tactile navigation. */
 (function(){
   'use strict';
-  const V='24.0.0';
+  const V='24.2.0';
   const PAGES=['home','jour','mois','paie','analyse'];
   let fresh=!!window.MH_V24_FRESH;
   const $=id=>document.getElementById(id);
@@ -108,10 +108,10 @@
     // et deux constructions de nav en compétition sur le même id #mhV24Dots avec des
     // classes CSS différentes — la seconde (app-v24.js) trouvait l'élément déjà créé par
     // celle-ci et n'appliquait jamais son propre style.
-    const v=$('mhVersion');if(v)v.textContent='V24.0.0';
+    const v=$('mhVersion');if(v)v.textContent='V24.2.0';
     const title=document.querySelector('.dash-greeting');if(title)title.textContent='Tableau de bord';
     const hs=$('homeBackupStatus');if(hs){hs.textContent='';hs.style.display='none'}
-    document.title='MesHeures V24.0.0';
+    document.title='MesHeures V24.2.0';
     setTimeout(()=>{setNav();loadLatestDefault()},40);
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();

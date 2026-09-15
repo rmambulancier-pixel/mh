@@ -3,7 +3,7 @@
 'use strict';
 const esc0=window.esc||((s)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])));
 const fmt=m=>{m=Math.max(0,Math.round(Number(m||0)));return Math.floor(m/60)+'h'+String(m%60).padStart(2,'0')};
-const V='24.0.0', WEEK48=2880, AVG46=2760, REST11=660;
+const V='24.2.0', WEEK48=2880, AVG46=2760, REST11=660;
 const work=k=>['T','NUIT'].includes(DB.days?.[k]?.t);
 const calc=k=>{try{return window.mhCalcDay?window.mhCalcDay(k):cd(k)}catch{return {tte:0,amp:0,deb:null,fin:null,al:[],trav:0}}};
 const mins=k=>Math.max(0,Number(calc(k).tte)||0);
