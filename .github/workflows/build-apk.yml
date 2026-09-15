@@ -85,7 +85,6 @@ jobs:
           test -s "$APK"
           AAPT2=$(find "$ANDROID_HOME/build-tools" -type f -name aapt2 | sort -V | tail -1)
           test -n "$AAPT2"
-          echo "Using aapt2: $AAPT2"
           "$AAPT2" dump badging "$APK" | tee /tmp/apk-badging.txt
           grep -F "versionCode='$MESHEURES_VERSION_CODE'" /tmp/apk-badging.txt
           grep -F "versionName='$MESHEURES_VERSION'" /tmp/apk-badging.txt

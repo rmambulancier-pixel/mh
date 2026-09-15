@@ -1,7 +1,7 @@
 /* MesHeures V20.4 — Hybrid Core.
    UI bridge only: all métier/calculation logic remains in the canonical JS engine. */
 (function(){
-  const V='21.0.0';
+  const V='22.0.0';
   function bridge(){return window.MesHeuresAndroid||null}
   function capabilities(){
     try{
@@ -13,7 +13,7 @@
   function openNative(){
     const b=bridge();
     if(b&&typeof b.openNativeDashboard==='function')b.openNativeDashboard();
-    else alert('Le dashboard natif est disponible uniquement dans l’application Android V21.');
+    else alert('Le dashboard natif est disponible uniquement dans l’application Android V22.');
   }
   function render(){
     const host=document.getElementById('mhHybrid');

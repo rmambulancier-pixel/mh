@@ -91,7 +91,9 @@ public class MainActivity extends ComponentActivity {
         if (Build.VERSION.SDK_INT >= 33
                 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
                 != PackageManager.PERMISSION_GRANTED) {
-            notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+            requestPermissions(new String[]{
+                Manifest.permission.POST_NOTIFICATIONS
+            }, 77);
         }
 
         web.loadUrl(HybridCore.ENTRY_URL);
@@ -273,9 +275,6 @@ public class MainActivity extends ComponentActivity {
         web.evaluateJavascript(js, null);
     }
 
-    private final ActivityResultLauncher<String> notificationPermissionLauncher =
-        registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> { });
-
     private final ActivityResultLauncher<Intent> documentLauncher = registerForActivityResult(
         new ActivityResultContracts.StartActivityForResult(), result -> {
             Intent data = result.getData();
@@ -338,7 +337,7 @@ public class MainActivity extends ComponentActivity {
 
         @JavascriptInterface
         public String capabilities() {
-            return "{\"version\":\"21.0.0\",\"nativeDashboard\":true,\"widgetBridge\":true,\"fileExport\":true,\"print\":true}";
+            return "{\"version\":\"22.0.0\",\"nativeDashboard\":true,\"widgetBridge\":true,\"fileExport\":true,\"print\":true}";
         }
 
         @JavascriptInterface
@@ -352,7 +351,7 @@ public class MainActivity extends ComponentActivity {
             });
         }
 
-        @JavascriptInterface public String version() { return "21.0.0"; }
+        @JavascriptInterface public String version() { return "22.0.0"; }
 
         @JavascriptInterface
         public void setSystemBarsLight(boolean light) {

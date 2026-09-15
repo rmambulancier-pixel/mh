@@ -10,9 +10,9 @@ import androidx.webkit.ServiceWorkerControllerCompat;
 import androidx.webkit.WebViewAssetLoader;
 import androidx.webkit.WebViewFeature;
 
-/** V21 secure WebView boundary. */
+/** V22 secure WebView boundary. */
 public final class HybridCore {
-    public static final String VERSION = "21.0.0";
+    public static final String VERSION = "22.0.0";
     public static final String DOMAIN = "appassets.androidplatform.net";
     public static final String ENTRY_URL = "https://" + DOMAIN + "/assets/web/index.html";
     private final WebViewAssetLoader assetLoader;

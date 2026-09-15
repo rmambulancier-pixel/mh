@@ -1,11 +1,11 @@
-const CACHE = 'mesheures-shell-v21.0.0';
+const CACHE = 'mesheures-shell-v22.0.0';
 const SHELL = [
   './',
   './index.html',
   './manifest.json',
   './icon.svg',
   './icon-512.png',
-  './style/refonte.css?v=21.0.0',
+  './style/refonte.css?v=22.0.0',
   './scripts/app-core.js',
   './scripts/app-pwa.js',
   './scripts/app-ui.js',
@@ -21,7 +21,10 @@ const SHELL = [
   './scripts/app-evidence.js',
   './scripts/app-dossier.js',
   './scripts/app-reconciliation.js',
-  './scripts/app-hybrid.js'
+  './scripts/app-hybrid.js',
+  './scripts/app-v22.js',
+  './style/v22.css',
+  './data/mesheures-default-backup.json'
 ];
 
 self.addEventListener('install', (event) => {

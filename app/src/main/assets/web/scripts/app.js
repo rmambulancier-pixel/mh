@@ -445,7 +445,7 @@ if('serviceWorker' in navigator){
    V15 — INTELLIGENCE / SÉCURITÉ / MODE PRO
    Couche additive : ne modifie pas les règles de calcul historiques.
 ═══════════════════════════════════════════════ */
-const MH_V='21.0.0';
+const MH_V='22.0.0';
 
 function mhMonthStats(ym){
   const [y,m]=ym.split('-').map(Number), last=isoOf(new Date(y,m,0));
@@ -603,7 +603,7 @@ function renderPay(){
   if(proNet)proNet.textContent=EUR(tot*DB.s.net);
   if(proHours)proHours.textContent=F(G.h25+G.h50);
 
-  // V21.0.0 : le champ « Écart bulletin » ne doit plus confondre
+  // V22.0.0 : le champ « Écart bulletin » ne doit plus confondre
   // l'absence de saisie RC de la quatorzaine avec l'absence de bulletin.
   // Les bulletins sont mensuels et une quatorzaine peut chevaucher deux mois.
   // On recherche donc les bulletins dont le mois intersecte réellement la période.
@@ -681,7 +681,7 @@ function mhRestoreLocal(){
 function mhTogglePro(){DB.s.proMode=!DB.s.proMode;save();document.body.classList.toggle('pro-mode',!!DB.s.proMode);renderReg();}
 
 function mhAutoBackup(){
-  if(typeof mhV17Backup==='function') return mhV17Backup('auto');
+  /* V22: normal save() is the persistence layer; snapshot backups are explicit from Outils > Données. */
 }
 function mhRestoreAuto(){
   if(typeof mhV17BackupPanel==='function') return mhV17BackupPanel();
@@ -721,7 +721,7 @@ function mhDecoratePages(){
   });
 }
 
-if($('mhVersion'))$('mhVersion').textContent='V21.0.0';
+if($('mhVersion'))$('mhVersion').textContent='V22.0.0';
 mhDecoratePages();
 mhAutoBackup();
 setTimeout(()=>{try{renderAll()}catch(e){console.error('V15 render',e)}},0);

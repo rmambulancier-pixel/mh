@@ -32,7 +32,7 @@ backup = text(SCRIPTS / 'app-backup.js')
 
 check('Canonical VERSION', bool(re.fullmatch(r'\d+\.\d+\.\d+', version)))
 check('Canonical VERSION_CODE', code.isdigit())
-check('Release target', version == '21.0.0' and code == '2100')
+check('Release target', version == '22.0.0' and code == '2200')
 check('Gradle reads canonical version', "file('../version.properties')" in build and 'releaseVersion' in build and 'releaseCode' in build)
 check('Gradle does not hardcode release number', "versionName '20.5.0'" not in build and 'versionCode 2050' not in build)
 check('Manifest web version', f'"version": "{version}"' in manifest)
@@ -46,7 +46,7 @@ check('Service Worker native interception', 'ServiceWorkerControllerCompat' in h
 check('File access hardened', 'setAllowFileAccess(false)' in hybrid and 'setAllowContentAccess(false)' in hybrid and 'setAllowFileAccess(true)' not in main and 'setAllowContentAccess(true)' not in main)
 check('Lifecycle backup guard', 'if (web == null || !webReady) return;' in main)
 check('No legacy full-storage interval', 'setInterval(save, 30000)' not in main and 'setInterval(save,30000)' not in main)
-check('Backup namespace current', "LS+'_v21_backup_'" in backup and "BACKUP_VERSION='21.0.0'" in backup)
+check('Backup namespace current', "LS+'_v22_backup_'" in backup and "BACKUP_VERSION='22.0.0'" in backup)
 check('Legacy backup compatibility', "LS+'_v18_backup_'" in backup and "LS+'_v17_backup_'" in backup)
 
 # Every local script referenced by index must exist and be cached by the SW.

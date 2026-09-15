@@ -1,19 +1,23 @@
-# MesHeures — V21.0.0 Mega Clean
+# MesHeures — V22.0.0
 
-Version active unique : **21.0.0** · Android `versionCode 2050`.
+Version active : **22.0.0** · Android `versionCode 2200`.
+
+## V22
+- Navigation tactile par swipe entre les écrans principaux.
+- Tableau de bord plus compact et professionnel.
+- Persistance locale normale conservée via `save()`.
+- Les snapshots automatiques ne sont plus créés à chaque lancement ; les sauvegardes JSON restent disponibles volontairement dans Outils > Données.
+- Compatibilité de lecture des anciens points de restauration V21/V18/V17.
+- Le JSON de référence fourni avec V22 est utilisé uniquement lors d'une installation vierge et commence au **19/05/2025**.
 
 ## Architecture
 - JavaScript : moteur métier unique (heures, paie, conformité, données).
 - Android : WebView, fichiers, widget et dashboard natif.
 - Hybrid Core : `WebViewAssetLoader` sur `https://appassets.androidplatform.net/...`.
 - Service Worker : cache versionné et interception native des assets.
-- Sauvegardes : stockage local, points de restauration, export/import et compatibilité historique.
 
 ## Versioning
-`VERSION` + `version.properties` sont les sources canoniques. Le build Android lit ces valeurs au lieu de dupliquer le numéro dans Gradle. GitHub Actions vérifie la version de l'APK après compilation.
+`VERSION` + `version.properties` sont les sources canoniques. Le build Android lit ces valeurs au lieu de dupliquer le numéro dans Gradle.
 
-## Build
-Le workflow GitHub Actions lance d'abord `qa/release-audit.py`, puis le contrôle de syntaxe JavaScript, compile l'APK et vérifie `applicationId`, `versionName` et `versionCode` avant publication de l'artifact.
-
-## Historique
-Les documents historiques sont archivés sous `docs/history/`. Les anciens fichiers de runtime ne sont pas chargés par l'application.
+## QA
+Les audits V22 passent avant compilation : version, assets, Service Worker, sécurité WebView, predictive back, Activity Result API, cible Android 17 et contrôles de performance.

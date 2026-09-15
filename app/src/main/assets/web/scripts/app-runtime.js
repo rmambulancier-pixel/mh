@@ -1,7 +1,7 @@
-/* MesHeures V21.0.0 — interface, projection, conformité et migrations.
+/* MesHeures V22.0.0 — interface, projection, conformité et migrations.
    Le préfixe mhV17 est conservé uniquement comme namespace de compatibilité avec les données/UI V17. */
 (function(){
-  const V='21.0.0';
+  const V='22.0.0';
   function migrate(){
     DB.s=DB.s||{};
     if(DB.s.taux===14.02)DB.s.taux=14.20;
@@ -24,7 +24,7 @@
     const nav=document.createElement('nav');nav.id='mhV17Nav';nav.className='mh-v17-nav';
     nav.innerHTML=`<button onclick="tab('home')">⌂<span>Accueil</span></button><button onclick="tab('jour')">＋<span>Saisie</span></button><button onclick="tab('mois')">▣<span>Planning</span></button><button onclick="tab('paie')">€<span>Paie</span></button><button onclick="mhV17Menu()">☰<span>Outils</span></button>`;
     document.body.appendChild(nav);
-    const menu=document.createElement('div');menu.id='mhV17Menu';menu.className='mh-v17-menu';menu.innerHTML=`<div class="mh-v17-sheet"><div class="mh-v17-sheet-head"><b>MesHeures V21.0.0</b><button class="g" onclick="mhV17Menu()">✕</button></div><div class="mh-v17-tools"><button onclick="tab('audit');mhV17Menu()">🛡️ Audit</button><button onclick="tab('bul');mhV17Menu()">📄 Bulletin</button><button onclick="tab('romi');mhV17Menu()">📋 ROMI1</button><button onclick="mhV17Legal();mhV17Menu()">⚖️ Contrôle légal</button><button onclick="tab('reg');mhV17Menu()">⚙️ Réglages</button><button onclick="mhV17BackupPanel();mhV17Menu()">💾 Sauvegardes</button></div><div class="mh-v17-theme"><b>Apparence</b><div><button onclick="mhV17Theme('auto')">📱 Auto</button><button onclick="mhV17Theme('dark')">🌙 Sombre</button><button onclick="mhV17Theme('light')">☀️ Clair</button></div></div></div>`;document.body.appendChild(menu);
+    const menu=document.createElement('div');menu.id='mhV17Menu';menu.className='mh-v17-menu';menu.innerHTML=`<div class="mh-v17-sheet"><div class="mh-v17-sheet-head"><b>MesHeures V22.0.0</b><button class="g" onclick="mhV17Menu()">✕</button></div><div class="mh-v17-tools"><button onclick="tab('audit');mhV17Menu()">🛡️ Audit</button><button onclick="tab('bul');mhV17Menu()">📄 Bulletin</button><button onclick="tab('romi');mhV17Menu()">📋 ROMI1</button><button onclick="mhV17Legal();mhV17Menu()">⚖️ Contrôle légal</button><button onclick="tab('reg');mhV17Menu()">⚙️ Réglages</button><button onclick="mhV17BackupPanel();mhV17Menu()">💾 Sauvegardes</button></div><div class="mh-v17-theme"><b>Apparence</b><div><button onclick="mhV17Theme('auto')">📱 Auto</button><button onclick="mhV17Theme('dark')">🌙 Sombre</button><button onclick="mhV17Theme('light')">☀️ Clair</button></div></div></div>`;document.body.appendChild(menu);
   }
   window.mhV17Menu=function(){document.getElementById('mhV17Menu')?.classList.toggle('on')};
   window.mhV17Theme=theme;
@@ -50,7 +50,7 @@
     const status=window.mhV17BackupStatus?.()||{count:list.length,last:''};
     const box=document.createElement('div');box.className='mh-v17-overlay';
     box.innerHTML=`<div class="mh-v17-dialog">
-      <div class="mh-v17-sheet-head"><b>💾 Sauvegarde renforcée V21.0.0</b><button class="g" onclick="this.closest('.mh-v17-overlay').remove()">✕</button></div>
+      <div class="mh-v17-sheet-head"><b>💾 Sauvegarde renforcée V22.0.0</b><button class="g" onclick="this.closest('.mh-v17-overlay').remove()">✕</button></div>
       <div class="al i"><b>${status.count}</b> point(s) local(aux) conservé(s) · ${status.last?'dernier : '+new Date(status.last).toLocaleString('fr-FR'):'aucun point encore créé'}<br>Les nouveaux points sont conservés localement. Un export JSON permet une copie hors du téléphone.</div>
       <div class="row">
         <button onclick="const r=mhV17Backup('manual');if(r.ok){alert('✅ Point de restauration créé.');this.closest('.mh-v17-overlay').remove();mhV17BackupPanel()}else alert('❌ '+r.error)">💾 Créer un point maintenant</button>
@@ -68,16 +68,16 @@
   };
   function addReg(){
     const host=document.getElementById('rBk');if(!host||document.getElementById('mhV17Reg'))return;
-    const c=document.createElement('div');c.id='mhV17Reg';c.className='mh-v17-reg';c.innerHTML='<b>V20.4 · sauvegarde renforcée</b><div class="row" style="margin-top:7px"><button class="g" onclick="mhV17BackupPanel()">💾 Ouvrir le centre de sauvegarde</button><button class="g" onclick="mhV17Export()">⬇ Export JSON complet</button></div><small>Dernière sauvegarde : <span id="mhV17Last">—</span></small>';host.appendChild(c);const st=window.mhV17BackupStatus?.()||{};document.getElementById('mhV17Last').textContent=st.last?new Date(st.last).toLocaleString('fr-FR'):'aucune';
+    const c=document.createElement('div');c.id='mhV17Reg';c.className='mh-v17-reg';c.innerHTML='<b>V22 · données & sauvegardes</b><div class="row" style="margin-top:7px"><button class="g" onclick="mhV17BackupPanel()">💾 Ouvrir le centre de sauvegarde</button><button class="g" onclick="mhV17Export()">⬇ Export JSON complet</button></div><small>Dernière sauvegarde : <span id="mhV17Last">—</span></small>';host.appendChild(c);const st=window.mhV17BackupStatus?.()||{};document.getElementById('mhV17Last').textContent=st.last?new Date(st.last).toLocaleString('fr-FR'):'aucune';
   }
   function legalCard(){
     const sec=document.getElementById('s-paie');if(!sec||document.getElementById('mhV17LegalCard'))return;
-    const c=document.createElement('div');c.id='mhV17LegalCard';c.className='card';c.innerHTML='<h2>⚖️ Conformité V21 <span class="sub">référentiel 11/09/2026</span></h2><div class="kpis"><div class="kpi"><b>12 h</b><span>amplitude principe</span></div><div class="kpi"><b>14 h</b><span>extension max contrôlée</span></div><div class="kpi"><b>48 h</b><span>max semaine</span></div><div class="kpi"><b>46 h</b><span>moyenne 12 semaines</span></div></div><button class="b" style="margin-top:9px;width:100%" onclick="mhV17Legal()">⚖️ Lancer le contrôle de la période</button>';sec.insertBefore(c,sec.children[2]||null);
+    const c=document.createElement('div');c.id='mhV17LegalCard';c.className='card';c.innerHTML='<h2>⚖️ Conformité V22 <span class="sub">référentiel 11/09/2026</span></h2><div class="kpis"><div class="kpi"><b>12 h</b><span>amplitude principe</span></div><div class="kpi"><b>14 h</b><span>extension max contrôlée</span></div><div class="kpi"><b>48 h</b><span>max semaine</span></div><div class="kpi"><b>46 h</b><span>moyenne 12 semaines</span></div></div><button class="b" style="margin-top:9px;width:100%" onclick="mhV17Legal()">⚖️ Lancer le contrôle de la période</button>';sec.insertBefore(c,sec.children[2]||null);
   }
   function patchRender(){
     if(window.__mhV17Render)return;window.__mhV17Render=true;const old=window.renderAll;window.renderAll=function(){old();addReg();legalCard();injectHome();renderProjection();};
   }
-  function boot(){migrate();theme(DB.s.theme);if(document.getElementById('mhVersion'))document.getElementById('mhVersion').textContent='V21.0.0';buildNav();patchHome();patchRender();addReg();legalCard();injectHome();setTimeout(()=>{try{tab('home');if(typeof pushWidgetData==='function')pushWidgetData()}catch(e){console.error(e)}},0);}
+  function boot(){migrate();theme(DB.s.theme);if(document.getElementById('mhVersion'))document.getElementById('mhVersion').textContent='V22.0.0';buildNav();patchHome();patchRender();addReg();legalCard();injectHome();setTimeout(()=>{try{tab('home');if(typeof pushWidgetData==='function')pushWidgetData()}catch(e){console.error(e)}},0);}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
   window.matchMedia('(prefers-color-scheme: light)').addEventListener?.('change',()=>{if(DB.s.theme==='auto')theme('auto')});
 })();
