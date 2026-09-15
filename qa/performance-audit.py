@@ -12,6 +12,7 @@ checks={
     'backup debounced': '2000' in main,
     'renderer recovery': 'onRenderProcessGone' in main,
     'edge-to-edge': 'enableEdgeToEdge' in main,
+    'analysis uses shared DB': 'window.DB' not in (ROOT/'app/src/main/assets/web/scripts/app-v23.js').read_text(encoding='utf-8'),
     'adaptive activities': 'screenOrientation="portrait"' not in (ROOT/'app/src/main/AndroidManifest.xml').read_text(encoding='utf-8'),
 }
 for k,v in checks.items(): print(('PASS' if v else 'FAIL')+': '+k)

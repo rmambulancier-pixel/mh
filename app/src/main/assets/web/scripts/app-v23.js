@@ -10,7 +10,7 @@
   const fmtMin=m=>{m=Math.max(0,Math.round(Number(m)||0));return `${Math.floor(m/60)}h${String(m%60).padStart(2,'0')}`};
   const shortDate=k=>k?new Date(k+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'2-digit'}):'';
   const todayKey=()=>typeof today==='function'?today():new Date().toISOString().slice(0,10);
-  const validKeys=()=>Object.keys(window.DB?.days||{}).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
+  const validKeys=()=>Object.keys(DB?.days||{}).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
   const pastKeys=()=>validKeys().filter(k=>k<=todayKey());
 
   function activeIndex(){const t=typeof curTab==='string'?curTab:'home';return PAGES.indexOf(t)}
