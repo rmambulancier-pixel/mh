@@ -18,9 +18,3 @@
 - Modern Activity Result API for document flows.
 - WebView startup bootstrap, secure asset interception and renderer recovery.
 - Debounced local-storage bridge and non-UI widget persistence.
-
-
-## V24.0.0 navigation hotfix
-- Replaced conflicting tab wrapper with a single five-page router.
-- Analysis now explicitly mounts before navigation.
-- Primary navigation no longer leaves the previous page visible.

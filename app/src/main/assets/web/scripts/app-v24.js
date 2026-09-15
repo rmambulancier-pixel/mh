@@ -36,24 +36,15 @@
 
   function installTab(){
     if(window.__mhV24Tab)return;
-    const old=window.tab;
-    if(typeof old!=='function')return;
+    const old=window.tab;if(typeof old!=='function')return;
     window.__mhV24Tab=true;
     window.tab=function(t){
-      if(!PAGES.includes(t)){ old(t); setNav(); return; }
-      if(t==='jour' && !curDate){curDate=todayKey();curMonth=curDate.slice(0,7)}
-      if(t==='mois' && !curMonth){curMonth=todayKey().slice(0,7);curDate=todayKey()}
-      if(t==='analyse') ensureAnalysis();
-      curTab=t;
-      const all=['home','jour','mois','paie','audit','bul','romi','reg','analyse'];
-      all.forEach(x=>{const sec=$('s-'+x);if(sec)sec.classList.toggle('on',x===t);const btn=$('t-'+x);if(btn)btn.classList.toggle('on',x===t)});
-      document.documentElement.dataset.mhPage=t;
-      try{window.scrollTo(0,0)}catch{}
-      try{renderAll()}catch(e){console.warn('MesHeures navigation render',e)}
-      if(t==='analyse'){try{renderAnalysis()}catch(e){console.warn('MesHeures analyse render',e)}}
+      old(t);
       setNav();
-      window.MHStore?.emit?.();
+      if(PAGES.includes(t)) document.documentElement.dataset.mhPage=t;
+      window.MHStore.emit();
     };
+    /* Stop V23 from installing a second navigation implementation. */
     window.__mhV23TabPatched=true;
   }
 

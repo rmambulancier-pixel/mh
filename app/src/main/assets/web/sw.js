@@ -24,8 +24,8 @@ const SHELL = [
   './scripts/app-dossier.js',
   './scripts/app-reconciliation.js',
   './scripts/app-hybrid.js',
-  './scripts/app-v24.js',
   './scripts/app-v23.js',
+  './scripts/app-v24.js',
   './scripts/app-v23-features.js',
   './data/mesheures-default-backup.json'
 ];

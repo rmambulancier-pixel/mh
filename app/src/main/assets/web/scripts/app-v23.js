@@ -120,7 +120,7 @@
   }
 
   function boot(){
-    ensureAnalysis();patchTab();buildNav();patchTouch();
+    ensureAnalysis();patchTab();buildNav();
     const v=$('mhVersion');if(v)v.textContent='V24.0.0';
     const title=document.querySelector('.dash-greeting');if(title)title.textContent='Tableau de bord';
     const hs=$('homeBackupStatus');if(hs){hs.textContent='';hs.style.display='none'}

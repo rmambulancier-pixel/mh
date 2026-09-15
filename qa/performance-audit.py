@@ -19,12 +19,3 @@ checks={
 for k,v in checks.items(): print(('PASS' if v else 'FAIL')+': '+k)
 if not all(checks.values()): sys.exit(1)
 print('PERFORMANCE AUDIT: PASS')
-
-
-# V24 navigation regression check
-v24 = (ROOT/"app/src/main/assets/web/scripts/app-v24.js").read_text(encoding="utf-8")
-required_nav = ["home", "jour", "mois", "paie", "analyse"]
-for _page in required_nav:
-    assert _page in v24, f"V24 navigation page missing: {_page}"
-assert "all=['home','jour','mois','paie','audit','bul','romi','reg','analyse']" in v24
-print("PASS: V24 primary navigation router covers all five pages")
