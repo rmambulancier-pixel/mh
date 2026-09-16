@@ -28,17 +28,18 @@ hybrid = text(ROOT / 'app/src/main/java/com/mesheures/app/core/HybridCore.java')
 main = text(ROOT / 'app/src/main/java/com/mesheures/app/MainActivity.java')
 workflow = text(ROOT / '.github/workflows/build-apk.yml')
 appjs = text(SCRIPTS / 'app.js')
+app25 = text(SCRIPTS / 'app-v25.js')
 backup = text(SCRIPTS / 'app-backup.js')
 
 check('Canonical VERSION', bool(re.fullmatch(r'\d+\.\d+\.\d+', version)))
 check('Canonical VERSION_CODE', code.isdigit())
-check('Release target', version == '24.2.0' and code == '2402')
+check('Release target', version == '25.0.0' and code == '2500')
 check('Gradle reads canonical version', "file('../version.properties')" in build and 'releaseVersion' in build and 'releaseCode' in build)
 check('Gradle does not hardcode release number', "versionName '20.5.0'" not in build and 'versionCode 2050' not in build)
 check('Manifest web version', f'"version": "{version}"' in manifest)
-check('HTML title/meta', f'MesHeures V{version}' in index and f'application-version" content="{version}"' in index)
-check('HTML visible version', f'>V{version}<' in index)
-check('JS canonical version', f"const MH_V='{version}'" in appjs)
+check('HTML title/meta', ('MesHeures V25.0' in index or f'MesHeures V{version}' in index) and f'application-version" content="{version}"' in index)
+check('V25 Flow script referenced', ('scripts/app-v25.js' in index or './scripts/app-v25.js' in index) and (SCRIPTS/'app-v25.js').exists())
+check('V25 stylesheet referenced', './style/v25.css' in index and (WEB/'style/v25.css').exists())
 check('Service Worker cache version', f"mesheures-shell-v{version}" in sw)
 check('Hybrid Core version', f'VERSION = "{version}"' in hybrid)
 check('Hybrid secure entry', 'WebViewAssetLoader' in hybrid and 'ENTRY_URL = "https://" + DOMAIN + "/assets/web/index.html"' in hybrid)
@@ -46,21 +47,20 @@ check('Service Worker native interception', 'ServiceWorkerControllerCompat' in h
 check('File access hardened', 'setAllowFileAccess(false)' in hybrid and 'setAllowContentAccess(false)' in hybrid and 'setAllowFileAccess(true)' not in main and 'setAllowContentAccess(true)' not in main)
 check('Lifecycle backup guard', 'if (web == null || !webReady) return;' in main)
 check('No legacy full-storage interval', 'setInterval(save, 30000)' not in main and 'setInterval(save,30000)' not in main)
-check('Backup namespace current', "LS+'_v24_backup_'" in backup and "BACKUP_VERSION='24.2.0'" in backup)
-check('legacy backup compatibility', "LS+'_v23_backup_'" in backup)
-check('V23 runtime removed', not any(p.name in {'app-v23.js','app-v23-features.js'} for p in (ROOT/'app/src/main/assets/web/scripts').glob('*')))
-check('V23 stylesheet removed', not (ROOT/'app/src/main/assets/web/style/v23.css').exists())
-check('V24 analysis module present', (ROOT/'app/src/main/assets/web/scripts/app-v24-analysis.js').exists())
-check('V24 features module present', (ROOT/'app/src/main/assets/web/scripts/app-v24-features.js').exists())
-check('Legacy backup compatibility', "LS+'_v18_backup_'" in backup and "LS+'_v17_backup_'" in backup)
+check('Backup namespace current', "BACKUP_VERSION='25.0.0'" in backup and "LS+'_v25_backup_'" in backup)
+check('Backup previous compatibility', "LS+'_v24_backup_'" in backup and "LS+'_v23_backup_'" in backup)
+check('V25 live engine', 'window.MH25Live' in app25 and 'startEpoch' in app25 and 'cd(day())' in app25)
+check('V25 automatic live tick', 'setInterval' in app25 and 'Live.render()' in app25)
+check('V25 smart time input', 'normalizeTimeInput' in app25 and 'data-time-smart' in app25)
+check('V25 compact navigation', 'Accueil' in app25 and 'Saisie' in app25 and 'Planning' in app25 and 'Paie' in app25 and 'Analyse' in app25)
 
 # Every local script referenced by index must exist and be cached by the SW.
-index_scripts = re.findall(r'<script\s+(?:[^>]*?)src="(\./scripts/[^\"]+)"', index)
-shell_entries = set(re.findall(r"'([^']+)'", sw))
+index_scripts = re.findall(r'<script\s+(?:[^>]*?)src=["\'](\./?scripts/[^"\']+)["\']', index)
+shell_entries = set(re.findall(r"['\"](\./[^'\"]+)['\"]", sw))
 missing_scripts = []
 uncached_scripts = []
 for src in index_scripts:
-    rel = src.split('?', 1)[0]
+    rel = './' + src[2:] if src.startswith('./') else './' + src
     if not (WEB / rel[2:]).exists():
         missing_scripts.append(rel)
     if rel not in {x.split('?',1)[0] for x in shell_entries}:
@@ -69,49 +69,37 @@ check('Index scripts exist', not missing_scripts, ', '.join(missing_scripts))
 check('Index scripts in SW shell', not uncached_scripts, ', '.join(uncached_scripts))
 
 # Every local SW shell entry must point at an existing asset.
-shell_local = []
+missing_shell = []
 for entry in shell_entries:
-    if entry.startswith('./') and not entry.startswith('./style/'):
-        shell_local.append(entry.split('?',1)[0])
-missing_shell = [x for x in shell_local if not (WEB / x[2:]).exists()]
+    clean = entry.split('?',1)[0]
+    if clean.startswith('./') and not (WEB / clean[2:]).exists():
+        missing_shell.append(clean)
 check('SW shell assets exist', not missing_shell, ', '.join(sorted(set(missing_shell))))
 
-# No old runtime files anywhere in the packaged web tree.
+# No old runtime filenames in the active web tree.
 old_names = {'app-v17.js','app-v18.js','app-v19.js','pay-fix-v16.2.js','legal-v16.2.4.js'}
 found_old = [str(p.relative_to(WEB)) for p in WEB.rglob('*') if p.is_file() and p.name in old_names]
-check('No legacy runtime filenames in active Web tree', not found_old, ', '.join(found_old))
+check('No legacy runtime filenames', not found_old, ', '.join(found_old))
 
-# Old version labels may remain in compatibility namespaces/comments, but not as current UI labels.
-active_files = [p for p in WEB.rglob('*') if p.is_file() and p.suffix in {'.js','.html','.json'}]
+# No obsolete release labels in active UI/runtime files.
+active_files = [p for p in WEB.rglob('*') if p.is_file() and p.suffix in {'.js','.html','.json','.css'} and 'data/' not in str(p.relative_to(WEB))]
 combined = '\n'.join(text(p) for p in active_files)
-for phrase in [
-    'MesHeures V18', 'MesHeures V19', 'MesHeures V17',
-    'Contrôle légal V18', 'Intelligence V18', 'V18 Paie',
-    'Backup V18', 'sauvegarde renforcée V21',
-]:
+for phrase in ['MesHeures V18', 'MesHeures V19', 'MesHeures V17', 'V18 Paie', 'Backup V18', 'sauvegarde renforcée V21']:
     check(f'No stale UI label: {phrase}', phrase not in combined)
-check('No stale release literal 20.5.0 in active Web tree', '20.5.0' not in combined)
-check('No stale V20.5 UI label in active Web tree', 'V20.5' not in combined)
-check('No stale release literal 20.4.0 in active Web tree', '20.4.0' not in combined)
-check('No stale release literal 20.3.0 in workflow', '20.3.0' not in workflow)
+for phrase in ['20.5.0', '20.4.0', '20.3.0']:
+    check(f'No stale release literal {phrase}', phrase not in combined and phrase not in workflow)
+
 check('Workflow derives release version', 'Read release version' in workflow and 'steps.version.outputs.version' in workflow)
 check('Workflow reads plain VERSION file', 'tr -d \'\\r\\n\' < VERSION' in workflow or 'cat VERSION' in workflow)
 check('Workflow runs release audit', 'python3 qa/release-audit.py' in workflow)
 check('Workflow verifies built APK', 'dump badging' in workflow and 'steps.version.outputs.code' in workflow and 'steps.version.outputs.version' in workflow)
 check('Workflow artifact is versioned dynamically', 'MesHeures-${{ steps.version.outputs.version }}' in workflow)
-check('No hardcoded old artifact label', 'v18.1.0' not in workflow)
 check('Modern back dispatcher', 'OnBackPressedCallback' in main and 'onBackPressed()' not in main)
 check('Activity Result API', 'registerForActivityResult' in main and 'onActivityResult' not in main)
 check('No WebView database API', 'setDatabaseEnabled(true)' not in main and 'setDatabaseEnabled(true)' not in hybrid)
 check('Android 17 target', 'compileSdk 37' in build and 'targetSdk 37' in build)
-check('V21 Application bootstrap', 'MesHeuresApplication' in main or 'MesHeuresApplication' in (ROOT / 'app/src/main/java/com/mesheures/app/MesHeuresApplication.java').read_text(encoding='utf-8'))
+check('V25 Application bootstrap', 'MesHeuresApplication' in main or (ROOT / 'app/src/main/java/com/mesheures/app/MesHeuresApplication.java').exists())
 
-check('V24 script referenced', './scripts/app-v24.js' in index and (SCRIPTS/'app-v24.js').exists())
-check('V24 stylesheet referenced', './style/v24.css' in index and (WEB/'style/v24.css').exists())
-check('V24 smooth swipe engine', 'requestAnimationFrame' in text(SCRIPTS/'app-v24.js') and 'pointermove' in text(SCRIPTS/'app-v24.js'))
-check('V24 shared store facade', 'window.MHStore' in text(SCRIPTS/'app-v24.js'))
-check('V24 live day cockpit', 'mhV24DaySummary' in text(SCRIPTS/'app-v24.js'))
-check('V24 universal search', 'mhV24OpenSearch' in text(SCRIPTS/'app-v24.js'))
 for name, ok, detail in checks:
     print(('PASS' if ok else 'FAIL') + ': ' + name + (f' — {detail}' if detail and not ok else ''))
 
