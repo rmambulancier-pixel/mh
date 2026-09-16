@@ -205,7 +205,20 @@
 
   function patchTab(){
     const oldTab=window.tab;if(!oldTab||window.__mh25Tab)return;window.__mh25Tab=true;
-    window.tab=function(t){buildAnalysis();oldTab(t);if(t==='home')renderHome25();if(t==='jour')renderDay25();if(t==='analyse')renderAnalysis();Live.render();};
+    window.tab=function(t){
+      buildAnalysis();
+      oldTab(t);
+      // V25 owns the visible cockpit/editor/analysis, while Planning and Paie
+      // still use their mature calculation/render engines. Explicitly render
+      // those views after navigation so a V25 tab switch can never leave an
+      // empty shell behind.
+      if(t==='home')renderHome25();
+      if(t==='jour')renderDay25();
+      if(t==='mois')try{window.renderMonth?.();}catch(e){console.warn('month25 bridge',e)}
+      if(t==='paie')try{window.renderPay?.();}catch(e){console.warn('pay25 bridge',e)}
+      if(t==='analyse')renderAnalysis();
+      Live.render();
+    };
   }
 
   function boot(){
