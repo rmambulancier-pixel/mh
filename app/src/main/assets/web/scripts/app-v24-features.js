@@ -111,7 +111,12 @@ function inject(){
 }
 function refresh(){checkAutoStart();renderProactive();renderTPU();renderTimer()}
 function patch(name,after){const key='__mhV24_'+name;if(window[key]||typeof window[name]!=='function')return;const old=window[name];window[name]=function(){const r=old.apply(this,arguments);setTimeout(()=>{after();refresh();},0);return r};window[key]=true}
-function boot(){inject();patch('setD',notify);patch('setP',notify);patch('addP',notify);patch('delP',notify);patch('clearDay',notify);patch('dupliConfirm',notify);patch('renderDay',()=>{});refresh();if(boot.timer)clearInterval(boot.timer);boot.timer=setInterval(()=>{checkAutoStart();renderTimer();if(DB.days?.[today()]?.running)pushWidgetData?.()},1000)}
+// Android suspend le setInterval quand l'app passe en arrière-plan/écran éteint :
+// le chrono affiché peut alors geler pendant l'absence. On force un recalcul
+// complet dès que l'app redevient visible, pour que l'écran rattrape le temps
+// réellement écoulé au lieu d'attendre le prochain tick.
+function resyncOnResume(){checkAutoStart();if(typeof window.renderAll==='function')window.renderAll();else{renderDay();refresh()}}
+function boot(){inject();patch('setD',notify);patch('setP',notify);patch('addP',notify);patch('delP',notify);patch('clearDay',notify);patch('dupliConfirm',notify);patch('renderDay',()=>{});refresh();if(boot.timer)clearInterval(boot.timer);boot.timer=setInterval(()=>{checkAutoStart();renderTimer();if(DB.days?.[today()]?.running)pushWidgetData?.()},1000);if(!boot.resumeBound){boot.resumeBound=true;document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')resyncOnResume()});window.addEventListener('pageshow',resyncOnResume);window.addEventListener('focus',resyncOnResume)}}
 window.mhV24StartTimer=startTimer;window.mhV24StopTimer=stopTimer;window.mhV24ExportCPH=exportCPH;window.mhV24OCRBulletin=ocrBulletin;window.mhV24ProactiveScan=scan;
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else setTimeout(boot,0);
 })();
