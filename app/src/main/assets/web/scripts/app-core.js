@@ -242,6 +242,25 @@ window.mhCurrentPaySummary=function(){
   }catch(e){return null}
 };
 
+function recalculerJournee(debut, fin, pauses, coeff = 0.90) {
+  if (!debut || !fin) return { tte: 0, amplitude: 0, repas: 0 };
+
+  const startMin = toMinutes(debut);
+  const endMin = toMinutes(fin);
+  const amplitude = Math.max(0, endMin - startMin);
+  
+  const totalPauses = (pauses || []).reduce((acc, p) => acc + (toMinutes(p.fin) - toMinutes(p.debut)), 0);
+  
+  const tempsTravail = Math.max(0, amplitude - totalPauses);
+  const tte = Math.round(tempsTravail * coeff);
+
+  let repas = 0;
+  if (startMin <= 660 && endMin >= 870) repas += 1;
+  if (startMin <= 1110 && endMin >= 1320) repas += 1;
+
+  return { amplitude, tte, totalPauses, repas };
+}
+
 function minutesNuit(a,b,S){
   const nd=P(S.nuitDeb),nf=P(S.nuitFin);
   if(nd==null||nf==null||!S.nuitMaj)return 0;
