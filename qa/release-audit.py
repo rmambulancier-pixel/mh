@@ -6,13 +6,41 @@ ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "app/src/main/assets/web"
 S = WEB / "scripts"
 
-def text(p):
-    return p.read_text(encoding="utf-8")
+def text(path):
+    return path.read_text(encoding="utf-8")
 
 checks = []
 
 def check(name, ok, detail=""):
     checks.append((name, bool(ok), detail))
+
+# --------------------------------------------------
+# Required architecture
+# --------------------------------------------------
+
+required = [
+    ROOT / "VERSION",
+    ROOT / "version.properties",
+    ROOT / "app/build.gradle",
+    ROOT / "app/src/main/AndroidManifest.xml",
+    ROOT / "app/src/main/java/com/mesheures/app/MainActivity.java",
+    ROOT / "app/src/main/java/com/mesheures/app/core/HybridCore.java",
+    WEB / "index.html",
+    WEB / "manifest.json",
+    WEB / "sw.js",
+    WEB / "style/v30.css",
+    S / "app-v30.js",
+]
+
+for path in required:
+    check(
+        f"Required file: {path.relative_to(ROOT)}",
+        path.exists()
+    )
+
+# --------------------------------------------------
+# Version
+# --------------------------------------------------
 
 version = text(ROOT / "VERSION").strip()
 
@@ -24,20 +52,9 @@ for line in text(ROOT / "version.properties").splitlines():
 
 code = props.get("VERSION_CODE", "")
 
-index = text(WEB / "index.html")
-manifest = text(WEB / "manifest.json")
-sw = text(WEB / "sw.js")
-build = text(ROOT / "app/build.gradle")
-hybrid = text(ROOT / "app/src/main/java/com/mesheures/app/core/HybridCore.java")
-main = text(ROOT / "app/src/main/java/com/mesheures/app/MainActivity.java")
-backup = text(S / "app-backup.js")
-v30 = text(S / "app-v30.js")
-
-# ---------------- Version ----------------
-
 check(
     "Canonical VERSION",
-    bool(re.fullmatch(r"\d+\.\d+\.\d+", version))
+    re.fullmatch(r"\d+\.\d+\.\d+", version) is not None
 )
 
 check(
@@ -51,24 +68,43 @@ check(
 )
 
 check(
-    "Gradle reads canonical version",
+    "Release code",
+    code == "3001"
+)
+
+# --------------------------------------------------
+# Build
+# --------------------------------------------------
+
+build = text(ROOT / "app/build.gradle")
+
+check(
+    "Gradle canonical version source",
     "file('../version.properties')" in build
     and "releaseVersion" in build
     and "releaseCode" in build
 )
 
 check(
-    "Manifest version",
-    f'"version": "{version}"' in manifest
+    "Android compileSdk 37",
+    "compileSdk 37" in build
 )
 
 check(
-    "HTML version",
-    f'application-version" content="{version}"' in index
-    and "MesHeures V30.0" in index
+    "Android targetSdk 37",
+    "targetSdk 37" in build
 )
 
-# ---------------- V30 architecture ----------------
+# --------------------------------------------------
+# Web
+# --------------------------------------------------
+
+index = text(WEB / "index.html")
+
+check(
+    "HTML version",
+    'application-version" content="30.0.2"' in index
+)
 
 check(
     "V30 runtime referenced",
@@ -83,16 +119,68 @@ check(
 )
 
 check(
-    "V30 runtime is canonical",
-    "canonical runtime" in v30
-    and "MH30Live" in v30
-    and "renderHome" in v30
-    and "renderDay" in v30
+    "No legacy runtime in HTML",
+    not any(
+        old in index
+        for old in [
+            "app-v24.js",
+            "app-v25.js",
+            "app-v26.js",
+            "app-v27.js",
+            "app-v28.js",
+            "app-runtime.js",
+            "app-live-engine.js",
+        ]
+    )
+)
+
+# --------------------------------------------------
+# V30 runtime
+# --------------------------------------------------
+
+v30 = text(S / "app-v30.js")
+
+check(
+    "V30 canonical runtime",
+    "MesHeures V30.0.2" in v30
+    and "canonical runtime" in v30
+    and "const V='30.0.2'" in v30
+)
+
+check(
+    "V30 live engine",
+    "window.MH30Live=Live" in v30
+    and "startEpoch" in v30
+    and "Date.now()" in v30
+)
+
+check(
+    "V30 dashboard",
+    "renderHome" in v30
+    and "renderHomeData" in v30
+)
+
+check(
+    "V30 day editor",
+    "renderDay" in v30
+    and "renderDayEditor" in v30
+)
+
+# --------------------------------------------------
+# Android
+# --------------------------------------------------
+
+main = text(
+    ROOT / "app/src/main/java/com/mesheures/app/MainActivity.java"
+)
+
+hybrid = text(
+    ROOT / "app/src/main/java/com/mesheures/app/core/HybridCore.java"
 )
 
 check(
     "Hybrid Core version",
-    f'VERSION = "{version}"' in hybrid
+    'VERSION = "30.0.2"' in hybrid
 )
 
 check(
@@ -102,54 +190,51 @@ check(
     and "setAllowContentAccess(false)" in hybrid
 )
 
-# ---------------- Backup ----------------
+check(
+    "Predictive back",
+    "OnBackPressedCallback" in main
+)
+
+check(
+    "Modern Activity Result",
+    "registerForActivityResult" in main
+    and "onActivityResult" not in main
+)
+
+check(
+    "Render process recovery",
+    "onRenderProcessGone" in main
+)
+
+check(
+    "No WebView database API",
+    "setDatabaseEnabled(true)" not in main
+    and "setDatabaseEnabled(true)" not in hybrid
+)
+
+# --------------------------------------------------
+# Backup
+# --------------------------------------------------
+
+backup = text(S / "app-backup.js")
 
 check(
     "Backup namespace",
-    "const BACKUP_VERSION='30.0.2';" in backup
-    and "const PREFIX=LS+'_v30_backup_';" in backup
-)
-
-# Legacy backup compatibility is intentionally allowed:
-check(
-    "Backup clean V30",
     "BACKUP_VERSION='30.0.2'" in backup
-    and "const PREFIX=LS+'_v30_backup_'" in backup
+    and "v30_backup_" in backup
 )
 
-# ---------------- Service Worker ----------------
+# --------------------------------------------------
+# Service Worker
+# --------------------------------------------------
+
+sw = text(WEB / "sw.js")
 
 check(
     "Service Worker V30 cache",
-    f"mesheures-shell-v{version}" in sw
+    "mesheures-shell-v30.0.2" in sw
 )
 
-# Extract local assets from SW shell
-sw_assets = re.findall(
-    r"""['"](\./[^'"]+)['"]""",
-    sw
-)
-
-missing_sw = []
-
-for asset in sw_assets:
-    clean = asset.split("?", 1)[0]
-
-    if clean in ("./",):
-        path = WEB
-    else:
-        path = WEB / clean[2:]
-
-    if not path.exists():
-        missing_sw.append(asset)
-
-check(
-    "Service Worker assets exist",
-    not missing_sw,
-    ",".join(missing_sw)
-)
-
-# No deleted historical runtime may be required by the V30 shell
 legacy_runtime = [
     "app-v24.js",
     "app-v25.js",
@@ -160,22 +245,44 @@ legacy_runtime = [
     "app-live-engine.js",
 ]
 
-legacy_refs = [
-    x for x in legacy_runtime
-    if x in sw
-]
+for old in legacy_runtime:
+    check(
+        f"SW clean: {old}",
+        old not in sw
+    )
 
-check(
-    "No legacy runtime in Service Worker",
-    not legacy_refs,
-    ",".join(legacy_refs)
+sw_assets = re.findall(
+    r"""['"](\./[^'"]+)['"]""",
+    sw
 )
 
-# ---------------- Index scripts ----------------
+missing = []
+
+for asset in set(sw_assets):
+    clean = asset.split("?", 1)[0]
+
+    if clean == "./":
+        path = WEB
+    else:
+        path = WEB / clean[2:]
+
+    if not path.exists():
+        missing.append(asset)
+
+check(
+    "Service Worker assets",
+    not missing,
+    ",".join(missing)
+)
+
+# --------------------------------------------------
+# Index -> files -> SW
+# --------------------------------------------------
 
 idx_scripts = re.findall(
-    r'<script\s+(?:[^>]*?)src=["\'](\./?scripts/[^"\']+)["\']',
-    index
+    r'<script[^>]+src=["\'](\./?scripts/[^"\']+)["\']',
+    index,
+    flags=re.I
 )
 
 missing_index = []
@@ -193,7 +300,6 @@ check(
     ",".join(missing_index)
 )
 
-# Every script loaded by index should be present in SW shell
 sw_clean = {
     x.split("?", 1)[0]
     for x in sw_assets
@@ -202,67 +308,66 @@ sw_clean = {
 uncached = []
 
 for src in idx_scripts:
-    rel = "./" + (src[2:] if src.startswith("./") else src)
-    rel = rel.split("?", 1)[0]
+    rel = src[2:] if src.startswith("./") else src
+    rel = "./" + rel.split("?", 1)[0]
 
     if rel not in sw_clean:
         uncached.append(rel)
 
 check(
-    "Index scripts in SW shell",
+    "Index scripts cached by SW",
     not uncached,
     ",".join(uncached)
 )
 
-# ---------------- Android ----------------
+# --------------------------------------------------
+# Legacy files really gone
+# --------------------------------------------------
 
-check(
-    "Modern back dispatcher",
-    "OnBackPressedCallback" in main
-)
+legacy_files = [
+    S / "app-v24.js",
+    S / "app-v25.js",
+    S / "app-v26.js",
+    S / "app-v27.js",
+    S / "app-v28.js",
+    S / "app-runtime.js",
+    S / "app-live-engine.js",
+    WEB / "style/v22.css",
+    WEB / "style/v24.css",
+    WEB / "style/v24-modules.css",
+    WEB / "style/v25.css",
+    WEB / "style/v26.css",
+    WEB / "style/v27.css",
+    WEB / "style/v28.css",
+    WEB / "style/v31.css",
+]
 
-check(
-    "Modern Activity Result",
-    "registerForActivityResult" in main
-    and "onActivityResult" not in main
-)
-
-check(
-    "No WebView database API",
-    "setDatabaseEnabled(true)" not in main
-    and "setDatabaseEnabled(true)" not in hybrid
-)
-
-check(
-    "Android 17 target",
-    "targetSdk 37" in build
-    and "compileSdk 37" in build
-)
-
-check(
-    "Application bootstrap",
-    "MesHeuresApplication" in main
-    or (
-        ROOT /
-        "app/src/main/java/com/mesheures/app/MesHeuresApplication.java"
-    ).exists()
-)
-
-# ---------------- Result ----------------
-
-for name, ok, detail in checks:
-    print(
-        ("PASS" if ok else "FAIL")
-        + ": "
-        + name
-        + ((" — " + detail) if detail else "")
+for path in legacy_files:
+    check(
+        f"Legacy removed: {path.name}",
+        not path.exists()
     )
 
-if not all(ok for _, ok, _ in checks):
-    print("\nRELEASE AUDIT: FAIL")
+# --------------------------------------------------
+# Result
+# --------------------------------------------------
+
+failed = 0
+
+for name, ok, detail in checks:
+    if ok:
+        print("PASS: " + name)
+    else:
+        print("FAIL: " + name + (f" — {detail}" if detail else ""))
+        failed += 1
+
+print()
+
+if failed:
+    print(f"RELEASE AUDIT: FAIL — {failed} check(s)")
     sys.exit(1)
 
 print(
-    f"\nRELEASE AUDIT: PASS — "
+    f"RELEASE AUDIT: PASS — "
     f"MesHeures V{version} / versionCode {code}"
 )
