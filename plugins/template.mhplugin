@@ -1,0 +1,14 @@
+{
+  "format": "MesHeures Plugin",
+  "manifest": {
+    "id": "mon-plugin-exemple",
+    "name": "Mon plugin",
+    "version": "1.0.0",
+    "author": "Votre nom",
+    "description": "Exemple de plugin MesHeures en lecture seule.",
+    "permissions": ["snapshot"]
+  },
+  "html": "<div><h2>Mon plugin</h2><div id=\"out\">Chargement…</div></div>",
+  "css": "body{font:15px system-ui;background:#0d1117;color:#e6edf3;padding:18px}",
+  "script": "parent.postMessage({type:'mhx-request',action:'snapshot'},'*'); window.addEventListener('message',e=>{if(e.data?.type==='mhx-data')document.getElementById('out').textContent=JSON.stringify(e.data.data,null,2)})"
+}
