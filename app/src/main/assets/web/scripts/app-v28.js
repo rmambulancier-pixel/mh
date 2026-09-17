@@ -171,7 +171,7 @@
     document.title='MesHeures V28.0';
     patchSave();
     /* Retire le scheduler V25 : V28 is the only runtime owner. */
-    try{if(window.Live?.tick){clearInterval(window.Live.tick);window.Live.tick=null}}catch(e){}
+    try{if(window.MH25Live?.tick){clearInterval(window.MH25Live.tick);window.MH25Live.tick=null}}catch(e){}
     window.renderHome=renderHome;
     window.MH28={version:V,engine,navigate:navigation,refresh:()=>schedule('refresh'),invalidate:r=>engine.invalidate(r),stats:()=>engine.stats()};
     window.tab=navigation;
