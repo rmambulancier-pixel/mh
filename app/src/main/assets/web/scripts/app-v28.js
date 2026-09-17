@@ -2,6 +2,9 @@
  * V28 owns the runtime. Data is memoized, invalidated after mutations and
  * rendered incrementally. The restored home is intentionally the rich cockpit:
  * Intelligence -> Tableau de bord -> Live -> actions -> today -> quatorzaine.
+/* MesHeures V28 — Data Engine + Render Scheduler
+ * Goal: one canonical data pipeline, memoized derived metrics, and zero full
+ * dashboard redraws for the live clock. Legacy UI remains the visual source.
  */
 (function(){
   'use strict';
