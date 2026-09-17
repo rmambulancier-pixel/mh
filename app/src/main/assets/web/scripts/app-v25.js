@@ -18,6 +18,11 @@
     return DB.days[k];
   }
   function nowHHMM(){const n=new Date();return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');}
+  function debEpoch(k,hhmm){
+    if(!hhmm||!/^\d{1,2}:\d{2}$/.test(hhmm))return Date.now();
+    const d=new Date(k+'T'+hhmm.padStart(5,'0')+':00');
+    return isNaN(d.getTime())?Date.now():d.getTime();
+  }
 
   /* ---------- Live service: DB-backed, restart-safe ---------- */
   const Live={
@@ -26,8 +31,8 @@
     elapsedMs(){const d=dayData();if(!this.active())return 0;return Math.max(0,Date.now()-Number(d.startEpoch));},
     elapsedClock(){const s=Math.floor(this.elapsedMs()/1000);return `${Math.floor(s/3600)}h${String(Math.floor((s%3600)/60)).padStart(2,'0')}`;},
     start(){
-      const k=day(),d=ensureDay(k),now=Date.now(),t=nowHHMM();
-      d.t='T';d.deb=d.deb||t;d.fin=null;d.running=true;d.startEpoch=now;
+      const k=day(),d=ensureDay(k),t=nowHHMM();
+      d.t='T';d.deb=d.deb||t;d.fin=null;d.running=true;d.startEpoch=debEpoch(k,d.deb);
       d.p=d.p||[];
       if(typeof save==='function')save();
       this.render();
@@ -60,8 +65,18 @@
   window.MH25Live=Live;
 
   function quickSetTime(k,field,value){
-    const d=ensureDay(k);d.t='T';d[field]=value;d.running=false;if(field==='fin')d.startEpoch=0;
+    const d=ensureDay(k);d.t='T';d[field]=value;
+    if(field==='deb'){
+      // Saisir l'heure de début démarre le direct tout seul (si le jour est
+      // aujourd'hui et pas déjà clôturé), en comptant depuis cette heure-là
+      // et non depuis l'instant de la saisie.
+      if(k===day()&&value&&!d.fin){d.running=true;d.startEpoch=debEpoch(k,value);}
+      else{d.running=false;d.startEpoch=0;}
+    }
+    if(field==='fin'){d.running=false;d.startEpoch=0;}
     if(typeof save==='function')save();renderDay();
+    if(typeof Live!=='undefined')Live.render();
+    if(typeof renderAll==='function')renderAll();
   }
   window.mh25SetTime=quickSetTime;
 
