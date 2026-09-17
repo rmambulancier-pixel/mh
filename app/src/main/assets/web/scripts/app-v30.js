@@ -396,7 +396,7 @@
   function boot(){
     if(booted)return; booted=true;
     document.documentElement.dataset.mhVersion=V;
-    if($('mhVersion'))$('mhVersion').textContent='V30.0.1';
+    if($('mhVersion'))$('mhVersion').textContent='V30.0.2';
     document.title='MesHeures V30.0';
     patchSave();
     if(window.__mh30PendingRefresh){ const pending=window.__mh30PendingRefresh; delete window.__mh30PendingRefresh; }

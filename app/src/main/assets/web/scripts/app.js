@@ -448,7 +448,7 @@ if('serviceWorker' in navigator){
    V15 — INTELLIGENCE / SÉCURITÉ / MODE PRO
    Couche additive : ne modifie pas les règles de calcul historiques.
 ═══════════════════════════════════════════════ */
-const MH_V='30.0.1';
+const MH_V='30.0.2';
 
 function mhMonthStatsRaw(ym){
   const [y,m]=ym.split('-').map(Number), last=isoOf(new Date(y,m+1,0));
