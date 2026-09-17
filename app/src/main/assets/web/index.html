@@ -567,5 +567,19 @@ html[data-theme="light"]{background:#f5f7f9!important;color-scheme:light}
 <script defer src="./scripts/app-hybrid.js"></script>
 <script defer src="scripts/app-v30.js"></script>
 <script>(function(){var hide=function(){var s=document.getElementById('mhSplash');if(s)s.classList.add('off')};setTimeout(hide,300);setTimeout(hide,1000);})();</script>
+<script>
+/* V30 BOOT WATCHDOG */
+(function(){
+  setTimeout(function(){
+    try{
+      if(window.MH30 && typeof window.MH30.refresh==="function"){
+        window.MH30.refresh("watchdog");
+      }
+    }catch(e){
+      console.error("[V30 BOOT]",e);
+    }
+  },50);
+})();
+</script>
 </body>
 </html>
