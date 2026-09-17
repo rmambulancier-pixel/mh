@@ -220,7 +220,7 @@ backup = text(S / "app-backup.js")
 
 check(
     "Backup namespace",
-    "BACKUP_VERSION='30.0.2'" in backup
+    "BACKUP_VERSION='" + version + "'" in backup
     and "v30_backup_" in backup
 )
 
