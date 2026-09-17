@@ -1,16 +1,16 @@
-/* MesHeures V28.0.0 — interface, projection, conformité et migrations.
+/* MesHeures V30.0.0 — interface, projection, conformité et migrations.
    Le préfixe mhV17 est conservé uniquement comme namespace de compatibilité avec les données/UI V17. */
 (function(){
-  const V='28.0.0';
+  const V='30.0.0';
   function migrate(){
-    DB.s=DB.s||{};
-    if(DB.s.taux===14.02)DB.s.taux=14.20;
-    if(!DB.s.theme)DB.s.theme='auto';
-    DB.s.appVersion=V;
-    save();
+    DB.s=DB.s||{}; let changed=false;
+    if(DB.s.taux===14.02){DB.s.taux=14.20;changed=true;}
+    if(!DB.s.theme){DB.s.theme='auto';changed=true;}
+    if(DB.s.appVersion!==V){DB.s.appVersion=V;changed=true;}
+    if(changed)save();
   }
   function theme(t){
-    t=t||DB.s.theme||'auto';DB.s.theme=t;save();
+    t=t||DB.s.theme||'auto';if(DB.s.theme!==t){DB.s.theme=t;save();}
     const root=document.documentElement;
     const resolved=t==='auto'?(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'):t;
     root.dataset.theme=resolved;
