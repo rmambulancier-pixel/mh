@@ -316,7 +316,7 @@
     if(t==='jour')safe(window.renderDay,'day');
     else if(t==='mois')safe(window.renderMonth,'month');
     else if(t==='paie')safe(window.renderPay,'pay');
-    else if(t==='analyse')safe(window.renderAnalysis,'analysis');
+    else if(t==='analyse')safe(window.MH30RenderAnalysis,'analysis');
     else if(t==='audit')safe(window.renderAudit,'audit');
     else if(t==='bul')safe(window.renderBulHist,'bulletins');
     else if(t==='romi')safe(window.renderRomiTab,'romi');
