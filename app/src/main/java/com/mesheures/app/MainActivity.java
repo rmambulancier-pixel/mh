@@ -293,7 +293,22 @@ public class MainActivity extends ComponentActivity {
     private void installModernBack() {
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override public void handleOnBackPressed() {
-                if (web != null && web.canGoBack()) web.goBack(); else finish();
+                if (web == null) {
+                    finish();
+                    return;
+                }
+
+                web.evaluateJavascript(
+                    "(function(){try{" +
+                    "if(window.MH30&&typeof window.MH30.goBack==='function')" +
+                    "return String(window.MH30.goBack());" +
+                    "if(window.curTab&&window.curTab!=='home'&&typeof window.tab==='function')" +
+                    "{window.tab('home');return 'true';}" +
+                    "}catch(e){}return 'false';})()",
+                    value -> {
+                        if (!"\"true\"".equals(value)) finish();
+                    }
+                );
             }
         });
     }

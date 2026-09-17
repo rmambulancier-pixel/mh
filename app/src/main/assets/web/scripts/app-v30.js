@@ -235,7 +235,7 @@
     window.__mh30SavePatch=true;
   }
 
-  let raf=0,liveTimer=0,booted=false,activeStructure='';
+  let raf=0,liveTimer=0,booted=false,activeStructure='',navHistory=['home'];
   let dirty=new Set(['home']);
   function safe(fn,label){try{return typeof fn==='function'?fn():null}catch(e){console.warn('MesHeures V30 '+label,e);return null}}
   function schedule(reason){
@@ -336,7 +336,22 @@
     SECTIONS.forEach(x=>{$('s-'+x)?.classList.toggle('on',x===t);$('t-'+x)?.classList.toggle('on',x===t)});
     window.scrollTo(0,0);
   }
-  function navigation(t){activate(t);dirty.add(t);schedule('navigate');}
+  function navigation(t){
+    t=t||'home';
+    if(t!==(window.curTab||'home'))navHistory.push(t);
+    activate(t);
+    dirty.add(t);
+    schedule('navigate');
+  }
+  function goBack(){
+    if(navHistory.length<=1)return false;
+    navHistory.pop();
+    const prev=navHistory[navHistory.length-1]||'home';
+    activate(prev);
+    dirty.add(prev);
+    schedule('back');
+    return true;
+  }
 
   async function notifySystem(title,body,tag){try{if('Notification' in window&&Notification.permission==='granted'){new Notification(title,{body,tag});return true}const reg=await navigator.serviceWorker?.ready;if(reg?.showNotification)return reg.showNotification(title,{body,tag});}catch(e){}return false}
 
@@ -407,8 +422,9 @@
     /* Final compatibility boundary: legacy renderAll callers are routed into the
        reactive scheduler instead of executing the historical full redraw chain. */
     window.renderAll=function(reason){ return schedule(reason||'legacy-renderAll'); };
-    window.MH30={version:V,navigate:navigation,refresh:(reason)=>schedule(reason||'refresh'),invalidate:r=>window.MH30DataEngine?.invalidate?.(r),stats:()=>window.MH30DataEngine?.stats?.()};
+    window.MH30={version:V,navigate:navigation,goBack:goBack,refresh:(reason)=>schedule(reason||'refresh'),invalidate:r=>window.MH30DataEngine?.invalidate?.(r),stats:()=>window.MH30DataEngine?.stats?.()};
     window.tab=navigation;
+    buildAnalysis();
     activate(window.curTab||'home');
     dirty=new Set(SECTIONS.filter(x=>$('s-'+x)));
     schedule('boot');
