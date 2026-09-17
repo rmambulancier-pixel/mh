@@ -448,7 +448,7 @@ if('serviceWorker' in navigator){
    V15 — INTELLIGENCE / SÉCURITÉ / MODE PRO
    Couche additive : ne modifie pas les règles de calcul historiques.
 ═══════════════════════════════════════════════ */
-const MH_V='30.0.1';
+const MH_V='30.0.2';
 
 function mhMonthStatsRaw(ym){
   const [y,m]=ym.split('-').map(Number), last=isoOf(new Date(y,m+1,0));
@@ -725,7 +725,7 @@ function mhDecoratePages(){
   });
 }
 
-if($('mhVersion'))$('mhVersion').textContent='V30.0.0';
+if($('mhVersion'))$('mhVersion').textContent='V30.0.2';
 mhDecoratePages();
 mhAutoBackup();
 setTimeout(()=>{try{mhRefresh('boot-legacy')}catch(e){console.error('V15 render',e)}},0);

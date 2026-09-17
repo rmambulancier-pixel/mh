@@ -1,24 +1,124 @@
 from pathlib import Path
 import sys
-ROOT=Path(__file__).resolve().parents[1]; WEB=ROOT/'app/src/main/assets/web'; S=WEB/'scripts'
-main=(ROOT/'app/src/main/java/com/mesheures/app/MainActivity.java').read_text(); hybrid=(ROOT/'app/src/main/java/com/mesheures/app/core/HybridCore.java').read_text(); index=(WEB/'index.html').read_text(); manifest=(ROOT/'app/src/main/AndroidManifest.xml').read_text(); v27=(S/'app-v27.js').read_text()
-v28=(S/'app-v28.js').read_text(); v25=(S/'app-v25.js').read_text()
-checks={
-'predictive back':'OnBackPressedCallback' in main,
-'modern activity results':'registerForActivityResult' in main and 'onActivityResult' not in main,
-'secure file access':'setAllowFileAccess(false)' in main and 'setAllowContentAccess(false)' in main,
-'no database API':'setDatabaseEnabled(true)' not in main and 'setDatabaseEnabled(true)' not in hybrid,
-'render process recovery':'onRenderProcessGone' in main,
-'edge-to-edge':'enableEdgeToEdge' in main,
-'V30 loaded':'scripts/app-v28.js' in index,
-'V30 batched rendering':'requestAnimationFrame' in v28 and 'let raf=0' in v28,
-'V30 adaptive live timer':'setTimeout(liveTick,15000)' in v28 and 'clearTimeout(liveTimer)' in v28 and 'stopLive' in v28,
-'V30 navigation owner':'window.MH28' in v28 and 'window.tab=navigation' in v28 and 'activate(t)' in v28,
-'V25 live DB state':'DB.days' in v25 and 'startEpoch' in v25 and 'Date.now()' in v25,
-'V25 canonical calculations':'cd(day())' in v25,
-'V25 smart time entry':'normalizeTimeInput' in v25 and 'data-time-smart' in v25,
-'adaptive activities':'screenOrientation="portrait"' not in manifest,
+
+ROOT = Path(__file__).resolve().parents[1]
+WEB = ROOT / "app/src/main/assets/web"
+S = WEB / "scripts"
+
+def read(p):
+    return p.read_text(encoding="utf-8")
+
+main = read(ROOT / "app/src/main/java/com/mesheures/app/MainActivity.java")
+hybrid = read(ROOT / "app/src/main/java/com/mesheures/app/core/HybridCore.java")
+index = read(WEB / "index.html")
+manifest = read(ROOT / "app/src/main/AndroidManifest.xml")
+build = read(ROOT / "app/build.gradle")
+v30 = read(S / "app-v30.js")
+sw = read(WEB / "sw.js")
+
+checks = {
+    "predictive back":
+        "OnBackPressedCallback" in main,
+
+    "modern activity result":
+        "registerForActivityResult" in main
+        and "onActivityResult" not in main,
+
+    "secure WebView":
+        "WebViewAssetLoader" in hybrid
+        and "setAllowFileAccess(false)" in hybrid
+        and "setAllowContentAccess(false)" in hybrid,
+
+    "render process recovery":
+        "onRenderProcessGone" in main,
+
+    "edge to edge":
+        "enableEdgeToEdge" in main,
+
+    "no WebView database API":
+        "setDatabaseEnabled(true)" not in main
+        and "setDatabaseEnabled(true)" not in hybrid,
+
+    "V30 runtime loaded":
+        "scripts/app-v30.js" in index
+        and (S / "app-v30.js").exists(),
+
+    "V30 stylesheet loaded":
+        "./style/v30.css" in index
+        and (WEB / "style/v30.css").exists(),
+
+    "V30 canonical runtime":
+        "MesHeures V30.0.2" in v30
+        and "canonical runtime" in v30
+        and "const V='30.0.2'" in v30,
+
+    "V30 live engine":
+        "window.MH30Live=Live" in v30
+        and "startEpoch" in v30
+        and "Date.now()" in v30,
+
+    "V30 dashboard":
+        "renderHome" in v30
+        and "renderHomeData" in v30,
+
+    "V30 day editor":
+        "renderDay" in v30
+        and "renderDayEditor" in v30,
+
+    "V30 smart time":
+        "normalizeTimeInput" in v30
+        and "data-time-smart" in v30,
+
+    "V30 refresh":
+        "mhRefresh" in v30
+        and "live-mutation" in v30,
+
+    "adaptive UI":
+        'screenOrientation="portrait"' not in manifest,
+
+    "Android 17 compile":
+        "compileSdk 37" in build,
+
+    "Android 17 target":
+        "targetSdk 37" in build,
+
+    "V30 Service Worker":
+        "mesheures-shell-v30.0.2" in sw,
+
+    "no legacy Service Worker":
+        not any(x in sw for x in (
+            "app-v24.js",
+            "app-v25.js",
+            "app-v26.js",
+            "app-v27.js",
+            "app-v28.js",
+            "app-runtime.js",
+            "app-live-engine.js",
+        )),
+
+    "no legacy HTML":
+        not any(x in index for x in (
+            "app-v24.js",
+            "app-v25.js",
+            "app-v26.js",
+            "app-v27.js",
+            "app-v28.js",
+            "app-runtime.js",
+            "app-live-engine.js",
+        )),
 }
-for k,v in checks.items(): print(('PASS' if v else 'FAIL')+': '+k)
-if not all(checks.values()): sys.exit(1)
-print('PERFORMANCE AUDIT: PASS')
+
+failed = 0
+
+for name, ok in checks.items():
+    print(("PASS" if ok else "FAIL") + ": " + name)
+    if not ok:
+        failed += 1
+
+if failed:
+    print()
+    print("PERFORMANCE AUDIT: FAIL")
+    sys.exit(1)
+
+print()
+print("PERFORMANCE AUDIT: PASS — MesHeures V30.0.2")

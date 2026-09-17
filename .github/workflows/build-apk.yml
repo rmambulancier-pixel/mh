@@ -2,7 +2,7 @@ name: build
 
 on:
   push:
-    branches: [main]
+    branches: [main, v30.0.2-clean]
   workflow_dispatch:
 
 permissions:
