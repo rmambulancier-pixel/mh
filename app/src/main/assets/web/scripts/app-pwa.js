@@ -1,7 +1,9 @@
-/* MesHeures V27.0.0 — persistance locale + synchronisation widget Android. */
+/* MesHeures V28.0.0 — persistance locale + synchronisation widget Android. */
 function save(){
-  try{localStorage.setItem(LS,JSON.stringify(DB))}
+  let persisted=false;
+  try{localStorage.setItem(LS,JSON.stringify(DB));persisted=true}
   catch(e){alert('Stockage plein : exportez vos données !\n'+e.message)}
+  if(persisted&&window.MH28DataEngine)window.MH28DataEngine.invalidate('save');
   pushWidgetData();
 }
 

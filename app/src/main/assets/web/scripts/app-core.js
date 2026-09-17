@@ -100,7 +100,7 @@ function calcAnc(emb){
 }
 
 
-function cd(k){
+function cdRaw(k){
   const d=DB.days[k],S=DB.s;
   const r={amp:0,tte:0,seuil:0,idaj:0,ir:0,iru:0,rc:0,fer:0,dim:0,trav:0,pz:0,nuit:0,al:[],deb:null,fin:null,t:d?d.t:null};
   if(!d)return r;
@@ -159,6 +159,52 @@ function cd(k){
   return r;
 }
 
+/* V28 DATA ENGINE — canonical memoized calculation layer.
+ * Raw records remain in DB. Derived legal/pay metrics are cached by revision.
+ * A save() invalidates the revision; renders then reuse the same computed snapshot.
+ */
+const MH28DataEngine=(function(){
+  let revision=0;
+  const dayCache=new Map(), monthCache=new Map(), periodCache=new Map(), brutCache=new Map();
+  function invalidate(reason){
+    revision++;
+    dayCache.clear(); monthCache.clear(); periodCache.clear(); brutCache.clear();
+    try{document.dispatchEvent(new CustomEvent('mh28:data-invalidated',{detail:{revision,reason:reason||'state'}}))}catch(e){}
+    return revision;
+  }
+  function day(k){
+    if(dayCache.has(k))return dayCache.get(k);
+    const r=cdRaw(k); dayCache.set(k,r); return r;
+  }
+  function month(ym){
+    if(monthCache.has(ym))return monthCache.get(ym);
+    const [y,m]=ym.split('-').map(Number),last=isoOf(new Date(y,m+1,0));
+    const out={amp:0,tte:0,trav:0,ir:0,iru:0,idaj:0,nuit:0,fer:0,dim:0,alerts:[],hard:0,warn:0,days:0};
+    for(let k=ym+'-01';k<=last;k=addD(k,1)){
+      const r=day(k),d=DB.days[k];
+      if(d)out.days++;
+      out.amp+=r.amp;out.tte+=r.tte;out.trav+=r.trav;out.ir+=r.ir;out.iru+=r.iru;out.idaj+=r.idaj;out.nuit+=r.nuit;out.fer+=r.fer;out.dim+=r.dim;
+      r.al.forEach(a=>{out.alerts.push({k,...a});a.lvl==='b'?out.hard++:out.warn++});
+    }
+    monthCache.set(ym,out); return out;
+  }
+  function period(start,nb){
+    const key=start+'|'+nb;
+    if(periodCache.has(key))return periodCache.get(key);
+    /* calcPer is patched below to call cd(), so this delegates to the canonical engine. */
+    const result=calcPerRaw(start,nb); periodCache.set(key,result); return result;
+  }
+  function brut(G){
+    const key=JSON.stringify(G);
+    if(brutCache.has(key))return brutCache.get(key);
+    const result=brutOfRaw(G); brutCache.set(key,result); return result;
+  }
+  function stats(){return {revision,day:dayCache.size,month:monthCache.size,period:periodCache.size,brut:brutCache.size}}
+  return {invalidate,day,month,period,brut,stats};
+})();
+function cd(k){return MH28DataEngine.day(k)}
+window.MH28DataEngine=MH28DataEngine
+
 // Current — canonical read-only day metrics for dossier/reconciliation/plugins.
 // Raw DB.days entries intentionally remain untouched; all derived legal metrics come from cd().
 window.mhCalcDay = function(k){
@@ -166,7 +212,7 @@ window.mhCalcDay = function(k){
   catch(e){return {amp:0,tte:0,pz:0,al:[],trav:0,seuil:0,idaj:0,ir:0,iru:0,rc:0,fer:0,dim:0,nuit:0}}
 };
 
-function calcPer(start,nb){
+function calcPerRaw(start,nb){
   const S=DB.s,Q=[],AL=[];
   let pk=null,pe=null;
   const G={amp:0,tte:0,seuil:0,trav:0,idaj:0,ir:0,iru:0,rc:0,fer:0,dim:0,nuit:0,nor:0,h25:0,h50:0,hab:0,ferJ:[],dimJ:[]};
@@ -208,7 +254,7 @@ function calcPer(start,nb){
   return{Q,AL,G};
 }
 
-function brutOf(G){
+function brutOfRaw(G){
   const S=DB.s,T=S.taux,L=[];
   const anc=calcAnc(S.emb);
   const ancPct=S.anc||anc.pct;
@@ -252,3 +298,7 @@ function minutesNuit(a,b,S){
   }
   return mn;
 }
+
+function calcPer(start,nb){return MH28DataEngine.period(start,nb)}
+function brutOf(G){return MH28DataEngine.brut(G)}
+

@@ -1,8 +1,9 @@
-/* MesHeures V27 — sauvegarde locale renforcée, JSON versionné et restauration sûre */
+/* MesHeures V28 — sauvegarde locale renforcée, JSON versionné et restauration sûre */
 (function(){
-  const BACKUP_VERSION='27.0.0';
-  const PREFIX=LS+'_v27_backup_';
-  const PREV_PREFIX=LS+'_v26_backup_';
+  const BACKUP_VERSION='28.0.0';
+  const PREFIX=LS+'_v28_backup_';
+  const PREV_PREFIX=LS+'_v27_backup_';
+  const LEGACY_V26_PREFIX=LS+'_v26_backup_';
   const LEGACY_V25_PREFIX=LS+'_v25_backup_';
   const LEGACY_V24_PREFIX=LS+'_v24_backup_';
   const LEGACY_V23_PREFIX=LS+'_v23_backup_';
@@ -27,7 +28,7 @@
   }
   function listKeys(){
     return Object.keys(localStorage)
-      .filter(k=>k.indexOf(PREFIX)===0 || k.indexOf(PREV_PREFIX)===0 || k.indexOf(LEGACY_V25_PREFIX)===0 || k.indexOf(LEGACY_V24_PREFIX)===0 || k.indexOf(LEGACY_V23_PREFIX)===0 || k.indexOf(LEGACY_PREFIX)===0 || k.indexOf(LEGACY_V17_PREFIX)===0)
+      .filter(k=>k.indexOf(PREFIX)===0 || k.indexOf(PREV_PREFIX)===0 || k.indexOf(LEGACY_V26_PREFIX)===0 || k.indexOf(LEGACY_V25_PREFIX)===0 || k.indexOf(LEGACY_V24_PREFIX)===0 || k.indexOf(LEGACY_V23_PREFIX)===0 || k.indexOf(LEGACY_PREFIX)===0 || k.indexOf(LEGACY_V17_PREFIX)===0)
       .sort()
       .reverse();
   }
@@ -37,7 +38,7 @@
   }
   function stamp(){
     const now=new Date().toISOString();
-    localStorage.setItem(LS+'_v27_last',now);
+    localStorage.setItem(LS+'_v28_last',now);
     localStorage.setItem(LS+'_manualAt',now);
     return now;
   }
@@ -75,7 +76,7 @@
 
   window.mhV17BackupStatus=function(){
     const keys=listKeys();
-    let last=localStorage.getItem(LS+'_v27_last')||localStorage.getItem(LS+'_v26_last')||localStorage.getItem(LS+'_v23_last')||localStorage.getItem(LS+'_v21_last')||localStorage.getItem(LS+'_v18_last')||localStorage.getItem(LS+'_v17_last')||'';
+    let last=localStorage.getItem(LS+'_v28_last')||localStorage.getItem(LS+'_v26_last')||localStorage.getItem(LS+'_v23_last')||localStorage.getItem(LS+'_v21_last')||localStorage.getItem(LS+'_v18_last')||localStorage.getItem(LS+'_v17_last')||'';
     if(!last&&keys.length){
       try{last=JSON.parse(localStorage.getItem(keys[0]))?.createdAt||''}catch(e){}
     }
@@ -87,7 +88,7 @@
       const s=snapshot();s.reason='export';
       const result=window.mhV17Backup('export');
       if(!result.ok)throw new Error('Impossible de créer le point de sécurité avant export.');
-      const mode=window.mhDownloadFile('MesHeures-backup-V27-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(s,null,2),'application/json;charset=utf-8');
+      const mode=window.mhDownloadFile('MesHeures-backup-V28-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(s,null,2),'application/json;charset=utf-8');
       return !!mode;
     }catch(e){alert('❌ Export impossible : '+e.message);return false;}
   };
@@ -114,7 +115,7 @@
 
   window.mhV17ListBackups=function(){
     return listKeys().map(k=>{
-      try{const s=JSON.parse(localStorage.getItem(k));return {key:k,date:s.createdAt,version:s.version||'27.0.0',reason:s.reason||''};}
+      try{const s=JSON.parse(localStorage.getItem(k));return {key:k,date:s.createdAt,version:s.version||'28.0.0',reason:s.reason||''};}
       catch(e){return null;}
     }).filter(Boolean);
   };

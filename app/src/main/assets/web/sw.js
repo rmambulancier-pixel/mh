@@ -1,13 +1,13 @@
-const CACHE = 'mesheures-shell-v27.0.0';
+const CACHE = 'mesheures-shell-v28.0.0';
 const SHELL = [
   './',
   './index.html',
   './manifest.json',
   './icon.svg',
   './icon-512.png',
-  './style/refonte.css?v=27.0.0',
-  './style/v24-modules.css?v=27.0.0',
-  './style/v24.css?v=27.0.0',
+  './style/refonte.css?v=28.0.0',
+  './style/v24-modules.css?v=28.0.0',
+  './style/v24.css?v=28.0.0',
   './scripts/app-core.js',
   './scripts/app-pwa.js',
   './scripts/app-ui.js',
@@ -28,6 +28,7 @@ const SHELL = [
   './scripts/app-v25.js',
   './scripts/app-v26.js',
   './scripts/app-v27.js',
+  './scripts/app-v28.js',
   './data/mesheures-default-backup.json'
 ];
 

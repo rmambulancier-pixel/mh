@@ -84,3 +84,11 @@
 - Live refresh is adaptive: it ticks only while a service is active and pauses when hidden.
 - V26 remains as a compatibility bridge.
 - Backup namespace advances to V27 while preserving V26/V25 history.
+
+## V28.0.0 — Data Engine + Ultra Smooth Runtime
+- Canonical memoized data engine for day/month/period/pay derived metrics.
+- Revision-based invalidation after state persistence; raw DB remains the source of truth.
+- Batched visible rendering through requestAnimationFrame.
+- Live clock no longer reconstructs the dashboard every second; only live UI is updated.
+- Background timer suspension and automatic resume on visibility/pageshow.
+- Restored V25 professional home cockpit as the V28 visual baseline.

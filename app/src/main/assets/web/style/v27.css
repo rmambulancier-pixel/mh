@@ -1,4 +1,4 @@
-/* MesHeures V27 — orchestration-safe UI polish */
+/* MesHeures V28 — orchestration-safe UI polish */
 :root{--mh26-border:rgba(148,163,184,.18);--mh26-panel:rgba(15,23,32,.72)}
 .mh26-ready{contain:layout paint}
 .mh25-shell,.card{backdrop-filter:blur(10px)}
@@ -11,6 +11,6 @@
 #s-paie #pSim{min-height:30px}
 #s-paie .pro-summary{margin-top:10px}
 
-/* V27 reactive runtime: keep critical cards stable during batched renders. */
-[data-mh-version="27.0.0"] .card,
-html[data-mh-version="27.0.0"] .card { contain: layout style; }
+/* V28 reactive runtime: keep critical cards stable during batched renders. */
+[data-mh-version="28.0.0"] .card,
+html[data-mh-version="28.0.0"] .card { contain: layout style; }

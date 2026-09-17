@@ -1,0 +1,7 @@
+/* MesHeures V28 — performance layer. Visual identity stays on the restored V25 cockpit. */
+:root{--mh28-safe-bottom:96px}
+html[data-mh-version="28.0.0"] body{padding-bottom:var(--mh28-safe-bottom)}
+html[data-mh-version="28.0.0"] button,html[data-mh-version="28.0.0"] a{-webkit-tap-highlight-color:transparent}
+html[data-mh-version="28.0.0"] .mh25-shell{contain:layout style}
+/* Avoid accidental transition storms during data refreshes. */
+html[data-mh-version="28.0.0"] .mh25-card,html[data-mh-version="28.0.0"] .mh25-action,html[data-mh-version="28.0.0"] .mh25-today,html[data-mh-version="28.0.0"] .mh25-period,html[data-mh-version="28.0.0"] .mh25-next{backface-visibility:hidden}

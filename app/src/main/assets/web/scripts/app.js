@@ -449,7 +449,7 @@ if('serviceWorker' in navigator){
 ═══════════════════════════════════════════════ */
 const MH_V='27.0.0';
 
-function mhMonthStats(ym){
+function mhMonthStatsRaw(ym){
   const [y,m]=ym.split('-').map(Number), last=isoOf(new Date(y,m+1,0));
   const out={amp:0,tte:0,trav:0,ir:0,iru:0,idaj:0,nuit:0,fer:0,dim:0,alerts:[],hard:0,warn:0,days:0};
   for(let k=ym+'-01';k<=last;k=addD(k,1)){
@@ -460,6 +460,7 @@ function mhMonthStats(ym){
   }
   return out;
 }
+function mhMonthStats(ym){return window.MH28DataEngine?MH28DataEngine.month(ym):mhMonthStatsRaw(ym)}
 function mhYearStats(y){
   const o={tte:0,trav:0,hs25:0,hs50:0,brut:0,alerts:0};
   for(let m=1;m<=12;m++){
