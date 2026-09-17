@@ -48,9 +48,9 @@ checks = {
         and (WEB / "style/v30.css").exists(),
 
     "V30 canonical runtime":
-        "MesHeures V30.0.2" in v30
+        "MesHeures V30.1.0" in v30
         and "canonical runtime" in v30
-        and "const V='30.0.2'" in v30,
+        and "const V=\'30.1.0\'" in v30,
 
     "V30 live engine":
         "window.MH30Live=Live" in v30
@@ -83,7 +83,7 @@ checks = {
         "targetSdk 37" in build,
 
     "V30 Service Worker":
-        "mesheures-shell-v30.0.2" in sw,
+        "mesheures-shell-v30.1.0" in sw,
 
     "no legacy Service Worker":
         not any(x in sw for x in (
@@ -121,4 +121,4 @@ if failed:
     sys.exit(1)
 
 print()
-print("PERFORMANCE AUDIT: PASS — MesHeures V30.0.2")
+print("PERFORMANCE AUDIT: PASS — MesHeures V30.1.0")
