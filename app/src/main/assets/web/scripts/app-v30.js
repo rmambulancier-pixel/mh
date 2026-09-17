@@ -394,6 +394,26 @@
     check(); setInterval(check,6*60*60*1000);
   }
 
+  /* V30 STARTUP DIAGNOSTIC */
+  window.addEventListener('error',function(e){
+    try{
+      console.error('[MesHeures V30 ERROR]',e.error||e.message);
+      var box=document.getElementById('s-home');
+      if(box && !box.innerHTML.trim()){
+        box.innerHTML='<div style="padding:24px;font-family:monospace;color:#ff6b6b;background:#11151c;border-radius:16px;margin:16px">'+
+          '<b>ERREUR V30 AU DÉMARRAGE</b><br><br>'+
+          String(e.message||e.error||'Erreur JavaScript inconnue').replace(/</g,'&lt;')+
+          '<br><br><small>ligne '+(e.lineno||'?')+'</small></div>';
+      }
+    }catch(_){}
+  });
+
+  window.addEventListener('unhandledrejection',function(e){
+    try{
+      console.error('[MesHeures V30 PROMISE]',e.reason);
+    }catch(_){}
+  });
+
   function boot(){
     if(booted)return; booted=true;
     document.documentElement.dataset.mhVersion=V;
