@@ -1,11 +1,11 @@
-/* MesHeures V30.0.2 — canonical runtime
+/* MesHeures V30.1.0 — canonical runtime
  * One calculation engine, one UI/live runtime, one scheduler.
  * Historical V24/V25/V26/V27/V28 runtime files are removed.
  */
 (function(){
   'use strict';
 
-  const V='30.0.2';
+  const V='30.1.0';
   const SECTIONS=['home','jour','mois','paie','analyse','audit','bul','romi','reg'];
   const q=s=>document.querySelector(s);
   const el=id=>document.getElementById(id);
@@ -207,9 +207,25 @@
 
   /* ---------- Navigation ---------- */
   function buildNav30(){
-    let nav=el('mhV30Nav');if(!nav){nav=document.createElement('nav');nav.id='mhV30Nav';document.body.appendChild(nav);}
+    let nav=el('mhV30Nav');
+    if(!nav){
+      nav=document.createElement('nav');
+      nav.id='mhV30Nav';
+      document.body.appendChild(nav);
+    }
     nav.className='mh-v30-nav mh30-nav';
-    nav.innerHTML=`<button onclick="tab('home')">⌂<span>Accueil</span></button><button onclick="tab('jour')">＋<span>Saisie</span></button><button onclick="tab('mois')">▦<span>Planning</span></button><button onclick="tab('paie')">€<span>Paie</span></button><button onclick="tab('analyse')">◌<span>Analyse</span></button>`;
+    nav.setAttribute('aria-label','Navigation principale');
+    nav.innerHTML=`<button data-nav-tab="home" onclick="tab('home')">⌂<span>Accueil</span></button><button data-nav-tab="jour" onclick="tab('jour')">＋<span>Saisie</span></button><button data-nav-tab="mois" onclick="tab('mois')">▦<span>Planning</span></button><button data-nav-tab="paie" onclick="tab('paie')">€<span>Paie</span></button><button data-nav-tab="analyse" onclick="tab('analyse')">◌<span>Analyse</span></button>`;
+    syncNav30();
+  }
+
+  function syncNav30(){
+    const t=window.curTab||'home';
+    document.querySelectorAll('#mhV30Nav [data-nav-tab]').forEach(b=>{
+      const on=b.getAttribute('data-nav-tab')===t;
+      b.setAttribute('aria-current',on?'page':'false');
+      b.classList.toggle('active',on);
+    });
   }
 
 
@@ -338,16 +354,28 @@
   }
   function navigation(t){
     t=t||'home';
+    if(!SECTIONS.includes(t))t='home';
     if(t!==(window.curTab||'home'))navHistory.push(t);
     activate(t);
+    syncNav30();
+    try{window.MesHeuresAndroid?.setCurrentTab?.(t)}catch(e){}
     dirty.add(t);
     schedule('navigate');
   }
   function goBack(){
-    if(navHistory.length<=1)return false;
+    if(navHistory.length<=1){
+      if((window.curTab||'home')!=='home'){
+        navHistory=['home'];
+        navigation('home');
+        return true;
+      }
+      return false;
+    }
     navHistory.pop();
     const prev=navHistory[navHistory.length-1]||'home';
     activate(prev);
+    syncNav30();
+    try{window.MesHeuresAndroid?.setCurrentTab?.(prev)}catch(e){}
     dirty.add(prev);
     schedule('back');
     return true;
@@ -412,8 +440,8 @@
   function boot(){
     if(booted)return; booted=true;
     document.documentElement.dataset.mhVersion=V;
-    if($('mhVersion'))$('mhVersion').textContent='V30.0.2';
-    document.title='MesHeures V30.0';
+    if($('mhVersion'))$('mhVersion').textContent='V30.1';
+    document.title='MesHeures V30.1';
     patchSave();
     if(window.__mh30PendingRefresh){ const pending=window.__mh30PendingRefresh; delete window.__mh30PendingRefresh; schedule(pending); }
     /* V30 est l’unique propriétaire du runtime. */
@@ -425,7 +453,10 @@
     window.MH30={version:V,navigate:navigation,goBack:goBack,refresh:(reason)=>schedule(reason||'refresh'),invalidate:r=>window.MH30DataEngine?.invalidate?.(r),stats:()=>window.MH30DataEngine?.stats?.()};
     window.tab=navigation;
     buildAnalysis();
+    buildNav30();
     activate(window.curTab||'home');
+    syncNav30();
+    try{window.MesHeuresAndroid?.setCurrentTab?.(window.curTab||'home')}catch(e){}
     dirty=new Set(SECTIONS.filter(x=>$('s-'+x)));
     schedule('boot');
     startLive();
@@ -435,12 +466,34 @@
     window.addEventListener('pageshow',()=>{window.MH30DataEngine?.invalidate?.('pageshow');schedule('pageshow');startLive()});
     window.addEventListener('pagehide',stopLive);
     document.addEventListener('mh:state-changed',()=>{window.MH30DataEngine?.invalidate?.('event');schedule('event')});
+    /* V30.1: tactile retour de secours */
+    let touchX=0,touchY=0;
+    document.addEventListener('touchstart',e=>{
+      const t=e.touches?.[0];
+      if(!t)return;
+      touchX=t.clientX;
+      touchY=t.clientY;
+    },{passive:true});
+
+    document.addEventListener('touchend',e=>{
+      const t=e.changedTouches?.[0];
+      if(!t)return;
+      const dx=t.clientX-touchX;
+      const dy=t.clientY-touchY;
+      const target=e.target;
+      const blocked=target?.closest?.('input,textarea,select,[contenteditable="true"],.mh30-bars');
+
+      if(touchX<=42 && dx>=70 && Math.abs(dx)>Math.abs(dy)*1.35 && !blocked){
+        window.MH30?.goBack?.();
+      }
+    },{passive:true});
+
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else setTimeout(boot,0);
 
 
 'use strict';
-const PDF_V='30.0.2';
+const PDF_V='30.1.0';
 function ascii(s){return String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\x20-\x7E]/g,'?')}
 function esc(s){return ascii(s).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)')}
 function snapshot(){return {format:'MesHeures Probatory Dossier',version:PDF_V,createdAt:new Date().toISOString(),data:JSON.parse(JSON.stringify(window.DB||{}))}}

@@ -53,6 +53,7 @@ public class MainActivity extends ComponentActivity {
 
     private String pendingDeepLink;
     private boolean webReady = false;
+    private volatile String currentTab = "home";
 
     @Override
     protected void onCreate(Bundle b) {
@@ -298,17 +299,19 @@ public class MainActivity extends ComponentActivity {
                     return;
                 }
 
-                web.evaluateJavascript(
-                    "(function(){try{" +
-                    "if(window.MH30&&typeof window.MH30.goBack==='function')" +
-                    "return String(window.MH30.goBack());" +
-                    "if(window.curTab&&window.curTab!=='home'&&typeof window.tab==='function')" +
-                    "{window.tab('home');return 'true';}" +
-                    "}catch(e){}return 'false';})()",
-                    value -> {
-                        if (!"\"true\"".equals(value)) finish();
-                    }
-                );
+                if (!"home".equals(currentTab)) {
+                    web.evaluateJavascript(
+                        "(function(){try{" +
+                        "if(window.MH30&&typeof window.MH30.goBack==='function')" +
+                        "return String(window.MH30.goBack());" +
+                        "if(typeof window.tab==='function'){window.tab('home');return 'true';}" +
+                        "}catch(e){}return 'true';})()",
+                        null
+                    );
+                    return;
+                }
+
+                finish();
             }
         });
     }
@@ -349,10 +352,16 @@ public class MainActivity extends ComponentActivity {
         AndroidBridge(Context x) { c = x; }
 
         @JavascriptInterface public String platform() { return "android"; }
+        @JavascriptInterface
+        public void setCurrentTab(String tab) {
+            if (tab == null || tab.isEmpty()) return;
+            currentTab = tab;
+        }
+
 
         @JavascriptInterface
         public String capabilities() {
-            return "{\"version\":\"30.0.2\",\"nativeDashboard\":true,\"widgetBridge\":true,\"fileExport\":true,\"print\":true}";
+            return "{\"version\":\"30.1.0\",\"nativeDashboard\":true,\"widgetBridge\":true,\"fileExport\":true,\"print\":true}";
         }
 
         @JavascriptInterface
@@ -366,7 +375,7 @@ public class MainActivity extends ComponentActivity {
             });
         }
 
-        @JavascriptInterface public String version() { return "30.0.2"; }
+        @JavascriptInterface public String version() { return "30.1.0"; }
 
         @JavascriptInterface
         public void setSystemBarsLight(boolean light) {
