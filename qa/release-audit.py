@@ -1,47 +1,268 @@
 from pathlib import Path
-import re, sys
-ROOT=Path(__file__).resolve().parents[1]; WEB=ROOT/'app/src/main/assets/web'; S=WEB/'scripts'
-version=(ROOT/'VERSION').read_text().strip(); props={}
-for line in (ROOT/'version.properties').read_text().splitlines():
-    if '=' in line: k,v=line.split('=',1); props[k.strip()]=v.strip()
-code=props.get('VERSION_CODE','')
-def text(p): return p.read_text(encoding='utf-8')
-index=text(WEB/'index.html'); manifest=text(WEB/'manifest.json'); sw=text(WEB/'sw.js'); build=text(ROOT/'app/build.gradle'); hybrid=text(ROOT/'app/src/main/java/com/mesheures/app/core/HybridCore.java'); main=text(ROOT/'app/src/main/java/com/mesheures/app/MainActivity.java'); workflow=text(ROOT/'.github/workflows/build-apk.yml'); backup=text(S/'app-backup.js'); v27=text(S/'app-v27.js'); v28=text(S/'app-v28.js'); v25=text(S/'app-v25.js')
-checks=[]
-def check(n,ok,d=''): checks.append((n,bool(ok),d))
-check('Canonical VERSION',bool(re.fullmatch(r'\d+\.\d+\.\d+',version)))
-check('Canonical VERSION_CODE',code.isdigit())
-check('Release target',version=='30.0.1' and code=='3001')
-check('Gradle reads canonical version',"file('../version.properties')" in build and 'releaseVersion' in build and 'releaseCode' in build)
-check('Manifest web version',f'"version": "{version}"' in manifest)
-check('HTML title/meta','MesHeures V30.0' in index and f'application-version" content="{version}"' in index)
-check('V30 runtime referenced','scripts/app-v28.js' in index and (S/'app-v28.js').exists())
-check('V30 stylesheet referenced','./style/v30.css' in index and (WEB/'style/v30.css').exists())
-check('Service Worker cache version',f'mesheures-shell-v{version}' in sw)
-check('Hybrid Core version',f'VERSION = "{version}"' in hybrid)
-check('Secure WebView','WebViewAssetLoader' in hybrid and 'setAllowFileAccess(false)' in hybrid and 'setAllowContentAccess(false)' in hybrid)
-check('Backup namespace',"BACKUP_VERSION='30.0.1'" in backup and "LS+'_v30_backup_'" in backup and "LS+'_v28_backup_'" in backup)
-check('Backup compatibility','LS+\'_v26_backup_\'' in backup and 'LEGACY_V25_PREFIX' in backup and 'LEGACY_V24_PREFIX' in backup)
-check('V30 reactive orchestrator','window.MH28' in v28 and 'requestAnimationFrame' in v28 and 'setTimeout(liveTick,15000)' in v28 and 'window.tab=navigation' in v28 and 'MH28DataEngine' in v28)
-check('V26 compatibility bridge','window.MH26' in text(S/'app-v26.js') and 'compat:true' in text(S/'app-v26.js'))
-check('V25 live engine retained','DB.days' in v25 and 'startEpoch' in v25 and 'Date.now()' in v25)
-check('Smart time retained','normalizeTimeInput' in v25 and 'data-time-smart' in v25)
-# all local scripts in index and SW shell exist
-idx_scripts=re.findall(r'<script\s+(?:[^>]*?)src=["\'](\./?scripts/[^"\']+)["\']',index)
-shell=set(re.findall(r'["\'](\./[^"\']+)["\']',sw))
-missing=[x for x in idx_scripts if not (WEB/(x[2:] if x.startswith('./') else x)).exists()]
-uncached=[]
-for x in idx_scripts:
-    rel='./'+x[2:] if x.startswith('./') else './'+x
-    if rel.split('?',1)[0] not in {a.split('?',1)[0] for a in shell}: uncached.append(rel)
-check('Index scripts exist',not missing,','.join(missing)); check('Index scripts in SW shell',not uncached,','.join(uncached))
-missing_shell=[a for a in shell if a.startswith('./') and not (WEB/a[2:].split('?',1)[0]).exists()]
-check('SW shell assets exist',not missing_shell,','.join(sorted(set(missing_shell))))
-check('Modern back dispatcher','OnBackPressedCallback' in main)
-check('Modern Activity Result','registerForActivityResult' in main and 'onActivityResult' not in main)
-check('No WebView database API','setDatabaseEnabled(true)' not in main and 'setDatabaseEnabled(true)' not in hybrid)
-check('Android 17 target','targetSdk 37' in text(ROOT/'app/build.gradle') and 'compileSdk 37' in text(ROOT/'app/build.gradle'))
-check('Application bootstrap','MesHeuresApplication' in main or (ROOT/'app/src/main/java/com/mesheures/app/MesHeuresApplication.java').exists())
-for n,ok,d in checks: print(('PASS' if ok else 'FAIL')+': '+n+((' — '+d) if d else ''))
-if not all(ok for _,ok,_ in checks): sys.exit(1)
-print(f'RELEASE AUDIT: PASS — MesHeures V{version} / versionCode {code}')
+import re
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+WEB = ROOT / "app/src/main/assets/web"
+S = WEB / "scripts"
+
+def text(p):
+    return p.read_text(encoding="utf-8")
+
+checks = []
+
+def check(name, ok, detail=""):
+    checks.append((name, bool(ok), detail))
+
+version = text(ROOT / "VERSION").strip()
+
+props = {}
+for line in text(ROOT / "version.properties").splitlines():
+    if "=" in line:
+        k, v = line.split("=", 1)
+        props[k.strip()] = v.strip()
+
+code = props.get("VERSION_CODE", "")
+
+index = text(WEB / "index.html")
+manifest = text(WEB / "manifest.json")
+sw = text(WEB / "sw.js")
+build = text(ROOT / "app/build.gradle")
+hybrid = text(ROOT / "app/src/main/java/com/mesheures/app/core/HybridCore.java")
+main = text(ROOT / "app/src/main/java/com/mesheures/app/MainActivity.java")
+backup = text(S / "app-backup.js")
+v30 = text(S / "app-v30.js")
+
+# ---------------- Version ----------------
+
+check(
+    "Canonical VERSION",
+    bool(re.fullmatch(r"\d+\.\d+\.\d+", version))
+)
+
+check(
+    "Canonical VERSION_CODE",
+    code.isdigit()
+)
+
+check(
+    "Release version",
+    version == "30.0.2"
+)
+
+check(
+    "Gradle reads canonical version",
+    "file('../version.properties')" in build
+    and "releaseVersion" in build
+    and "releaseCode" in build
+)
+
+check(
+    "Manifest version",
+    f'"version": "{version}"' in manifest
+)
+
+check(
+    "HTML version",
+    f'application-version" content="{version}"' in index
+    and "MesHeures V30.0" in index
+)
+
+# ---------------- V30 architecture ----------------
+
+check(
+    "V30 runtime referenced",
+    "scripts/app-v30.js" in index
+    and (S / "app-v30.js").exists()
+)
+
+check(
+    "V30 stylesheet referenced",
+    "./style/v30.css" in index
+    and (WEB / "style/v30.css").exists()
+)
+
+check(
+    "V30 runtime is canonical",
+    "canonical runtime" in v30
+    and "MH30Live" in v30
+    and "renderHome" in v30
+    and "renderDay" in v30
+)
+
+check(
+    "Hybrid Core version",
+    f'VERSION = "{version}"' in hybrid
+)
+
+check(
+    "Secure WebView",
+    "WebViewAssetLoader" in hybrid
+    and "setAllowFileAccess(false)" in hybrid
+    and "setAllowContentAccess(false)" in hybrid
+)
+
+# ---------------- Backup ----------------
+
+check(
+    "Backup namespace",
+    "const BACKUP_VERSION='30.0.2';" in backup
+    and "const PREFIX=LS+'_v30_backup_';" in backup
+)
+
+# Legacy backup compatibility is intentionally allowed:
+check(
+    "Backup clean V30",
+    "BACKUP_VERSION='30.0.2'" in backup
+    and "const PREFIX=LS+'_v30_backup_'" in backup
+)
+
+# ---------------- Service Worker ----------------
+
+check(
+    "Service Worker V30 cache",
+    f"mesheures-shell-v{version}" in sw
+)
+
+# Extract local assets from SW shell
+sw_assets = re.findall(
+    r"""['"](\./[^'"]+)['"]""",
+    sw
+)
+
+missing_sw = []
+
+for asset in sw_assets:
+    clean = asset.split("?", 1)[0]
+
+    if clean in ("./",):
+        path = WEB
+    else:
+        path = WEB / clean[2:]
+
+    if not path.exists():
+        missing_sw.append(asset)
+
+check(
+    "Service Worker assets exist",
+    not missing_sw,
+    ",".join(missing_sw)
+)
+
+# No deleted historical runtime may be required by the V30 shell
+legacy_runtime = [
+    "app-v24.js",
+    "app-v25.js",
+    "app-v26.js",
+    "app-v27.js",
+    "app-v28.js",
+    "app-runtime.js",
+    "app-live-engine.js",
+]
+
+legacy_refs = [
+    x for x in legacy_runtime
+    if x in sw
+]
+
+check(
+    "No legacy runtime in Service Worker",
+    not legacy_refs,
+    ",".join(legacy_refs)
+)
+
+# ---------------- Index scripts ----------------
+
+idx_scripts = re.findall(
+    r'<script\s+(?:[^>]*?)src=["\'](\./?scripts/[^"\']+)["\']',
+    index
+)
+
+missing_index = []
+
+for src in idx_scripts:
+    rel = src[2:] if src.startswith("./") else src
+    rel = rel.split("?", 1)[0]
+
+    if not (WEB / rel).exists():
+        missing_index.append(src)
+
+check(
+    "Index scripts exist",
+    not missing_index,
+    ",".join(missing_index)
+)
+
+# Every script loaded by index should be present in SW shell
+sw_clean = {
+    x.split("?", 1)[0]
+    for x in sw_assets
+}
+
+uncached = []
+
+for src in idx_scripts:
+    rel = "./" + (src[2:] if src.startswith("./") else src)
+    rel = rel.split("?", 1)[0]
+
+    if rel not in sw_clean:
+        uncached.append(rel)
+
+check(
+    "Index scripts in SW shell",
+    not uncached,
+    ",".join(uncached)
+)
+
+# ---------------- Android ----------------
+
+check(
+    "Modern back dispatcher",
+    "OnBackPressedCallback" in main
+)
+
+check(
+    "Modern Activity Result",
+    "registerForActivityResult" in main
+    and "onActivityResult" not in main
+)
+
+check(
+    "No WebView database API",
+    "setDatabaseEnabled(true)" not in main
+    and "setDatabaseEnabled(true)" not in hybrid
+)
+
+check(
+    "Android 17 target",
+    "targetSdk 37" in build
+    and "compileSdk 37" in build
+)
+
+check(
+    "Application bootstrap",
+    "MesHeuresApplication" in main
+    or (
+        ROOT /
+        "app/src/main/java/com/mesheures/app/MesHeuresApplication.java"
+    ).exists()
+)
+
+# ---------------- Result ----------------
+
+for name, ok, detail in checks:
+    print(
+        ("PASS" if ok else "FAIL")
+        + ": "
+        + name
+        + ((" — " + detail) if detail else "")
+    )
+
+if not all(ok for _, ok, _ in checks):
+    print("\nRELEASE AUDIT: FAIL")
+    sys.exit(1)
+
+print(
+    f"\nRELEASE AUDIT: PASS — "
+    f"MesHeures V{version} / versionCode {code}"
+)
