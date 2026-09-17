@@ -90,5 +90,6 @@
   window.mhV18ReconciliationCSV=()=>{init();exportCsv(months().map(calcMonth))};
   window.mhV18ReconciliationRefresh=()=>draw();
   window.mhV18CreateReconciliationConstat=(m)=>{const x=calcMonth(m);if(makeConstat(x)){alert('✅ Constat de rapprochement ajouté pour '+m+'.');if(window.mhV18RenderEvidence)window.mhV18RenderEvidence();draw()}else alert('ℹ️ Ce constat existe déjà.')};
+  const old=window.renderAll;if(old&&!window.__mhV18ReconciliationPatch){window.__mhV18ReconciliationPatch=true;window.renderAll=function(){old();render()}}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',render,{once:true});else setTimeout(render,0);
 })();

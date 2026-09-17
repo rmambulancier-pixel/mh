@@ -1,14 +1,13 @@
-# Changelog
+# V30.0.0
 
-## 30.0.0 — Reactive performance / energy / evidence
-- V30 makes MH28 the single render gateway; legacy `renderAll()` orchestration and render-all monkey patches are removed.
-- Daily mutations/navigation are routed through `MH28.refresh()` / the animation-frame scheduler to avoid redundant full renders.
-- Home Intelligence is rendered by V30 only; legacy injector no longer re-injects a duplicate card after V28 takes ownership.
-- Versioned static assets use a cache-first Service Worker strategy; the active CSS is consolidated in `v30.css`.
-- Background snapshot is refreshed after saves; periodic checks notify only on newly detected trajectory/pause conditions.
-- External encrypted backup reminder is success-aware.
-- Probatory PDF export includes timestamp, SHA-256 integrity hash and detached ECDSA P-256 signature metadata.
-- Android release/signing workflow and persistent signing secrets are preserved.
+- Reactive render gateway: legacy renderAll call sites routed through MH28 scheduler.
+- Versioned static assets cached first by Service Worker.
+- Unified CSS bundle v30.
+- Background-check foundation with Periodic Background Sync when supported.
+- External backup reminder.
+- Probatory PDF export with SHA-256 and detached ECDSA P-256 signature.
+
+# Changelog
 
 ## V24.2.0 — Navigation (phase 2 de la refonte)
 - Suppression d'`app-v22.js` : fichier mort, jamais chargé par `index.html` ni par

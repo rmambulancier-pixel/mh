@@ -131,7 +131,7 @@
   };
   window.mhV18EncryptedBackup=async function(){
     const p=prompt('Mot de passe pour chiffrer la sauvegarde :');if(!p)return;const p2=prompt('Confirme le mot de passe :');if(p!==p2)return alert('❌ Les mots de passe ne correspondent pas.');
-    try{init();const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12)),key=await deriveKey(p,salt);const payload={format:'MesHeures Encrypted Backup',version:V,createdAt:new Date().toISOString(),data:DB};const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(JSON.stringify(payload)));const obj={format:payload.format,version:V,createdAt:payload.createdAt,kdf:'PBKDF2-SHA256',iterations:150000,cipher:'AES-256-GCM',salt:btoa(String.fromCharCode(...salt)),iv:btoa(String.fromCharCode(...iv)),ciphertext:btoa(String.fromCharCode(...new Uint8Array(ct)))};const mode=typeof mhDownloadFile==='function'?mhDownloadFile('MesHeures-backup-chiffre-'+today()+'.mhbackup.json',JSON.stringify(obj,null,2),'application/json'):null; if(!mode){const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='MesHeures-backup-chiffre-'+today()+'.mhbackup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);} alert(mode==='android'?'📁 Choisis où enregistrer la sauvegarde chiffrée.':'✅ Sauvegarde chiffrée exportée.');return true;}catch(e){alert('❌ Chiffrement impossible : '+e.message);return false}
+    try{init();const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12)),key=await deriveKey(p,salt);const payload={format:'MesHeures Encrypted Backup',version:V,createdAt:new Date().toISOString(),data:DB};const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(JSON.stringify(payload)));const obj={format:payload.format,version:V,createdAt:payload.createdAt,kdf:'PBKDF2-SHA256',iterations:150000,cipher:'AES-256-GCM',salt:btoa(String.fromCharCode(...salt)),iv:btoa(String.fromCharCode(...iv)),ciphertext:btoa(String.fromCharCode(...new Uint8Array(ct)))};const mode=typeof mhDownloadFile==='function'?mhDownloadFile('MesHeures-backup-chiffre-'+today()+'.mhbackup.json',JSON.stringify(obj,null,2),'application/json'):null; if(!mode){const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='MesHeures-backup-chiffre-'+today()+'.mhbackup.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);} alert(mode==='android'?'📁 Choisis où enregistrer la sauvegarde chiffrée.':'✅ Sauvegarde chiffrée exportée.');}catch(e){alert('❌ Chiffrement impossible : '+e.message)}
   };
   window.mhV18RenderEvidence=renderEvidence;
 
@@ -142,6 +142,8 @@
     window.save=function(){const result=oldSave.apply(this,arguments);invalidate();return result};
   }
   function inject(){init();wrapSave();if(document.getElementById('mhV18Evidence'))return;const host=document.createElement('section');host.id='mhV18Evidence';const target=document.getElementById('s-audit')||document.body;target.appendChild(host);renderEvidence();}
+  const oldRenderAll=window.renderAll;
+  if(oldRenderAll&&!window.__mhV18EvidencePatch){window.__mhV18EvidencePatch=true;window.renderAll=function(){oldRenderAll();inject();renderEvidence()}}
   function boot(){wrapSave();inject();}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else setTimeout(boot,0);
 })();

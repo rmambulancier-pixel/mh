@@ -38,9 +38,9 @@ function mhPrint(){
   try{window.print()}catch(e){alert('❌ Impression indisponible : '+e.message)}
 }
 
-function goDay(n){curDate=addD(curDate,n);typeof mhRefresh==='function'?mhRefresh('day-navigation'):renderDay()}
+function goDay(n){curDate=addD(curDate,n);mhRefresh('day-change') }
 
-function goToday(){curDate=today();curMonth=curDate.slice(0,7);typeof mhRefresh==='function'?mhRefresh('today-navigation'):renderDay();window.scrollTo(0,0)}
+function goToday(){curDate=today();curMonth=curDate.slice(0,7);mhRefresh('today');window.scrollTo(0,0)}
 
 let mhDayMenuKey=null,mhLongTimer=null,mhLongTriggered=false;
 function openDayMenu(k){
@@ -76,12 +76,12 @@ function bindMonthLongPress(){
 function setD(f,v){
   const d=gd(curDate);
   if(f==='t'&&d.t!==v)pushUndo('Changement type '+d.t+'→'+v+' le '+short(curDate));
-  d[f]=v; save(); typeof mhRefresh==='function'?mhRefresh('day-mutation'):renderDay();
+  d[f]=v; save(); mhRefresh('day-field');
 }
 
-function setP(i,f,v){const d=gd(curDate);if(!d.p[i])d.p[i]={ty:'ENT'};d.p[i][f]=v;save();typeof mhRefresh==='function'?mhRefresh('pause-mutation'):renderDay()}
+function setP(i,f,v){const d=gd(curDate);if(!d.p[i])d.p[i]={ty:'ENT'};d.p[i][f]=v;save();mhRefresh('day-pause');}
 
-function addP(){gd(curDate).p.push({d:'',f:'',ty:'ENT'});save();typeof mhRefresh==='function'?mhRefresh('pause-add'):renderDay()}
+function addP(){gd(curDate).p.push({d:'',f:'',ty:'ENT'});save();mhRefresh('day-pause');}
 
 function clearDay(){
   const d=DB.days[curDate];
@@ -89,10 +89,10 @@ function clearDay(){
   if(!confirm('Effacer les données de cette journée ?')) return;
   pushUndo('Effacement du '+short(curDate));
   DB.days[curDate]={t:'REPOS',p:[]};
-  save();typeof mhRefresh==='function'?mhRefresh('day-clear'):renderDay();
+  save();mhRefresh('day-pause');;
 }
 
-function delP(i){gd(curDate).p.splice(i,1);save();typeof mhRefresh==='function'?mhRefresh('pause-delete'):renderDay()}
+function delP(i){gd(curDate).p.splice(i,1);save();mhRefresh('day-pause');}
 
 function dupliConfirm(){
   const prev=DB.days[addD(curDate,-1)];
@@ -103,7 +103,7 @@ function dupliConfirm(){
   }
   pushUndo('Copie veille → '+short(curDate));
   DB.days[curDate]=JSON.parse(JSON.stringify(prev));
-  save(); typeof mhRefresh==='function'?mhRefresh('day-copy'):renderDay();
+  save(); mhRefresh('day-copy');
 }
 
 function renderDay(){
@@ -203,11 +203,11 @@ Projection à rythme constant : <b>${F(Math.round(projH25))}</b> HS 25% · <b>${
 </div>`;
 }
 
-function goMonth(n){const d=dOf(curMonth+'-01');d.setMonth(d.getMonth()+n);curMonth=isoOf(d).slice(0,7);typeof mhRefresh==='function'?mhRefresh('month-navigation'):renderMonth()}
+function goMonth(n){const d=dOf(curMonth+'-01');d.setMonth(d.getMonth()+n);curMonth=isoOf(d).slice(0,7);mhRefresh('month-change')}
 
 function goPer(n){
   DB.per.start=addD(DB.per.start,n*14*DB.per.nb);
-  save();typeof mhRefresh==='function'?mhRefresh('pay-mutation'):renderPay();
+  save();mhRefresh('pay-field');
 }
 
 function regPer(){
@@ -282,7 +282,7 @@ ${sol>S.rcAlerte?`<div class="al b" style="margin-top:6px">🚨 Solde RC > ${S.r
   Q.forEach(o=>o.w.forEach(s=>{
     const v=DB.cmp[s.start]||'',e=v?P(v)-s.tte:null;
     c+=`<tr><td>${short(s.start)}</td><td class="n">${F(s.tte)}</td>
-<td class="n"><input type="time" value="${v}" onchange="DB.cmp['${s.start}']=this.value;save();typeof mhRefresh==='function'?mhRefresh('comparison-mutation'):renderPay()" style="width:100px"></td>
+<td class="n"><input type="time" value="${v}" onchange="DB.cmp['${s.start}']=this.value;save();mhRefresh('pay-field')" style="width:100px"></td>
 <td class="n ${e===null?'':e===0?'ok':'bad'}">${e===null?'—':e===0?'✓':F(e)}</td></tr>`;
   }));
   $('pCmp').innerHTML=c;

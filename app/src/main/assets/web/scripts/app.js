@@ -10,7 +10,7 @@ function gb(s){
   return DB.bul[s];
 }
 // v : null si le champ est laissé vide (« pas encore renseigné »), distinct de 0 (« renseigné à zéro »).
-function setBul(f,v){gb(DB.per.start)[f]=(v===''||v==null||isNaN(v))?null:+v;save();typeof mhRefresh==='function'?mhRefresh('bulletin-mutation'):renderPay()}
+function setBul(f,v){gb(DB.per.start)[f]=(v===''||v==null||isNaN(v))?null:+v;save();mhRefresh('pay-field')}
 
 
 const AD=[
@@ -421,7 +421,8 @@ curDate=today();curMonth=curDate.slice(0,7);
 if(!Object.keys(DB.days).length){
   loadArchive();
 }else{
-  typeof mhRefresh==='function'?mhRefresh('boot-refresh'):renderDay();renderReg();
+  if(typeof mhRefresh==='function') mhRefresh('settings-update');
+  else window.__mh30PendingRefresh='settings-update';
 }
 
 let _tx=null;
@@ -674,14 +675,14 @@ function mhRestorePreImport(){
   mhV17Restore(list[0].key);
 }
 function mhBackupLocal(){
-  if(typeof mhV17Backup==='function') { mhV17Backup('manual'); renderReg(); alert('✅ Point de restauration créé.'); return; }
-  localStorage.setItem(LS+'_manual',JSON.stringify(DB));localStorage.setItem(LS+'_manualAt',new Date().toISOString());save();typeof mhRefresh==='function'?mhRefresh('backup-local'):renderReg();alert('✅ Point de restauration local créé.');
+  if(typeof mhV17Backup==='function') { mhV17Backup('manual'); mhRefresh('manual-backup'); alert('✅ Point de restauration créé.'); return; }
+  localStorage.setItem(LS+'_manual',JSON.stringify(DB));localStorage.setItem(LS+'_manualAt',new Date().toISOString());save();mhRefresh('manual-backup');alert('✅ Point de restauration local créé.');
 }
 function mhRestoreLocal(){
   if(typeof mhV17BackupPanel==='function') return mhV17BackupPanel();
   alert('Centre de sauvegarde indisponible.');
 }
-function mhTogglePro(){DB.s.proMode=!DB.s.proMode;save();document.body.classList.toggle('pro-mode',!!DB.s.proMode);typeof mhRefresh==='function'?mhRefresh('settings-mutation'):renderReg();}
+function mhTogglePro(){DB.s.proMode=!DB.s.proMode;save();document.body.classList.toggle('pro-mode',!!DB.s.proMode);mhRefresh('settings');}
 
 function mhAutoBackup(){
   /* V25: normal save() is the persistence layer; snapshot backups are explicit from Outils > Données. */

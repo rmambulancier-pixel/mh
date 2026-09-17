@@ -61,7 +61,6 @@
       const out=base.apply(this,arguments);
       engine.invalidate('save');
       schedule('save');
-      try{syncBackgroundSnapshot();}catch(e){}
       return out;
     };
     window.__mh28SavePatch=true;
@@ -201,7 +200,7 @@
   async function syncBackgroundSnapshot(reg){
     try{
       if(!window.DB||!('indexedDB' in window))return;
-      const intel=window.mhV18IntelligenceData?.(); const todayKey=today(); const todayRec=window.MH28DataEngine?.day(todayKey)||{}; const pauseDue=!!(window.MH25Live?.active?.() && Number(todayRec.tte||0)>=360 && Number(todayRec.pz||0)<20); const payload={version:V,updatedAt:new Date().toISOString(),days:DB.days||{},settings:{base:DB.s?.base||0,anchor:DB.s?.anchor||'',min:!!DB.s?.min},alerts:{firstRisk:intel?.projection?.firstRisk||null,pauseDue}};
+      const intel=window.mhV18IntelligenceData?.(); const todayKey=today(); const todayRec=window.MH28DataEngine?.day(todayKey)||{}; const pauseDue=!!(window.MH25Live?.active?.() && Number(todayRec.tte||0)>=360 && Number(todayRec.pz||0)<20); const payload={version:V,updatedAt:new Date().toISOString(),days:DB.days||{},settings:{base:DB.s?.base||0,anchor:DB.s?.anchor||''},alerts:{firstRisk:intel?.projection?.firstRisk||null,pauseDue}};
       const req=indexedDB.open('mesheures-v30',1);
       req.onupgradeneeded=()=>{try{req.result.createObjectStore('state')}catch(e){}};
       req.onsuccess=()=>{try{const db=req.result,tx=db.transaction('state','readwrite');tx.objectStore('state').put(payload,'snapshot');}catch(e){}};
@@ -218,7 +217,7 @@
         const host=document.getElementById('mh28Next');
         if(host && !document.getElementById('mh30BackupReminder')){
           const d=document.createElement('div');d.id='mh30BackupReminder';d.className='card';
-          d.innerHTML='<b>🛡️ Sauvegarde externe recommandée</b><p class="mut">Aucune sauvegarde externe depuis 7 jours. Exporte une copie chiffrée pour ne pas dépendre de ce téléphone.</p><button onclick="(async()=>{try{if(await mhV18EncryptedBackup())localStorage.setItem(\''+KEY+'\',Date.now())}catch(e){}})()">🔐 Exporter une sauvegarde</button>';
+          d.innerHTML='<b>🛡️ Sauvegarde externe recommandée</b><p class="mut">Aucune sauvegarde externe depuis 7 jours. Exporte une copie chiffrée pour ne pas dépendre de ce téléphone.</p><button onclick="mhV18EncryptedBackup();localStorage.setItem(\''+KEY+'\',Date.now())">🔐 Exporter une sauvegarde</button>';
           host.after(d);
         }
       }
@@ -232,14 +231,14 @@
     if($('mhVersion'))$('mhVersion').textContent='V30.0.0';
     document.title='MesHeures V30.0';
     patchSave();
+    if(window.__mh30PendingRefresh){ const pending=window.__mh30PendingRefresh; delete window.__mh30PendingRefresh; }
     /* Retire le scheduler V25 : V28 is the only runtime owner. */
     try{if(window.MH25Live?.tick){clearInterval(window.MH25Live.tick);window.MH25Live.tick=null}}catch(e){}
     window.renderHome=renderHome;
+    /* Final compatibility boundary: legacy renderAll callers are routed into the
+       reactive scheduler instead of executing the historical full redraw chain. */
+    window.renderAll=function(reason){ return schedule(reason||'legacy-renderAll'); };
     window.MH28={version:V,engine,navigate:navigation,refresh:(reason)=>schedule(reason||'refresh'),invalidate:r=>engine.invalidate(r),stats:()=>engine.stats()};
-    /* Compatibility gateway: old modules may still call renderAll, but it must
-       never rebuild Home + Jour + Analyse. V30 turns it into a single scheduled
-       active-tab refresh. */
-    window.renderAll=function(){engine.invalidate('legacy-render');schedule('legacy-render');};
     window.tab=navigation;
     activate(window.curTab||'home');
     dirty=new Set(SECTIONS.filter(x=>$('s-'+x)));

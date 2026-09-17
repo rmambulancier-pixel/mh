@@ -35,13 +35,15 @@
       d.t='T';d.deb=d.deb||t;d.fin=null;d.running=true;d.startEpoch=debEpoch(k,d.deb);
       d.p=d.p||[];
       if(typeof save==='function')save();
-      if(typeof mhRefresh==='function')mhRefresh('live-mutation'); else this.render();
+      this.render();
+      if(typeof mhRefresh==='function')mhRefresh('live-mutation');
     },
     stop(){
       const k=day(),d=ensureDay(k);if(!this.active())return;
       d.fin=nowHHMM();d.running=false;d.startEpoch=0;
       if(typeof save==='function')save();
-      if(typeof mhRefresh==='function')mhRefresh('live-mutation'); else this.render();
+      this.render();
+      if(typeof mhRefresh==='function')mhRefresh('live-mutation');
     },
     toggle(){this.active()?this.stop():this.start();},
     render(){
@@ -72,8 +74,8 @@
       else{d.running=false;d.startEpoch=0;}
     }
     if(field==='fin'){d.running=false;d.startEpoch=0;}
-    if(typeof save==='function')save();
-    if(typeof mhRefresh==='function')mhRefresh('live-mutation'); else renderDay();
+    if(typeof save==='function')save();mhRefresh('live-field');
+    if(typeof mhRefresh==='function')mhRefresh('live-mutation');
   }
   window.mh25SetTime=quickSetTime;
 
@@ -167,13 +169,13 @@
       host.innerHTML=`<div class="mh25-card mh25-empty-editor"><b>${({REPOS:'Journée de repos',RC:'Repos compensateur',CP:'Congé payé',MAL:'Journée maladie'})[d.t]||'Journée'}</b><span>Rien à saisir. Le planning et les compteurs s’actualiseront automatiquement.</span></div>`;
     }
   }
-  window.mh25SetType=function(v){const d=ensureDay(curDate||day());d.t=v;d.p=d.p||[];if(v!=='T'&&v!=='NUIT'){d.running=false;d.startEpoch=0;}if(typeof save==='function')save();typeof mhRefresh==='function'?mhRefresh('day-mutation'):renderDay();};
-  window.mh25SetPanier=function(v){const d=ensureDay(curDate||day());d.panier=v||null;save();typeof mhRefresh==='function'?mhRefresh('day-mutation'):renderDay();};
-  window.mh25AddPause=function(){ensureDay(curDate||day()).p.push({d:'',f:'',ty:'ENT'});save();typeof mhRefresh==='function'?mhRefresh('day-mutation'):renderDay();};
-  window.mh25DelPause=function(i){ensureDay(curDate||day()).p.splice(i,1);save();typeof mhRefresh==='function'?mhRefresh('day-mutation'):renderDay();};
-  window.mh25SetPause=function(i,f,v){const d=ensureDay(curDate||day());d.p[i]=d.p[i]||{ty:'ENT'};d.p[i][f]=v;save();typeof mhRefresh==='function'?mhRefresh('day-mutation'):renderDay();};
+  window.mh25SetType=function(v){const d=ensureDay(curDate||day());d.t=v;d.p=d.p||[];if(v!=='T'&&v!=='NUIT'){d.running=false;d.startEpoch=0;}if(typeof save==='function')save();mhRefresh('live-field');};
+  window.mh25SetPanier=function(v){const d=ensureDay(curDate||day());d.panier=v||null;save();mhRefresh('live-mutation');};
+  window.mh25AddPause=function(){ensureDay(curDate||day()).p.push({d:'',f:'',ty:'ENT'});save();mhRefresh('live-mutation');};
+  window.mh25DelPause=function(i){ensureDay(curDate||day()).p.splice(i,1);save();mhRefresh('live-mutation');};
+  window.mh25SetPause=function(i,f,v){const d=ensureDay(curDate||day());d.p[i]=d.p[i]||{ty:'ENT'};d.p[i][f]=v;save();mhRefresh('live-mutation');};
   window.mh25SetNote=function(v){ensureDay(curDate||day()).note=v;save();};
-  window.mh25SetField=function(f,v){ensureDay(curDate||day())[f]=v;save();typeof mhRefresh==='function'?mhRefresh('day-mutation'):renderDay();};
+  window.mh25SetField=function(f,v){ensureDay(curDate||day())[f]=v;save();mhRefresh('live-mutation');};
 
   /* ---------- Analysis: all intelligence in one place ---------- */
   function buildAnalysis(){
@@ -210,12 +212,18 @@
     // app-v25 is loaded after the legacy/core scripts (all are defer), so the
     // original renderers are available here. Capture them at boot, not at file
     // evaluation time, then keep one deterministic V25 orchestration layer.
-    const oldRenderHome=window.renderHome,oldRenderDay=window.renderDay;
+    const oldRenderHome=window.renderHome,oldRenderDay=window.renderDay,oldRenderAll=window.renderAll;
     const oldRenderMonth=window.renderMonth,oldRenderPay=window.renderPay;
     const oldTab=window.tab;
     window.renderHome=renderHome25;
     window.renderDay=renderDay25;
-    /* V30 owns rendering; legacy renderAll orchestration removed. */
+    window.renderAll=function(){
+      try{oldRenderAll?.();}catch(e){console.warn('legacy render',e)}
+      try{renderHome25();}catch(e){console.warn('home25',e)}
+      try{renderDay25();}catch(e){console.warn('day25',e)}
+      try{renderAnalysis();}catch(e){console.warn('analysis25',e)}
+      try{Live.render();}catch(e){}
+    };
     if(oldTab&&!window.__mh25Tab){
       window.__mh25Tab=true;
       window.tab=function(t){

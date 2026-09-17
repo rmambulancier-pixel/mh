@@ -140,7 +140,7 @@ function parseBulletin(){
   DB.bulletins.sort((a,b)=>(a.mois||'')>(b.mois||'')?1:-1);
   save();
   afficherBulletin(bul);
-  typeof mhRefresh==='function'?mhRefresh('bulletin-import'):renderBulHist();
+  renderBulHist();
 }
 
 function afficherBulletin(bul){
@@ -317,7 +317,7 @@ function renderBulHist(){
 <td class="n">${b.net?EUR(b.net):'?'}</td>
 <td class="n">${b.hs25H!=null?b.hs25H.toFixed(2)+' h':'—'}</td>
 <td class="n">${b.hs50H!=null?b.hs50H.toFixed(2)+' h':'—'}</td>
-<td><button class="r" style="padding:4px 8px;font-size:11px" onclick="DB.bulletins.splice(${i},1);save();typeof mhRefresh==='function'?mhRefresh('bulletin-delete'):renderBulHist()">✕</button></td>
+<td><button class="r" style="padding:4px 8px;font-size:11px" onclick="DB.bulletins.splice(${i},1);save();mhRefresh('bulletin-delete')">✕</button></td>
 </tr>`;
   });
   h+='</table>';
@@ -396,7 +396,7 @@ function saveRomi(){
   romiTmp={_loaded:true};
   $('romiRawTxt').value='';
   $('romiOcrOut').innerHTML='';
-  typeof mhRefresh==='function'?mhRefresh('romi-save'):renderRomiTab();
+  renderRomiTab();
 }
 
 function loadRomi(start){
@@ -407,7 +407,7 @@ function loadRomi(start){
 }
 
 function deleteRomi(start){
-  delete DB.romi[start];save();typeof mhRefresh==='function'?mhRefresh('romi-delete'):renderRomiTab();
+  delete DB.romi[start];save();mhRefresh('romi-save');
 }
 
 function afficherRomi(e){

@@ -1,7 +1,7 @@
 /* MesHeures V28.0.0 — interface, projection, conformité et migrations.
    Le préfixe mhV17 est conservé uniquement comme namespace de compatibilité avec les données/UI V17. */
 (function(){
-  const V='30.0.0';
+  const V='28.0.0';
   function migrate(){
     DB.s=DB.s||{};
     if(DB.s.taux===14.02)DB.s.taux=14.20;
@@ -74,7 +74,9 @@
     const sec=document.getElementById('s-paie');if(!sec||document.getElementById('mhV17LegalCard'))return;
     const c=document.createElement('div');c.id='mhV17LegalCard';c.className='card';c.innerHTML='<h2>⚖️ Conformité V25 <span class="sub">référentiel 11/09/2026</span></h2><div class="kpis"><div class="kpi"><b>12 h</b><span>amplitude principe</span></div><div class="kpi"><b>14 h</b><span>extension max contrôlée</span></div><div class="kpi"><b>48 h</b><span>max semaine</span></div><div class="kpi"><b>46 h</b><span>moyenne 12 semaines</span></div></div><button class="b" style="margin-top:9px;width:100%" onclick="mhV17Legal()">⚖️ Lancer le contrôle de la période</button>';sec.insertBefore(c,sec.children[2]||null);
   }
-  function patchRender(){ /* V30 render gateway owns orchestration. */ }
+  function patchRender(){
+    if(window.__mhV17Render)return;window.__mhV17Render=true;const old=window.renderAll;window.renderAll=function(){old();addReg();legalCard();injectHome();renderProjection();};
+  }
   function boot(){migrate();theme(DB.s.theme);if(document.getElementById('mhVersion'))document.getElementById('mhVersion').textContent='V28.0.0';buildNav();patchHome();patchRender();addReg();legalCard();injectHome();setTimeout(()=>{try{tab('home');if(typeof pushWidgetData==='function')pushWidgetData()}catch(e){console.error(e)}},0);}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
   window.matchMedia('(prefers-color-scheme: light)').addEventListener?.('change',()=>{if(DB.s.theme==='auto')theme('auto')});
