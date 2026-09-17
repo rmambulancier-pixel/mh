@@ -6,6 +6,7 @@
   'use strict';
 
   const V='30.0.2';
+  const SECTIONS=['home','jour','mois','paie','analyse','audit','bul','romi','reg'];
   const q=s=>document.querySelector(s);
   const el=id=>document.getElementById(id);
   const fmt=m=>typeof F==='function'?F(Math.round(m||0)):'0h00';

@@ -725,7 +725,7 @@ function mhDecoratePages(){
   });
 }
 
-if($('mhVersion'))$('mhVersion').textContent='V30.0.0';
+if($('mhVersion'))$('mhVersion').textContent='V30.0.2';
 mhDecoratePages();
 mhAutoBackup();
 setTimeout(()=>{try{mhRefresh('boot-legacy')}catch(e){console.error('V15 render',e)}},0);
