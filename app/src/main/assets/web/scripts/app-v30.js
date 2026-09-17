@@ -1,11 +1,11 @@
-/* MesHeures V30.1.0 — canonical runtime
+/* MesHeures V30.2.0 — canonical runtime
  * One calculation engine, one UI/live runtime, one scheduler.
  * Historical V24/V25/V26/V27/V28 runtime files are removed.
  */
 (function(){
   'use strict';
 
-  const V='30.1.0';
+  const V='30.2.0';
   const SECTIONS=['home','jour','mois','paie','analyse','audit','bul','romi','reg'];
   const q=s=>document.querySelector(s);
   const el=id=>document.getElementById(id);
@@ -493,7 +493,7 @@
 
 
 'use strict';
-const PDF_V='30.1.0';
+const PDF_V='30.2.0';
 function ascii(s){return String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\x20-\x7E]/g,'?')}
 function esc(s){return ascii(s).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)')}
 function snapshot(){return {format:'MesHeures Probatory Dossier',version:PDF_V,createdAt:new Date().toISOString(),data:JSON.parse(JSON.stringify(window.DB||{}))}}

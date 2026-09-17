@@ -49,7 +49,7 @@ checks = {
 
     "V30 canonical runtime":
         "canonical runtime" in v30
-        and "const V=\'30.1.0\'" in v30
+        and "const V=\\'" + read(ROOT / "VERSION").strip() + "\\'" in v30
         and "One calculation engine" in v30,
 
     "V30 live engine":
@@ -83,7 +83,7 @@ checks = {
         "targetSdk 37" in build,
 
     "V30 Service Worker":
-        "mesheures-shell-v30.1.0" in sw
+        "mesheures-shell-v" + read(ROOT / "VERSION").strip() in sw
         and "scripts/app-v30.js" in sw,
 
     "no legacy Service Worker":
@@ -122,4 +122,4 @@ if failed:
     sys.exit(1)
 
 print()
-print("PERFORMANCE AUDIT: PASS — MesHeures V30.1.0")
+print("PERFORMANCE AUDIT: PASS — MesHeures V" + read(ROOT / "VERSION").strip())
