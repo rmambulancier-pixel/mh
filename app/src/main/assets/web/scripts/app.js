@@ -295,7 +295,7 @@ function loadArchive(){
   DB.periods.sort((a,b)=>a.start<b.start?-1:1);
   DB.s.anchor='2025-05-19'; DB.per={start:'2025-05-19',nb:1};
   save(); curDate='2026-09-05'; curMonth='2026-09';
-  mhRefresh();
+  if(typeof mhRefresh==='function') mhRefresh(); else window.__mh30PendingRefresh='archive-load';
   alert('✅ Archive chargée : '+AD.length+' journées · '+AP.length+' quatorzaines.');
 }
 
@@ -728,4 +728,4 @@ function mhDecoratePages(){
 if($('mhVersion'))$('mhVersion').textContent='V30.0.2';
 mhDecoratePages();
 mhAutoBackup();
-setTimeout(()=>{try{mhRefresh('boot-legacy')}catch(e){console.error('V15 render',e)}},0);
+setTimeout(()=>{try{if(typeof mhRefresh==='function')mhRefresh('boot-legacy');else window.__mh30PendingRefresh='boot-legacy'}catch(e){console.error('V15 render',e)}},0);

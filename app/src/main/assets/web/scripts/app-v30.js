@@ -11,7 +11,7 @@
   const el=id=>document.getElementById(id);
   const fmt=m=>typeof F==='function'?F(Math.round(m||0)):'0h00';
   const money=n=>typeof EUR==='function'?EUR(n):'—';
-  const escapeHtml=s=>typeof esc==='function'?esc(s):String(s??'');
+  const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
   function day(){return today();}
   function dayData(k=day()){return (DB.days&&DB.days[k])||{t:'REPOS',p:[]};}
@@ -261,7 +261,7 @@
       <div class="mh-v30-intel-bar"><i style="width:${Math.min(100,Math.max(0,avg/(typeof LEGAL_WEEK==='number'?LEGAL_WEEK:2760)*100)).toFixed(1)}%"></i></div>
       <div class="mh-v30-intel-note">12 semaines glissantes · ${p.plannedDays||0} journée(s) future(s) planifiée(s) · ${p.unknownDays||0} journée(s) future(s) inconnue(s).${p.firstRisk?` ⚠️ Risque détecté vers le ${typeof shortY==='function'?shortY(p.firstRisk):p.firstRisk}.`:' Aucun dépassement projeté sur les journées futures connues.'}</div>
       ${p.unknownDays?'<div class="al w">🟠 Trajectoire partielle : les journées futures non planifiées ne sont pas inventées.</div>':''}
-      <details open><summary>🔁 Motifs récurrents</summary>${patterns.length?patterns.slice(0,3).map(x=>`<div class="al ${x.level||'w'}"><b>${esc0(x.title||x.type||'Motif')}</b><br>${esc0(x.text||x.message||'')}<small>${esc0(x.detail||'')}</small></div>`).join(''):'<div class="audit-empty">Aucun motif récurrent suffisamment établi dans les données connues.</div>'}</details>
+      <details open><summary>🔁 Motifs récurrents</summary>${patterns.length?patterns.slice(0,3).map(x=>`<div class="al ${x.level||'w'}"><b>${escapeHtml(x.title||x.type||'Motif')}</b><br>${escapeHtml(x.text||x.message||'')}<small>${escapeHtml(x.detail||'')}</small></div>`).join(''):'<div class="audit-empty">Aucun motif récurrent suffisamment établi dans les données connues.</div>'}</details>
     </div>`;
   }
 
@@ -283,17 +283,17 @@
       <div class="mh30-section-title"><span>PROCHAINE ÉCHÉANCE</span></div><div class="mh30-next" id="mh30Next"></div>
     </div>`;
     activeStructure='home';
-    safe(window.MH30Live?.render,'live');
+    safe(()=>window.MH30Live?.render?.(),'live');
   }
 
   function refreshHome(){
     const k=today(),d=DB.days?.[k]||{t:'REPOS'},r=window.MH30DataEngine?.day?.(k),m=window.MH30DataEngine?.month?.(k.slice(0,7)),pi=periodInfo();
     const date=$('mh30HomeDate'); if(date)date.textContent=(typeof shortY==='function'?shortY(k):k)+' · '+(typeof dow==='function'?dow(k).toUpperCase():'');
-    const today=$('mh30Today'); if(today)today.innerHTML=`<div class="mh30-big"><strong>${fmt(r.tte)}</strong><span>${d.t==='T'?'Temps de travail effectif':d.t==='NUIT'?'Service de nuit':d.t==='CP'?'Congé payé':d.t==='RC'?'Repos compensateur':d.t==='MAL'?'Maladie':'Aucune journée travaillée'}</span></div><div class="mh30-stats"><span>Amplitude <b>${fmt(r.amp)}</b></span><span>Pauses <b>${fmt(r.pz)}</b></span><span>Paniers <b>${(r.ir+r.iru)||0}</b></span></div>`;
+    const todayEl=$('mh30Today'); if(todayEl)todayEl.innerHTML=`<div class="mh30-big"><strong>${fmt(r.tte)}</strong><span>${d.t==='T'?'Temps de travail effectif':d.t==='NUIT'?'Service de nuit':d.t==='CP'?'Congé payé':d.t==='RC'?'Repos compensateur':d.t==='MAL'?'Maladie':'Aucune journée travaillée'}</span></div><div class="mh30-stats"><span>Amplitude <b>${fmt(r.amp)}</b></span><span>Pauses <b>${fmt(r.pz)}</b></span><span>Paniers <b>${(r.ir+r.iru)||0}</b></span></div>`;
     const q=pi.q,N=pi.N,period=$('mh30Period'); if(period)period.innerHTML=`<div class="mh30-period-head"><b>${fmt(q.seuil)}</b><span>${short(pi.qs)} → ${short(addD(pi.qs,13))}</span></div><div class="mh30-progress"><i style="width:${pi.pc.toFixed(1)}%"></i></div><div class="mh30-period-foot"><span>${q.seuil<N?'Marge avant HS · '+fmt(N-q.seuil):'Seuil atteint'}</span><span>${fmt(q.h25)} HS25 · ${fmt(q.h50)} HS50</span></div>`;
     const nextKeys=Object.keys(DB.days||{}).filter(x=>x>k&&['T','NUIT'].includes(DB.days[x]?.t)).sort(),next=nextKeys[0],box=$('mh30Next');
     if(box)box.innerHTML=next?`<button onclick="mhOpenDay('${next}')"><span>📅</span><div><b>${shortY(next)} · ${dow(next).toUpperCase()}</b><small>${DB.days[next].deb||'Horaire à définir'}${DB.days[next].fin?' → '+DB.days[next].fin:''}</small></div><em>›</em></button>`:`<div class="mh30-empty">Aucune journée future planifiée.</div>`;
-    safe(window.MH30Live?.render,'live');
+    safe(()=>window.MH30Live?.render?.(),'live');
     refreshIntelligence();
   }
 
@@ -328,7 +328,7 @@
       safe(window.mhV30ReconciliationRefresh,'reconciliation');
       safe(window.mhV30DossierRefresh,'dossier');
     }
-    safe(window.MH30Live?.render,'live');
+    safe(()=>window.MH30Live?.render?.(),'live');
   }
 
   function activate(t){
@@ -344,10 +344,10 @@
   function liveTick(){
     liveTimer=0;
     if(document.visibilityState!=='visible')return;
-    const active=!!safe(window.MH30Live?.active,'live-active');
+    const active=!!safe(()=>window.MH30Live?.active?.(),'live-active');
     if(!active)return;
     const now=new Date(), minute=now.getMinutes();
-    safe(window.MH30Live?.render,'live-render');
+    safe(()=>window.MH30Live?.render?.(),'live-render');
     try{const r=window.MH30DataEngine?.day(today())||{};const due=!!(Number(r.tte||0)>=360&&Number(r.pz||0)<20);if(due&&!window.__mh30PauseNotified){window.__mh30PauseNotified=true;notifySystem('MesHeures — pause obligatoire','20 min de pause à prévoir : le seuil de 6 h de TTE est atteint.','mh30-pause');}if(!due)window.__mh30PauseNotified=false;}catch(e){}
     if(minute!==lastLiveMinute){ lastLiveMinute=minute; schedule('live-minute'); }
     liveTimer=setTimeout(liveTick,15000);
@@ -394,33 +394,13 @@
     check(); setInterval(check,6*60*60*1000);
   }
 
-  /* V30 STARTUP DIAGNOSTIC */
-  window.addEventListener('error',function(e){
-    try{
-      console.error('[MesHeures V30 ERROR]',e.error||e.message);
-      var box=document.getElementById('s-home');
-      if(box && !box.innerHTML.trim()){
-        box.innerHTML='<div style="padding:24px;font-family:monospace;color:#ff6b6b;background:#11151c;border-radius:16px;margin:16px">'+
-          '<b>ERREUR V30 AU DÉMARRAGE</b><br><br>'+
-          String(e.message||e.error||'Erreur JavaScript inconnue').replace(/</g,'&lt;')+
-          '<br><br><small>ligne '+(e.lineno||'?')+'</small></div>';
-      }
-    }catch(_){}
-  });
-
-  window.addEventListener('unhandledrejection',function(e){
-    try{
-      console.error('[MesHeures V30 PROMISE]',e.reason);
-    }catch(_){}
-  });
-
   function boot(){
     if(booted)return; booted=true;
     document.documentElement.dataset.mhVersion=V;
     if($('mhVersion'))$('mhVersion').textContent='V30.0.2';
     document.title='MesHeures V30.0';
     patchSave();
-    if(window.__mh30PendingRefresh){ const pending=window.__mh30PendingRefresh; delete window.__mh30PendingRefresh; }
+    if(window.__mh30PendingRefresh){ const pending=window.__mh30PendingRefresh; delete window.__mh30PendingRefresh; schedule(pending); }
     /* V30 est l’unique propriétaire du runtime. */
     try{if(window.MH30Live?.tick){clearInterval(window.MH30Live.tick);window.MH30Live.tick=null}}catch(e){}
     window.renderHome=renderHome;
