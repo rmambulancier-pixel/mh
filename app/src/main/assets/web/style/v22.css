@@ -1,0 +1,26 @@
+/* MesHeures V22 — navigation tactile et interface professionnelle */
+:root{--v22-ease:cubic-bezier(.2,.8,.2,1)}
+html,body{overscroll-behavior-x:none}
+body{touch-action:pan-y}
+.mh-v22-swipe-hint{display:none}
+.dash-greeting{font-size:19px!important;letter-spacing:-.2px}
+.home-backup-status{display:none!important}
+.mh-v22-nav-state{position:fixed;top:0;left:50%;transform:translateX(-50%);z-index:70;display:flex;gap:4px;padding:5px 8px;border:1px solid var(--line);border-top:0;border-radius:0 0 999px 999px;background:#0d1117dd;backdrop-filter:blur(10px);opacity:0;pointer-events:none;transition:opacity .2s ease}
+.mh-v22-nav-state i{width:5px;height:5px;border-radius:50%;background:var(--dim);opacity:.45}
+.mh-v22-nav-state i.on{width:18px;border-radius:999px;background:var(--blue);opacity:1}
+#s-home.mh-v22-page-in,#s-jour.mh-v22-page-in,#s-mois.mh-v22-page-in,#s-paie.mh-v22-page-in{animation:v22PageIn .22s var(--v22-ease)}
+@keyframes v22PageIn{from{opacity:.45;transform:translateX(var(--v22-dir,0))}to{opacity:1;transform:translateX(0)}}
+.mh-v17-nav button.v22-active{color:#fff!important;background:#1d2630!important;border-radius:12px!important}
+:root[data-theme="light"] .mh-v22-nav-state{background:#fffdfddd}
+:root[data-theme="light"] .mh-v17-nav button.v22-active{color:#0969da!important;background:#eaf2ff!important}
+.mh-v22-data-note{display:flex;align-items:center;gap:8px;padding:9px 11px;margin:0 0 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);font-size:11px;color:var(--dim)}
+.mh-v22-data-note b{color:var(--txt)}
+.mh-v22-alert-summary{display:flex;gap:7px;flex-wrap:wrap;margin-top:5px}
+.mh-v22-chip{font-size:10px;padding:4px 7px;border-radius:999px;background:#151c24;border:1px solid var(--line);color:var(--dim)}
+.mh-v22-chip.bad{color:var(--bad);border-color:#5d282b}.mh-v22-chip.warn{color:var(--warn);border-color:#5b481f}
+@media(max-width:700px){
+  main{padding-top:8px}
+  .dash-head{padding-top:4px}
+  .mh-v22-nav-state{opacity:.9}
+  .mh-v22-data-note{font-size:10px}
+}
