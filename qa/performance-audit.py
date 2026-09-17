@@ -49,7 +49,7 @@ checks = {
 
     "V30 canonical runtime":
         "canonical runtime" in v30
-        and "const V=\\'" + read(ROOT / "VERSION").strip() + "\\'" in v30
+        and "const V='" + read(ROOT / "VERSION").strip() + "'" in v30
         and "One calculation engine" in v30,
 
     "V30 live engine":
