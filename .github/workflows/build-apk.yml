@@ -84,7 +84,7 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/aapt2" dump badging "$APK" | grep "versionCode='${{ steps.version.outputs.code }}'"
 
       - name: Publish APK artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: MesHeures-${{ steps.version.outputs.version }}-${{ steps.version.outputs.code }}
           path: app/build/outputs/apk/release/app-release.apk
