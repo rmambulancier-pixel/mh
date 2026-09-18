@@ -114,6 +114,10 @@
 
   /* ---------- Home: one cockpit, no repeated analytics ---------- */
   function renderHome(){
+    if (window.MH302 && typeof window.MH302.renderHome === 'function') {
+      window.MH302.renderHome();
+      return;
+    }
     const host=el('s-home');if(!host)return;
     host.innerHTML=`<div class="mh30-shell">
       <header class="mh30-pagehead"><div><span class="mh30-kicker">MESHEURES · AUJOURD’HUI</span><h2>Tableau de bord</h2><p>${shortY(day())} · ${dow(day()).toUpperCase()}</p></div><button class="mh30-iconbtn" onclick="tab('reg')">⚙</button></header>
@@ -441,7 +445,7 @@
     if(booted)return; booted=true;
     document.documentElement.dataset.mhVersion=V;
     if($('mhVersion'))$('mhVersion').textContent='V30.1';
-    document.title='MesHeures V30.1';
+    document.title='MesHeures V30.2.0';
     patchSave();
     if(window.__mh30PendingRefresh){ const pending=window.__mh30PendingRefresh; delete window.__mh30PendingRefresh; schedule(pending); }
     /* V30 est l’unique propriétaire du runtime. */
