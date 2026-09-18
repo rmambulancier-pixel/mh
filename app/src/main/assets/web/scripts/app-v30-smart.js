@@ -1,5 +1,5 @@
 /*
- * MesHeures V30.2.2 — SMART CONTROL
+ * MesHeures V30.2.3 — SMART CONTROL
  *
  * Couche cockpit / insights.
  * Le moteur existant reste la source de vérité.
@@ -8,7 +8,7 @@
 (function () {
   'use strict';
 
-  const V = '30.2.2';
+  const V = '30.2.3';
   const PRIMARY = ['home', 'jour', 'mois', 'paie', 'analyse'];
 
   const $ = id => document.getElementById(id);
@@ -773,12 +773,24 @@
       </div>
     `;
 
+    modal.hidden = false;
+    modal.style.display = 'flex';
+    modal.style.position = 'fixed';
+    modal.style.inset = '0';
+    modal.style.zIndex = '1000';
+    modal.style.alignItems = 'flex-end';
     modal.classList.add('on');
+
     bindSmartTimes(modal);
   };
 
   window.mh302CloseQuickAdd = function () {
-    $('mh302QuickAdd')?.classList.remove('on');
+    const modal = $('mh302QuickAdd');
+    if (!modal) return;
+
+    modal.classList.remove('on');
+    modal.hidden = true;
+    modal.style.display = 'none';
   };
 
   window.mh302SaveQuickAdd = function () {
@@ -935,6 +947,13 @@
 
     ensureFab();
     ensureSwipe();
+
+    const strayQuickAdd = $('mh302QuickAdd');
+    if (strayQuickAdd) {
+      strayQuickAdd.classList.remove('on');
+      strayQuickAdd.hidden = true;
+      strayQuickAdd.style.display = 'none';
+    }
 
     setTimeout(() => {
       try {

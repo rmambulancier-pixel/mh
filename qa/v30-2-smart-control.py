@@ -19,8 +19,8 @@ css = (WEB / "style/v30.css").read_text()
 
 checks = []
 
-checks += [ok("VERSION canonique", version == "30.2.2")]
-checks += [ok("VERSION_CODE canonique", "VERSION_CODE=3022" in props)]
+checks += [ok("VERSION canonique", version == "30.2.3")]
+checks += [ok("VERSION_CODE canonique", "VERSION_CODE=3023" in props)]
 checks += [ok("Smart JS chargé", "scripts/app-v30-smart.js" in index)]
 checks += [ok("Smart JS dans Service Worker", "app-v30-smart.js" in sw)]
 checks += [ok("runtime canonique V30.2", "const V='" + version + "'" in runtime)]
