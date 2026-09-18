@@ -422,6 +422,7 @@
 
 
   function renderHome() {
+    window.__MH_HOME_OWNER = 'SMART_CONTROL';
     const host = $('s-home');
     if (!host) return;
 
@@ -1147,6 +1148,8 @@
       }
     }, 100);
   }
+
+  window.__MH_HOME_OWNER = 'SMART_CONTROL';
 
   window.MH302 = {
     version: V,

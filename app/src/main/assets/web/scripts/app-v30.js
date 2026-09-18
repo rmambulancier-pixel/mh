@@ -113,7 +113,7 @@
   }
 
   /* ---------- Home: one cockpit, no repeated analytics ---------- */
-  function renderHome(){
+  function legacyV30RenderHome() {
     if (window.MH302 && typeof window.MH302.renderHome === 'function') {
       window.MH302.renderHome();
       return;

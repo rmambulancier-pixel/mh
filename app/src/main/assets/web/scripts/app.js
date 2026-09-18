@@ -474,6 +474,9 @@ function mhOpenDay(k){curDate=k;curMonth=k.slice(0,7);tab('jour')}
 function mhClass(v,good='ok',bad='bad'){return v>0?bad:good}
 
 function renderHome(){
+  if(window.MH302 && typeof window.MH302.renderHome==='function'){
+    return window.MH302.renderHome();
+  }
   const now=today(),m=now.slice(0,7),month=mhMonthStats(m);
   const diff=nDays(DB.s.anchor,now),qs=addD(DB.s.anchor,Math.floor(diff/14)*14),qData=calcPer(qs,1),q=qData.Q[0],qG=qData.G;
   const todayData=gd(now)||{t:'REPOS'},todayR=cd(now);
