@@ -184,7 +184,15 @@ public class MainActivity extends ComponentActivity {
                 webReady = true;
                 // Legacy: normal launch always lands on Accueil; widget deep-links remain explicit.
                 if (pendingDeepLink == null) {
-                    web.evaluateJavascript("(function(){try{if(typeof tab==='function')tab('home');}catch(e){}})();", null);
+                    web.evaluateJavascript(
+                        "(function(){try{" +
+                        "window.curTab='home';" +
+                        "if(window.MH302&&typeof window.MH302.renderHome==='function')" +
+                        "{window.MH302.renderHome();}" +
+                        "else if(typeof tab==='function'){tab('home');}" +
+                        "}catch(e){console.error('MesHeures boot',e);}})();",
+                        null
+                    );
                 }
                 tryConsumeDeepLink();
             }
