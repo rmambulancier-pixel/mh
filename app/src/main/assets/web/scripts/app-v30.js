@@ -1,11 +1,11 @@
-/* MesHeures V30.2.4 — canonical runtime
+/* MesHeures V30.2.5 — canonical runtime
  * One calculation engine, one UI/live runtime, one scheduler.
  * Historical V24/V25/V26/V27/V28 runtime files are removed.
  */
 (function(){
   'use strict';
 
-  const V='30.2.4';
+  const V='30.2.5';
   const SECTIONS=['home','jour','mois','paie','analyse','audit','bul','romi','reg'];
   const q=s=>document.querySelector(s);
   const el=id=>document.getElementById(id);
@@ -322,7 +322,7 @@
   }
 
   function renderHome(){
-    /* V30.2.4: Smart Control owns Accueil.
+    /* V30.2.5: Smart Control owns Accueil.
        The legacy V30 dashboard must never redraw over it. */
     if (window.MH302 && typeof window.MH302.renderHome === 'function') {
       window.MH302.renderHome();
@@ -450,8 +450,8 @@
   function boot(){
     if(booted)return; booted=true;
     document.documentElement.dataset.mhVersion=V;
-    if($('mhVersion'))$('mhVersion').textContent='V30.2.4';
-    document.title='MesHeures V30.2.4';
+    if($('mhVersion'))$('mhVersion').textContent='V30.2.5';
+    document.title='MesHeures V30.2.5';
     patchSave();
     if(window.__mh30PendingRefresh){ const pending=window.__mh30PendingRefresh; delete window.__mh30PendingRefresh; schedule(pending); }
     /* V30 est l’unique propriétaire du runtime. */
@@ -476,7 +476,7 @@
     window.addEventListener('pageshow',()=>{window.MH30DataEngine?.invalidate?.('pageshow');schedule('pageshow');startLive()});
     window.addEventListener('pagehide',stopLive);
     document.addEventListener('mh:state-changed',()=>{window.MH30DataEngine?.invalidate?.('event');schedule('event')});
-    /* V30.2.4: tactile retour de secours */
+    /* V30.2.5: tactile retour de secours */
     let touchX=0,touchY=0;
     document.addEventListener('touchstart',e=>{
       const t=e.touches?.[0];
@@ -503,7 +503,7 @@
 
 
 'use strict';
-const PDF_V='30.2.4';
+const PDF_V='30.2.5';
 function ascii(s){return String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\x20-\x7E]/g,'?')}
 function esc(s){return ascii(s).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)')}
 function snapshot(){return {format:'MesHeures Probatory Dossier',version:PDF_V,createdAt:new Date().toISOString(),data:JSON.parse(JSON.stringify(window.DB||{}))}}
