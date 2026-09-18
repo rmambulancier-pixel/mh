@@ -455,6 +455,8 @@
     const host = $('s-home');
     if (!host) return;
 
+    try {
+
     const k = todayKey();
     const d = dayData(k);
     const r = dayCalc(k);
@@ -587,6 +589,22 @@
     host.innerHTML = html.join('');
     renderLive();
     if (window.MH30Live?.render) window.MH30Live.render();
+
+    } catch (e) {
+      console.error('MesHeures V31 HOME ERROR:', e);
+
+      host.innerHTML =
+        '<div class="mh31-home">' +
+        '<section class="mh31-intelligence">' +
+        '<div class="mh31-intel-top">' +
+        '<div><span>MESHEURES V31</span><b>Accueil en récupération</b></div>' +
+        '<strong>⚠️</strong>' +
+        '</div>' +
+        '<p>Le moteur V31 a rencontré une erreur au démarrage.</p>' +
+        '<button onclick="location.reload()">Recharger <em>↻</em></button>' +
+        '</section>' +
+        '</div>';
+    }
   }
 
   /*
