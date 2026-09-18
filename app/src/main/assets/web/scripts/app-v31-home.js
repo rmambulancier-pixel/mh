@@ -1,5 +1,5 @@
 /*
- * MesHeures V31.0.0 — ACCUEIL PREMIUM
+ * MesHeures V31.1.0 — ACCUEIL PREMIUM
  *
  * Nouveau renderer indépendant.
  * Le moteur V30 reste la source de vérité.
@@ -9,7 +9,7 @@
 (function () {
   'use strict';
 
-  const V = '31.0.0';
+  const V = '31.1.0';
 
   const $ = id => document.getElementById(id);
 
@@ -59,7 +59,7 @@
   }
 
   function dayData(k) {
-    return DB?.days?.[k] || {
+    return window.DB?.days?.[k] || {
       t: 'REPOS',
       p: []
     };
@@ -90,7 +90,7 @@
   function periodInfo() {
     try {
       const k = todayKey();
-      const anchor = DB?.s?.anchor || k;
+      const anchor = window.DB?.s?.anchor || k;
 
       if (
         window.MH30DataEngine &&
@@ -107,7 +107,7 @@
 
         const q = result?.Q?.[0] || {};
         const objective =
-          Number(DB?.s?.base || 0) * 120;
+          Number(window.DB?.s?.base || 0) * 120;
 
         return {
           start,
@@ -134,7 +134,7 @@
           end: addD(start, 13),
           actual: Number(q.seuil || q.tte || 0),
           objective:
-            Number(DB?.s?.base || 0) * 120,
+            Number(window.DB?.s?.base || 0) * 120,
           h25: Number(q.h25 || 0),
           h50: Number(q.h50 || 0)
         };
@@ -158,17 +158,17 @@
   function nextService() {
     const k = todayKey();
 
-    const keys = Object.keys(DB?.days || {})
+    const keys = Object.keys(window.DB?.days || {})
       .filter(x =>
         x > k &&
-        ['T', 'NUIT'].includes(DB.days[x]?.t)
+        ['T', 'NUIT'].includes(window.DB.days[x]?.t)
       )
       .sort();
 
     return keys.length
       ? {
           k: keys[0],
-          d: DB.days[keys[0]]
+          d: window.DB.days[keys[0]]
         }
       : null;
   }
@@ -188,6 +188,54 @@
         r
       });
     }
+
+    return out;
+  }
+
+
+  function weekInfo(days) {
+    const work = days.filter(x => ['T','NUIT'].includes(x.d?.t));
+    const tte = work.reduce((s,x) => s + Number(x.r?.tte || 0), 0);
+    const amp = work.reduce((s,x) => s + Number(x.r?.amp || 0), 0);
+    return {
+      days,
+      workCount: work.length,
+      tte,
+      avgAmp: work.length ? amp / work.length : 0
+    };
+  }
+
+  function homeAlerts(d, r, active) {
+    const out = [];
+
+    if (['T','NUIT'].includes(d?.t) && d.deb && !d.fin && !active)
+      out.push({
+        icon:'⚠️',
+        title:'Journée à compléter',
+        text:'Une heure de fin manque pour aujourd’hui.',
+        action:'jour'
+      });
+
+    if (['T','NUIT'].includes(d?.t) && Number(r?.amp || 0) >= 720)
+      out.push({
+        icon:'⏱',
+        title:'Amplitude élevée',
+        text:'Vérifie cette journée dans la saisie.',
+        action:'jour'
+      });
+
+    if (
+      ['T','NUIT'].includes(d?.t) &&
+      Number(r?.pz || 0) === 0 &&
+      Number(r?.tte || 0) >= 360 &&
+      !active
+    )
+      out.push({
+        icon:'☕',
+        title:'Pause à vérifier',
+        text:'Aucune pause n’est actuellement comptabilisée.',
+        action:'jour'
+      });
 
     return out;
   }
@@ -299,6 +347,12 @@
     const m = monthInfo();
     const next = nextService();
     const recent = recentDays();
+    const week = weekInfo(recent);
+    const alerts = homeAlerts(
+      d,
+      r,
+      !!window.MH30Live?.active?.()
+    );
 
     const worked =
       ['T', 'NUIT'].includes(d.t);
@@ -444,6 +498,56 @@
 
         </section>
 
+
+        <section class="mh31-week">
+
+          <div class="mh31-week-head">
+            <div>
+              <span>MA SEMAINE</span>
+              <b>${week.workCount} jour${week.workCount > 1 ? 's' : ''} travaillé${week.workCount > 1 ? 's' : ''}</b>
+            </div>
+
+            <span>${fmt(week.tte)} TTE</span>
+          </div>
+
+          <div class="mh31-week-strip">
+
+            ${recent.map(x => `
+              <button
+                class="mh31-week-day ${
+                  x.d?.t === 'T'
+                    ? 'work'
+                    : x.d?.t === 'NUIT'
+                      ? 'night'
+                      : x.d?.t === 'CP'
+                        ? 'leave'
+                        : x.d?.t === 'MAL'
+                          ? 'sick'
+                          : x.d?.t === 'RC'
+                            ? 'rest'
+                            : ''
+                }"
+                onclick="mhOpenDay('${esc(x.k)}')">
+
+                <strong>
+                  ${new Date(
+                    x.k + 'T12:00:00'
+                  ).getDate()}
+                </strong>
+
+                <small>
+                  ${esc(dayLabel(x.k).slice(0,3))}
+                </small>
+
+                <i></i>
+
+              </button>
+            `).join('')}
+
+          </div>
+
+        </section>
+
         <section class="mh31-actions">
 
           <button onclick="tab('jour')">
@@ -549,6 +653,104 @@
               }
             </b>
           </div>
+
+        </section>
+
+
+        <section class="mh31-insights">
+
+          <div class="mh31-insight-card">
+            <span>CETTE SEMAINE</span>
+            <b>${fmt(week.tte)}</b>
+            <small>
+              ${week.workCount}
+              journée${week.workCount > 1 ? 's' : ''}
+              travaillée${week.workCount > 1 ? 's' : ''}
+            </small>
+          </div>
+
+          <div class="mh31-insight-card">
+            <span>AMPLITUDE MOY.</span>
+            <b>
+              ${week.avgAmp > 0 ? fmt(week.avgAmp) : '—'}
+            </b>
+            <small>sur les jours travaillés</small>
+          </div>
+
+          <button
+            class="mh31-insight-card mh31-insight-link"
+            onclick="tab('paie')">
+
+            <span>QUATORZAINE</span>
+
+            <b>
+              ${p ? fmt(p.actual) : '—'}
+            </b>
+
+            <small>
+              ${
+                p && p.objective
+                  ? Math.round(progress) + '% de l’objectif'
+                  : 'Détail paie ›'
+              }
+            </small>
+
+          </button>
+
+        </section>
+
+        <section class="mh31-alerts ${alerts.length ? 'has-alerts' : ''}">
+
+          <div class="mh31-alert-head">
+
+            <div>
+              <span>INTELLIGENCE</span>
+
+              <b>
+                ${
+                  alerts.length
+                    ? alerts.length +
+                      ' point' +
+                      (alerts.length > 1 ? 's' : '') +
+                      ' à vérifier'
+                    : 'Tout est à jour'
+                }
+              </b>
+            </div>
+
+            <span>
+              ${alerts.length ? 'À SURVEILLER' : '✓ OK'}
+            </span>
+
+          </div>
+
+          ${
+            alerts.length
+              ? alerts.map(a => `
+                  <button
+                    class="mh31-alert"
+                    onclick="tab('${a.action}')">
+
+                    <strong>${a.icon}</strong>
+
+                    <span>
+                      <b>${esc(a.title)}</b>
+                      <small>${esc(a.text)}</small>
+                    </span>
+
+                    <em>›</em>
+
+                  </button>
+                `).join('')
+              : `
+                <div class="mh31-alert-ok">
+                  <strong>✓</strong>
+                  <span>
+                    Aucune anomalie détectée sur l’accueil.
+                  </span>
+                </div>
+              `
+          }
 
         </section>
 
@@ -731,10 +933,10 @@
       $('mhVersion');
 
     if (version)
-      version.textContent = 'V31.0.0';
+      version.textContent = 'V31.1.0';
 
     document.title =
-      'MesHeures V31.0.0';
+      'MesHeures V31.1.0';
 
     if (
       window.curTab === 'home' ||

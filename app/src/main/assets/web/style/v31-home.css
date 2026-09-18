@@ -1,4 +1,4 @@
-/* MesHeures V31 — Home Premium */
+/* MesHeures V31.1 — Home Premium */
 
 .mh31-home{
   width:100%;
@@ -432,6 +432,257 @@
   .mh31-home{
     padding-left:2px;
     padding-right:2px;
+  }
+
+}
+
+
+/* V31.1 — densité premium */
+
+.mh31-week{
+  margin:0 0 12px;
+  padding:13px;
+  border:1px solid #29333e;
+  border-radius:18px;
+  background:linear-gradient(145deg,#151b22,#10151b);
+}
+
+.mh31-week-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:10px;
+}
+
+.mh31-week-head span{
+  color:var(--dim);
+  font-size:8px;
+  letter-spacing:1px;
+  font-weight:800;
+}
+
+.mh31-week-head b{
+  display:block;
+  margin-top:2px;
+  font-size:15px;
+}
+
+.mh31-week-strip{
+  display:grid;
+  grid-template-columns:repeat(7,1fr);
+  gap:5px;
+}
+
+.mh31-week-day{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:3px;
+  padding:8px 2px!important;
+  border-radius:12px!important;
+  background:#11171e!important;
+  border:1px solid #252f3a!important;
+  color:var(--dim)!important;
+}
+
+.mh31-week-day strong{
+  font-size:14px;
+  color:var(--txt);
+}
+
+.mh31-week-day small{
+  font-size:7px;
+  font-weight:800;
+}
+
+.mh31-week-day i{
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:#39434e;
+}
+
+.mh31-week-day.work i{background:#65dc8e}
+.mh31-week-day.night i{background:#a982f0}
+.mh31-week-day.leave i{background:#e0b45a}
+.mh31-week-day.sick i{background:#d66a6a}
+.mh31-week-day.rest i{background:#78909c}
+
+.mh31-insights{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin:0 0 10px;
+}
+
+.mh31-insight-card{
+  min-width:0;
+  padding:12px 10px;
+  border:1px solid #29333e;
+  border-radius:15px;
+  background:#141a21;
+  text-align:left;
+}
+
+.mh31-insight-card span{
+  display:block;
+  color:var(--dim);
+  font-size:8px;
+  letter-spacing:.6px;
+  font-weight:800;
+}
+
+.mh31-insight-card b{
+  display:block;
+  margin-top:6px;
+  font-size:20px;
+  font-variant-numeric:tabular-nums;
+}
+
+.mh31-insight-card small{
+  display:block;
+  margin-top:3px;
+  color:var(--dim);
+  font-size:8px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.mh31-insight-link{
+  width:100%;
+  color:var(--txt)!important;
+}
+
+.mh31-alerts{
+  margin:0 0 10px;
+  padding:13px;
+  border:1px solid #29333e;
+  border-radius:18px;
+  background:#12181f;
+}
+
+.mh31-alerts.has-alerts{
+  border-color:#51452c;
+}
+
+.mh31-alert-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:8px;
+}
+
+.mh31-alert-head span{
+  display:block;
+  color:var(--dim);
+  font-size:8px;
+  letter-spacing:1px;
+  font-weight:800;
+}
+
+.mh31-alert-head b{
+  display:block;
+  margin-top:2px;
+  font-size:14px;
+}
+
+.mh31-alert-head>span:last-child{
+  padding:4px 7px;
+  border-radius:999px;
+  background:#1b252d;
+  color:#65dc8e;
+}
+
+.mh31-alerts.has-alerts
+.mh31-alert-head>span:last-child{
+  color:#e6b85c;
+  background:#302a1d;
+}
+
+.mh31-alert{
+  width:100%;
+  display:grid;
+  grid-template-columns:28px 1fr 18px;
+  align-items:center;
+  gap:8px;
+  padding:9px!important;
+  margin-top:6px;
+  border-radius:12px!important;
+  background:#181e25!important;
+  border:1px solid #2c3640!important;
+  text-align:left;
+  color:var(--txt)!important;
+}
+
+.mh31-alert strong{
+  font-size:18px;
+}
+
+.mh31-alert span b{
+  display:block;
+  font-size:10px;
+}
+
+.mh31-alert span small{
+  display:block;
+  margin-top:2px;
+  color:var(--dim);
+  font-size:8px;
+}
+
+.mh31-alert em{
+  font-style:normal;
+  color:var(--dim);
+  font-size:20px;
+}
+
+.mh31-alert-ok{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  padding:9px;
+  border-radius:12px;
+  background:#142119;
+  color:#9be7b1;
+  font-size:10px;
+}
+
+.mh31-alert-ok strong{
+  font-size:16px;
+}
+
+@media(max-width:600px){
+
+  .mh31-week{
+    padding:11px 9px;
+  }
+
+  .mh31-week-strip{
+    gap:3px;
+  }
+
+  .mh31-week-day{
+    padding:7px 1px!important;
+  }
+
+  .mh31-insights{
+    gap:6px;
+  }
+
+  .mh31-insight-card{
+    padding:10px 8px;
+  }
+
+  .mh31-insight-card b{
+    font-size:17px;
+  }
+
+  .mh31-insight-card small{
+    font-size:7px;
   }
 
 }
