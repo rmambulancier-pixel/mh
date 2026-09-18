@@ -19,11 +19,11 @@ css = (WEB / "style/v30.css").read_text()
 
 checks = []
 
-checks += [ok("VERSION 30.2.0", version == "30.2.0")]
-checks += [ok("VERSION_CODE 3020", "VERSION_CODE=3020" in props)]
+checks += [ok("VERSION canonique", version == "30.2.2")]
+checks += [ok("VERSION_CODE canonique", "VERSION_CODE=3022" in props)]
 checks += [ok("Smart JS chargé", "scripts/app-v30-smart.js" in index)]
 checks += [ok("Smart JS dans Service Worker", "app-v30-smart.js" in sw)]
-checks += [ok("runtime canonique V30.2", "const V='30.2.0'" in runtime)]
+checks += [ok("runtime canonique V30.2", "const V='" + version + "'" in runtime)]
 checks += [ok("SMART CONTROL", "SMART CONTROL" in smart)]
 checks += [ok("cockpit", "renderHome" in smart)]
 checks += [ok("Quick Add", "mh302OpenQuickAdd" in smart and "mh302SaveQuickAdd" in smart)]

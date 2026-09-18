@@ -1,4 +1,4 @@
-/* MesHeures V30.2.0 — constats, journal de preuves, chronologie, backup chiffré
+/* MesHeures V30.2.2 — constats, journal de preuves, chronologie, backup chiffré
    Optimisation : l'historique probatoire est calculé uniquement lorsqu'une donnée est modifiée.
 */
 (function(){

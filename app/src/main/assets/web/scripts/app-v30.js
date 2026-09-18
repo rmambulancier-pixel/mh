@@ -495,7 +495,7 @@
 
 
 'use strict';
-const PDF_V='30.2.0';
+const PDF_V='30.2.2';
 function ascii(s){return String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\x20-\x7E]/g,'?')}
 function esc(s){return ascii(s).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)')}
 function snapshot(){return {format:'MesHeures Probatory Dossier',version:PDF_V,createdAt:new Date().toISOString(),data:JSON.parse(JSON.stringify(window.DB||{}))}}
