@@ -842,7 +842,9 @@
 
             <p>
               Le moteur principal reste disponible.
-              Un module du cockpit n’a pas pu être rendu.
+              Un module du cockpit n’a pas pu être rendu.            <small class="mh302-diagnostic">
+              Diagnostic : ${esc(e?.message || String(e))}
+            </small>
             </p>
 
             <button onclick="tab('jour')">
