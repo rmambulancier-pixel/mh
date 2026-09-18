@@ -334,582 +334,259 @@
       });
   }
 
+  function monthProjection() {
+    const now = todayKey();
+    const month = now.slice(0, 7);
+    const days = Object.keys(window.DB?.days || {})
+      .filter(k => k.slice(0, 7) === month)
+      .sort();
+
+    const past = days.filter(k => k <= now);
+    const future = days.filter(k =>
+      k > now && ['T', 'NUIT'].includes(window.DB.days[k]?.t)
+    );
+
+    const worked = past.filter(k =>
+      ['T', 'NUIT'].includes(window.DB.days[k]?.t)
+    );
+
+    const tte = worked.reduce((sum, k) =>
+      sum + Number(dayCalc(k)?.tte || 0), 0
+    );
+
+    const avg = worked.length ? tte / worked.length : 0;
+    const projected = worked.length
+      ? tte + avg * future.length
+      : 0;
+
+    return {
+      tte,
+      avg,
+      worked: worked.length,
+      future: future.length,
+      projected,
+      confidence: worked.length >= 5
+        ? 'Bonne base'
+        : worked.length > 0
+          ? 'Base partielle'
+          : 'En attente de données'
+    };
+  }
+
+  function dossierHealth() {
+    const now = todayKey();
+    const month = now.slice(0, 7);
+    let complete = 0;
+    let toCheck = 0;
+    let critical = 0;
+
+    Object.keys(window.DB?.days || {})
+      .filter(k => k.slice(0, 7) === month && k <= now)
+      .forEach(k => {
+        const d = dayData(k);
+        if (!['T', 'NUIT'].includes(d?.t)) return;
+
+        const r = dayCalc(k);
+        const active = k === now && !!window.MH30Live?.active?.();
+
+        if (d.deb && !d.fin && !active) {
+          toCheck++;
+          return;
+        }
+
+        if (Number(r?.amp || 0) >= 900) {
+          critical++;
+          return;
+        }
+
+        if (d.deb && d.fin) complete++;
+      });
+
+    return { complete, toCheck, critical };
+  }
+
+  function smartInsight(proj, health) {
+    try {
+      const intel = window.mhV30IntelligenceData?.();
+      const p = intel?.projection || {};
+      if (p.firstRisk) {
+        return {
+          icon: '⚠️',
+          title: 'Point de vigilance',
+          text: 'Une trajectoire à surveiller apparaît dans Intelligence.',
+          action: 'analyse'
+        };
+      }
+    } catch (_) {}
+
+    if (health.critical)
+      return {
+        icon: '🔴',
+        title: 'Vérification prioritaire',
+        text: health.critical + ' journée(s) présentent une amplitude très élevée.',
+        action: 'audit'
+      };
+
+    if (health.toCheck)
+      return {
+        icon: '🟠',
+        title: 'Donnée à compléter',
+        text: health.toCheck + ' journée(s) du mois restent incomplètes.',
+        action: 'jour'
+      };
+
+    if (proj.future > 0 && proj.avg > 0)
+      return {
+        icon: '🔮',
+        title: 'Trajectoire calculée',
+        text: 'La projection utilise tes journées enregistrées et les services déjà planifiés.',
+        action: 'analyse'
+      };
+
+    return {
+      icon: '✓',
+      title: 'Dossier propre',
+      text: 'Aucune anomalie prioritaire détectée sur les données connues.',
+      action: 'audit'
+    };
+  }
+
   function renderHome() {
     const host = $('s-home');
-
-    if (!host)
-      return;
+    if (!host) return;
 
     const k = todayKey();
     const d = dayData(k);
     const r = dayCalc(k);
-    const p = periodInfo();
-    const m = monthInfo();
     const next = nextService();
-    const recent = recentDays();
-    const week = weekInfo(recent);
-    const alerts = homeAlerts(
-      d,
-      r,
-      !!window.MH30Live?.active?.()
+    const proj = monthProjection();
+    const health = dossierHealth();
+    const insight = smartInsight(proj, health);
+    const active = !!window.MH30Live?.active?.();
+
+    const monthRemaining = Math.max(
+      0,
+      new Date(
+        Number(k.slice(0, 4)),
+        Number(k.slice(5, 7)),
+        0
+      ).getDate() - Number(k.slice(8, 10))
     );
 
-    const worked =
-      ['T', 'NUIT'].includes(d.t);
+    const html = [];
+
+    html.push(
+      '<div class="mh31-home">',
+
+      '<header class="mh31-head">',
+      '<div class="mh31-brand">',
+      '<div class="mh31-logo">⏱</div>',
+      '<div>',
+      '<span>MESHEURES</span><strong>V31</strong>',
+      '<h1>Tableau de bord</h1>',
+      '<small>' + esc(dateLabel(k)) + ' · ' + esc(dayLabel(k)) + '</small>',
+      '</div></div>',
+      '<button class="mh31-settings" onclick="tab(\'reg\')" aria-label="Réglages">⚙</button>',
+      '</header>',
+
+      '<section class="mh31-hero">',
+      '<div class="mh31-hero-top">',
+      '<div><span>AUJOURD’HUI</span><b data-v31-state>' +
+        esc(active ? 'EN SERVICE' : serviceType(d)) +
+      '</b></div>',
+      '<button class="mh31-live-button" data-v31-live-button onclick="mhV31ToggleLive()">' +
+        (active ? '■ Arrêter' : '▶ Démarrer') +
+      '</button>',
+      '</div>',
+      '<div class="mh31-clock" data-v31-clock>' + fmt(r.tte) + '</div>',
+      '<div class="mh31-caption">Temps de travail effectif</div>',
+      '<div class="mh31-meta">',
+      '<div><span>Début</span><b data-v31-start>' + esc(d.deb || '—') + '</b></div>',
+      '<div><span>Fin</span><b data-v31-end>' + esc(active ? 'En cours' : d.fin || '—') + '</b></div>',
+      '<div><span>Pause</span><b data-v31-pause>' + fmt(r.pz) + '</b></div>',
+      '<div><span>Amplitude</span><b data-v31-amp>' + fmt(r.amp) + '</b></div>',
+      '</div></section>',
+
+      '<section class="mh31-actions">',
+      '<button onclick="tab(\'jour\')"><b>＋</b><span>Saisie</span><small>Journée & pauses</small></button>',
+      '<button onclick="tab(\'mois\')"><b>▦</b><span>Planning</span><small>Calendrier</small></button>',
+      '<button onclick="tab(\'paie\')"><b>€</b><span>Paie</span><small>Heures & HS</small></button>',
+      '<button onclick="tab(\'analyse\')"><b>◌</b><span>Analyse</span><small>Suivi</small></button>',
+      '</section>',
+
+      '<section class="mh31-command">',
+      '<div class="mh31-command-head"><div><span>PILOTAGE</span><b>Où en est ton mois ?</b></div>',
+      '<span class="mh31-command-badge">' + monthRemaining + ' j restants</span></div>',
+      '<div class="mh31-command-grid">',
+      '<div class="mh31-command-card"><span>PROJECTION</span><strong>' +
+        (proj.projected ? fmt(proj.projected) : '—') +
+      '</strong><small>fin de mois au rythme actuel</small></div>',
+      '<div class="mh31-command-card"><span>RYTHME MOYEN</span><strong>' +
+        (proj.avg ? fmt(proj.avg) : '—') +
+      '</strong><small>par journée travaillée</small></div>',
+      '<div class="mh31-command-card"><span>SERVICES PLANIFIÉS</span><strong>' +
+        proj.future +
+      '</strong><small>restant(s) ce mois-ci</small></div>',
+      '</div>',
+      '<div class="mh31-command-foot"><span>' +
+        proj.worked + ' journée(s) comptabilisée(s)' +
+      '</span><span>' + esc(proj.confidence) + '</span></div>',
+      '</section>',
+
+      '<section class="mh31-intelligence">',
+      '<div class="mh31-intel-top"><div><span>INTELLIGENCE</span><b>' +
+        esc(insight.title) +
+      '</b></div><strong>' + insight.icon + '</strong></div>',
+      '<p>' + esc(insight.text) + '</p>',
+      '<button onclick="tab(\'' + esc(insight.action) + '\')">Ouvrir le détail <em>›</em></button>',
+      '</section>',
+
+      '<section class="mh31-health">',
+      '<div class="mh31-health-head"><div><span>ÉTAT DU DOSSIER</span><b>' +
+        ((health.toCheck || health.critical)
+          ? 'Vérification nécessaire'
+          : 'Données cohérentes') +
+      '</b></div><strong class="' +
+        ((health.toCheck || health.critical) ? 'warn' : 'ok') +
+      '">' + (health.toCheck + health.critical) + '</strong></div>',
+      '<div class="mh31-health-row">',
+      '<span>✓ ' + health.complete + ' complète(s)</span>',
+      '<span>⚠ ' + health.toCheck + ' à compléter</span>',
+      '<span>! ' + health.critical + ' critique(s)</span>',
+      '</div>',
+      '<button onclick="tab(\'audit\')">Contrôler les données <em>›</em></button>',
+      '</section>',
+
+      '<section class="mh31-next-command">',
+      '<div class="mh31-title"><div><span>PROCHAINE ACTION</span><b>' +
+        (next ? 'Service planifié' : 'Rien à préparer') +
+      '</b></div><button onclick="tab(\'mois\')">Planning ›</button></div>',
+
+      next
+        ? '<button class="mh31-next" onclick="mhOpenDay(\'' + esc(next.k) + '\')">' +
+          '<div class="mh31-next-date"><strong>' +
+          new Date(next.k + 'T12:00:00').getDate() +
+          '</strong><span>' + esc(dayLabel(next.k)) +
+          '</span></div>' +
+          '<div><b>' + esc(dateLabel(next.k)) + '</b><small>' +
+          esc(next.d?.deb || 'Horaire à définir') +
+          (next.d?.fin ? ' → ' + esc(next.d.fin) : '') +
+          '</small></div><em>›</em></button>'
+        : '<div class="mh31-empty">Aucune journée future planifiée dans les données connues.</div>',
+
+      '</section>',
 
-    const progress =
-      p && Number(p.objective) > 0
-        ? Math.min(
-            100,
-            Math.max(
-              0,
-              Number(p.actual || 0) /
-              Number(p.objective) *
-              100
-            )
-          )
-        : 0;
+      '<section class="mh31-footer-actions">',
+      '<button onclick="tab(\'jour\')">＋ Ajouter une journée</button>',
+      '<button onclick="tab(\'reg\')">⚙ Réglages</button>',
+      '</section>',
 
-    const monthTte =
-      Number(m?.tte || 0);
+      '</div>'
+    );
 
-    const monthDays =
-      Number(m?.trav || 0);
-
-    const monthAmp =
-      monthDays > 0
-        ? Number(m?.amp || 0) / monthDays
-        : 0;
-
-    const recentWork =
-      recent.filter(x =>
-        ['T', 'NUIT'].includes(x.d?.t)
-      );
-
-    const maxTte =
-      Math.max(
-        1,
-        ...recentWork.map(x =>
-          Number(x.r?.tte || 0)
-        )
-      );
-
-    host.innerHTML = `
-      <div class="mh31-home">
-
-        <header class="mh31-head">
-
-          <div class="mh31-brand">
-
-            <div class="mh31-logo">
-              ⏱
-            </div>
-
-            <div>
-              <span>MESHEURES</span>
-              <strong>V31</strong>
-              <h1>Tableau de bord</h1>
-              <small>
-                ${esc(dateLabel(k))}
-                · ${esc(dayLabel(k))}
-              </small>
-            </div>
-
-          </div>
-
-          <button
-            class="mh31-settings"
-            onclick="tab('reg')"
-            aria-label="Réglages">
-            ⚙
-          </button>
-
-        </header>
-
-        <section class="mh31-hero">
-
-          <div class="mh31-hero-top">
-
-            <div>
-              <span>AUJOURD’HUI</span>
-              <b data-v31-state>
-                ${esc(serviceType(d))}
-              </b>
-            </div>
-
-            <button
-              class="mh31-live-button"
-              data-v31-live-button
-              onclick="mhV31ToggleLive()">
-              ${
-                window.MH30Live?.active?.()
-                  ? '■ Arrêter'
-                  : '▶ Démarrer'
-              }
-            </button>
-
-          </div>
-
-          <div
-            class="mh31-clock"
-            data-v31-clock>
-            ${fmt(r.tte)}
-          </div>
-
-          <div class="mh31-caption">
-            Temps de travail effectif
-          </div>
-
-          <div class="mh31-meta">
-
-            <div>
-              <span>Début</span>
-              <b data-v31-start>
-                ${esc(d.deb || '—')}
-              </b>
-            </div>
-
-            <div>
-              <span>Fin</span>
-              <b data-v31-end>
-                ${esc(
-                  window.MH30Live?.active?.()
-                    ? 'En cours'
-                    : d.fin || '—'
-                )}
-              </b>
-            </div>
-
-            <div>
-              <span>Pause</span>
-              <b data-v31-pause>
-                ${fmt(r.pz)}
-              </b>
-            </div>
-
-            <div>
-              <span>Amplitude</span>
-              <b data-v31-amp>
-                ${fmt(r.amp)}
-              </b>
-            </div>
-
-          </div>
-
-        </section>
-
-
-        <section class="mh31-week">
-
-          <div class="mh31-week-head">
-            <div>
-              <span>MA SEMAINE</span>
-              <b>${week.workCount} jour${week.workCount > 1 ? 's' : ''} travaillé${week.workCount > 1 ? 's' : ''}</b>
-            </div>
-
-            <span>${fmt(week.tte)} TTE</span>
-          </div>
-
-          <div class="mh31-week-strip">
-
-            ${recent.map(x => `
-              <button
-                class="mh31-week-day ${
-                  x.d?.t === 'T'
-                    ? 'work'
-                    : x.d?.t === 'NUIT'
-                      ? 'night'
-                      : x.d?.t === 'CP'
-                        ? 'leave'
-                        : x.d?.t === 'MAL'
-                          ? 'sick'
-                          : x.d?.t === 'RC'
-                            ? 'rest'
-                            : ''
-                }"
-                onclick="mhOpenDay('${esc(x.k)}')">
-
-                <strong>
-                  ${new Date(
-                    x.k + 'T12:00:00'
-                  ).getDate()}
-                </strong>
-
-                <small>
-                  ${esc(dayLabel(x.k).slice(0,3))}
-                </small>
-
-                <i></i>
-
-              </button>
-            `).join('')}
-
-          </div>
-
-        </section>
-
-        <section class="mh31-actions">
-
-          <button onclick="tab('jour')">
-            <b>＋</b>
-            <span>Saisie</span>
-            <small>Journée & pauses</small>
-          </button>
-
-          <button onclick="tab('mois')">
-            <b>▦</b>
-            <span>Planning</span>
-            <small>Calendrier</small>
-          </button>
-
-          <button onclick="tab('paie')">
-            <b>€</b>
-            <span>Paie</span>
-            <small>Heures & HS</small>
-          </button>
-
-          <button onclick="tab('analyse')">
-            <b>◌</b>
-            <span>Analyse</span>
-            <small>Suivi</small>
-          </button>
-
-        </section>
-
-        <section class="mh31-section">
-
-          <div class="mh31-title">
-            <div>
-              <span>QUATORZAINE</span>
-              <b>
-                ${
-                  p
-                    ? fmt(p.actual)
-                    : '—'
-                }
-              </b>
-            </div>
-
-            <button onclick="tab('paie')">
-              Détail ›
-            </button>
-          </div>
-
-          <div class="mh31-progress">
-            <i style="width:${progress.toFixed(1)}%"></i>
-          </div>
-
-          <div class="mh31-period">
-
-            <span>
-              ${
-                p
-                  ? fmt(p.objective) +
-                    ' objectif'
-                  : 'Objectif indisponible'
-              }
-            </span>
-
-            <span>
-              ${
-                p
-                  ? (
-                      Number(p.actual) >=
-                      Number(p.objective)
-                        ? 'Seuil atteint'
-                        : 'Reste ' +
-                          fmt(
-                            Number(p.objective) -
-                            Number(p.actual)
-                          )
-                    )
-                  : '—'
-              }
-            </span>
-
-          </div>
-
-        </section>
-
-        <section class="mh31-kpis">
-
-          <div>
-            <span>TTE DU MOIS</span>
-            <b>${fmt(monthTte)}</b>
-          </div>
-
-          <div>
-            <span>JOURS TRAVAILLÉS</span>
-            <b>${monthDays || '—'}</b>
-          </div>
-
-          <div>
-            <span>AMPLITUDE MOY.</span>
-            <b>
-              ${
-                monthAmp > 0
-                  ? fmt(monthAmp)
-                  : '—'
-              }
-            </b>
-          </div>
-
-        </section>
-
-
-        <section class="mh31-insights">
-
-          <div class="mh31-insight-card">
-            <span>CETTE SEMAINE</span>
-            <b>${fmt(week.tte)}</b>
-            <small>
-              ${week.workCount}
-              journée${week.workCount > 1 ? 's' : ''}
-              travaillée${week.workCount > 1 ? 's' : ''}
-            </small>
-          </div>
-
-          <div class="mh31-insight-card">
-            <span>AMPLITUDE MOY.</span>
-            <b>
-              ${week.avgAmp > 0 ? fmt(week.avgAmp) : '—'}
-            </b>
-            <small>sur les jours travaillés</small>
-          </div>
-
-          <button
-            class="mh31-insight-card mh31-insight-link"
-            onclick="tab('paie')">
-
-            <span>QUATORZAINE</span>
-
-            <b>
-              ${p ? fmt(p.actual) : '—'}
-            </b>
-
-            <small>
-              ${
-                p && p.objective
-                  ? Math.round(progress) + '% de l’objectif'
-                  : 'Détail paie ›'
-              }
-            </small>
-
-          </button>
-
-        </section>
-
-        <section class="mh31-alerts ${alerts.length ? 'has-alerts' : ''}">
-
-          <div class="mh31-alert-head">
-
-            <div>
-              <span>INTELLIGENCE</span>
-
-              <b>
-                ${
-                  alerts.length
-                    ? alerts.length +
-                      ' point' +
-                      (alerts.length > 1 ? 's' : '') +
-                      ' à vérifier'
-                    : 'Tout est à jour'
-                }
-              </b>
-            </div>
-
-            <span>
-              ${alerts.length ? 'À SURVEILLER' : '✓ OK'}
-            </span>
-
-          </div>
-
-          ${
-            alerts.length
-              ? alerts.map(a => `
-                  <button
-                    class="mh31-alert"
-                    onclick="tab('${a.action}')">
-
-                    <strong>${a.icon}</strong>
-
-                    <span>
-                      <b>${esc(a.title)}</b>
-                      <small>${esc(a.text)}</small>
-                    </span>
-
-                    <em>›</em>
-
-                  </button>
-                `).join('')
-              : `
-                <div class="mh31-alert-ok">
-                  <strong>✓</strong>
-                  <span>
-                    Aucune anomalie détectée sur l’accueil.
-                  </span>
-                </div>
-              `
-          }
-
-        </section>
-
-        <section class="mh31-section">
-
-          <div class="mh31-title">
-            <div>
-              <span>ACTIVITÉ RÉCENTE</span>
-              <b>7 jours</b>
-            </div>
-          </div>
-
-          <div class="mh31-chart">
-
-            ${
-              recent.map(x => {
-
-                const minutes =
-                  Number(x.r?.tte || 0);
-
-                const height =
-                  minutes > 0
-                    ? Math.max(
-                        8,
-                        Math.round(
-                          minutes /
-                          maxTte *
-                          100
-                        )
-                      )
-                    : 4;
-
-                const cls =
-                  x.d?.t === 'NUIT'
-                    ? 'night'
-                    : x.d?.t === 'T'
-                      ? 'work'
-                      : '';
-
-                return `
-                  <button
-                    class="mh31-day ${cls}"
-                    onclick="mhOpenDay('${esc(x.k)}')">
-
-                    <i style="height:${height}%"></i>
-
-                    <strong>
-                      ${new Date(
-                        x.k +
-                        'T12:00:00'
-                      ).getDate()}
-                    </strong>
-
-                    <small>
-                      ${
-                        minutes > 0
-                          ? fmt(minutes)
-                          : x.d?.t === 'CP'
-                            ? 'CP'
-                            : x.d?.t === 'RC'
-                              ? 'RC'
-                              : '—'
-                      }
-                    </small>
-
-                  </button>
-                `;
-              }).join('')
-            }
-
-          </div>
-
-        </section>
-
-        <section class="mh31-section">
-
-          <div class="mh31-title">
-
-            <div>
-              <span>PROCHAINE JOURNÉE</span>
-            </div>
-
-            <button onclick="tab('mois')">
-              Planning ›
-            </button>
-
-          </div>
-
-          ${
-            next
-              ? `
-                <button
-                  class="mh31-next"
-                  onclick="mhOpenDay('${esc(next.k)}')">
-
-                  <div class="mh31-next-date">
-                    <strong>
-                      ${new Date(
-                        next.k +
-                        'T12:00:00'
-                      ).getDate()}
-                    </strong>
-                    <span>
-                      ${esc(dayLabel(next.k))}
-                    </span>
-                  </div>
-
-                  <div>
-                    <b>
-                      ${esc(dateLabel(next.k))}
-                    </b>
-                    <small>
-                      ${
-                        esc(
-                          next.d?.deb ||
-                          'Horaire à définir'
-                        )
-                      }
-                      ${
-                        next.d?.fin
-                          ? ' → ' +
-                            esc(next.d.fin)
-                          : ''
-                      }
-                    </small>
-                  </div>
-
-                  <em>›</em>
-
-                </button>
-              `
-              : `
-                <div class="mh31-empty">
-                  Aucune journée future planifiée.
-                </div>
-              `
-          }
-
-        </section>
-
-        <section class="mh31-footer-actions">
-
-          <button onclick="tab('jour')">
-            ＋ Ajouter une journée
-          </button>
-
-          <button onclick="tab('reg')">
-            ⚙ Réglages
-          </button>
-
-        </section>
-
-      </div>
-    `;
-
+    host.innerHTML = html.join('');
     renderLive();
-
-    if (window.MH30Live?.render)
-      window.MH30Live.render();
+    if (window.MH30Live?.render) window.MH30Live.render();
   }
 
   /*
