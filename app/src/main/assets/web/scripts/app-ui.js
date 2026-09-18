@@ -395,7 +395,11 @@ function renderRegBase(){
 }
 
 function renderAll(){
-  renderHome();
+  if(curTab==='home' && window.MH302 && typeof window.MH302.renderHome==='function'){
+    window.MH302.renderHome();
+  }else{
+    renderHome();
+  }
   if(curTab==='jour')renderDay();
   if(curTab==='mois')renderMonth();
   if(curTab==='paie')renderPay();

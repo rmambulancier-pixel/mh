@@ -295,7 +295,7 @@ function loadArchive(){
   DB.periods.sort((a,b)=>a.start<b.start?-1:1);
   DB.s.anchor='2025-05-19'; DB.per={start:'2025-05-19',nb:1};
   save(); curDate='2026-09-05'; curMonth='2026-09';
-  mhRefresh();
+  if(typeof mhRefresh==='function') mhRefresh(); else window.__mh30PendingRefresh='archive-load';
   alert('✅ Archive chargée : '+AD.length+' journées · '+AP.length+' quatorzaines.');
 }
 
@@ -436,7 +436,7 @@ document.addEventListener('touchend',e=>{
   else if(curTab==='mois'){dx<0?goMonth(1):goMonth(-1)}
 });
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('./sw.js',{scope:'./'}).then(reg=>{
+  navigator.serviceWorker.register('./sw.js?v=30.2.5',{scope:'./'}).then(reg=>{
     try{
       window.mhServiceWorkerReady=!!reg;
       if(typeof reg.update==='function') reg.update().catch(()=>{});
@@ -448,7 +448,7 @@ if('serviceWorker' in navigator){
    V15 — INTELLIGENCE / SÉCURITÉ / MODE PRO
    Couche additive : ne modifie pas les règles de calcul historiques.
 ═══════════════════════════════════════════════ */
-const MH_V='30.0.2';
+const MH_V='30.2.5';
 
 function mhMonthStatsRaw(ym){
   const [y,m]=ym.split('-').map(Number), last=isoOf(new Date(y,m+1,0));
@@ -474,6 +474,9 @@ function mhOpenDay(k){curDate=k;curMonth=k.slice(0,7);tab('jour')}
 function mhClass(v,good='ok',bad='bad'){return v>0?bad:good}
 
 function renderHome(){
+  if(window.MH302 && typeof window.MH302.renderHome==='function'){
+    return window.MH302.renderHome();
+  }
   const now=today(),m=now.slice(0,7),month=mhMonthStats(m);
   const diff=nDays(DB.s.anchor,now),qs=addD(DB.s.anchor,Math.floor(diff/14)*14),qData=calcPer(qs,1),q=qData.Q[0],qG=qData.G;
   const todayData=gd(now)||{t:'REPOS'},todayR=cd(now);
@@ -725,7 +728,7 @@ function mhDecoratePages(){
   });
 }
 
-if($('mhVersion'))$('mhVersion').textContent='V30.0.2';
+if($('mhVersion'))$('mhVersion').textContent='V30.2.5';
 mhDecoratePages();
 mhAutoBackup();
-setTimeout(()=>{try{mhRefresh('boot-legacy')}catch(e){console.error('V15 render',e)}},0);
+setTimeout(()=>{try{if(typeof mhRefresh==='function')mhRefresh('boot-legacy');else window.__mh30PendingRefresh='boot-legacy'}catch(e){console.error('V15 render',e)}},0);

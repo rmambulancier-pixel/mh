@@ -1,6 +1,6 @@
-/* MesHeures V30.0.2 — intelligence locale : intelligence locale, patterns, projection 12 semaines, alertes */
+/* MesHeures V30.2.3 — intelligence locale : intelligence locale, patterns, projection 12 semaines, alertes */
 (function(){
-  const V='30.0.2';
+  const V='30.2.3';
   const LEGAL_WEEK=46*60;
   const WORK=['T','NUIT'];
   let calcCache=new Map(), calcSig='';

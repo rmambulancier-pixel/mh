@@ -1,17 +1,17 @@
-/* MesHeures V30.0.2 — canonical runtime
+/* MesHeures V30.2.5 — canonical runtime
  * One calculation engine, one UI/live runtime, one scheduler.
  * Historical V24/V25/V26/V27/V28 runtime files are removed.
  */
 (function(){
   'use strict';
 
-  const V='30.0.2';
+  const V='30.2.5';
   const SECTIONS=['home','jour','mois','paie','analyse','audit','bul','romi','reg'];
   const q=s=>document.querySelector(s);
   const el=id=>document.getElementById(id);
   const fmt=m=>typeof F==='function'?F(Math.round(m||0)):'0h00';
   const money=n=>typeof EUR==='function'?EUR(n):'—';
-  const escapeHtml=s=>typeof esc==='function'?esc(s):String(s??'');
+  const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
   function day(){return today();}
   function dayData(k=day()){return (DB.days&&DB.days[k])||{t:'REPOS',p:[]};}
@@ -113,7 +113,11 @@
   }
 
   /* ---------- Home: one cockpit, no repeated analytics ---------- */
-  function renderHome(){
+  function legacyV30RenderHome() {
+    if (window.MH302 && typeof window.MH302.renderHome === 'function') {
+      window.MH302.renderHome();
+      return;
+    }
     const host=el('s-home');if(!host)return;
     host.innerHTML=`<div class="mh30-shell">
       <header class="mh30-pagehead"><div><span class="mh30-kicker">MESHEURES · AUJOURD’HUI</span><h2>Tableau de bord</h2><p>${shortY(day())} · ${dow(day()).toUpperCase()}</p></div><button class="mh30-iconbtn" onclick="tab('reg')">⚙</button></header>
@@ -207,9 +211,25 @@
 
   /* ---------- Navigation ---------- */
   function buildNav30(){
-    let nav=el('mhV30Nav');if(!nav){nav=document.createElement('nav');nav.id='mhV30Nav';document.body.appendChild(nav);}
+    let nav=el('mhV30Nav');
+    if(!nav){
+      nav=document.createElement('nav');
+      nav.id='mhV30Nav';
+      document.body.appendChild(nav);
+    }
     nav.className='mh-v30-nav mh30-nav';
-    nav.innerHTML=`<button onclick="tab('home')">⌂<span>Accueil</span></button><button onclick="tab('jour')">＋<span>Saisie</span></button><button onclick="tab('mois')">▦<span>Planning</span></button><button onclick="tab('paie')">€<span>Paie</span></button><button onclick="tab('analyse')">◌<span>Analyse</span></button>`;
+    nav.setAttribute('aria-label','Navigation principale');
+    nav.innerHTML=`<button data-nav-tab="home" onclick="tab('home')">⌂<span>Accueil</span></button><button data-nav-tab="jour" onclick="tab('jour')">＋<span>Saisie</span></button><button data-nav-tab="mois" onclick="tab('mois')">▦<span>Planning</span></button><button data-nav-tab="paie" onclick="tab('paie')">€<span>Paie</span></button><button data-nav-tab="analyse" onclick="tab('analyse')">◌<span>Analyse</span></button>`;
+    syncNav30();
+  }
+
+  function syncNav30(){
+    const t=window.curTab||'home';
+    document.querySelectorAll('#mhV30Nav [data-nav-tab]').forEach(b=>{
+      const on=b.getAttribute('data-nav-tab')===t;
+      b.setAttribute('aria-current',on?'page':'false');
+      b.classList.toggle('active',on);
+    });
   }
 
 
@@ -235,7 +255,7 @@
     window.__mh30SavePatch=true;
   }
 
-  let raf=0,liveTimer=0,booted=false,activeStructure='';
+  let raf=0,liveTimer=0,booted=false,activeStructure='',navHistory=['home'];
   let dirty=new Set(['home']);
   function safe(fn,label){try{return typeof fn==='function'?fn():null}catch(e){console.warn('MesHeures V30 '+label,e);return null}}
   function schedule(reason){
@@ -261,7 +281,7 @@
       <div class="mh-v30-intel-bar"><i style="width:${Math.min(100,Math.max(0,avg/(typeof LEGAL_WEEK==='number'?LEGAL_WEEK:2760)*100)).toFixed(1)}%"></i></div>
       <div class="mh-v30-intel-note">12 semaines glissantes · ${p.plannedDays||0} journée(s) future(s) planifiée(s) · ${p.unknownDays||0} journée(s) future(s) inconnue(s).${p.firstRisk?` ⚠️ Risque détecté vers le ${typeof shortY==='function'?shortY(p.firstRisk):p.firstRisk}.`:' Aucun dépassement projeté sur les journées futures connues.'}</div>
       ${p.unknownDays?'<div class="al w">🟠 Trajectoire partielle : les journées futures non planifiées ne sont pas inventées.</div>':''}
-      <details open><summary>🔁 Motifs récurrents</summary>${patterns.length?patterns.slice(0,3).map(x=>`<div class="al ${x.level||'w'}"><b>${esc0(x.title||x.type||'Motif')}</b><br>${esc0(x.text||x.message||'')}<small>${esc0(x.detail||'')}</small></div>`).join(''):'<div class="audit-empty">Aucun motif récurrent suffisamment établi dans les données connues.</div>'}</details>
+      <details open><summary>🔁 Motifs récurrents</summary>${patterns.length?patterns.slice(0,3).map(x=>`<div class="al ${x.level||'w'}"><b>${escapeHtml(x.title||x.type||'Motif')}</b><br>${escapeHtml(x.text||x.message||'')}<small>${escapeHtml(x.detail||'')}</small></div>`).join(''):'<div class="audit-empty">Aucun motif récurrent suffisamment établi dans les données connues.</div>'}</details>
     </div>`;
   }
 
@@ -274,7 +294,6 @@
   function homeSkeleton(){
     const host=$('s-home'); if(!host)return;
     host.innerHTML=`<div class="mh30-shell mh30-home">
-      ${intelligenceHtml()}
       <header class="mh30-pagehead"><div><span class="mh30-kicker">MESHEURES · AUJOURD’HUI</span><h2>Tableau de bord</h2><p id="mh30HomeDate"></p></div><button class="mh30-iconbtn" onclick="tab('reg')">⚙</button></header>
       ${liveCard()}
       <div class="mh30-grid2 mh30-gap"><button class="mh30-action" onclick="tab('jour')"><span>＋</span><b>Saisir</b><small>Journée / pauses</small></button><button class="mh30-action" onclick="tab('mois')"><span>▦</span><b>Planning</b><small>Calendrier / prévision</small></button><button class="mh30-action" onclick="tab('paie')"><span>€</span><b>Paie</b><small>HS / RC / brut</small></button><button class="mh30-action" onclick="tab('analyse')"><span>◌</span><b>Analyse</b><small>Alertes / tendances</small></button></div>
@@ -283,18 +302,17 @@
       <div class="mh30-section-title"><span>PROCHAINE ÉCHÉANCE</span></div><div class="mh30-next" id="mh30Next"></div>
     </div>`;
     activeStructure='home';
-    safe(window.MH30Live?.render,'live');
+    safe(()=>window.MH30Live?.render?.(),'live');
   }
 
   function refreshHome(){
     const k=today(),d=DB.days?.[k]||{t:'REPOS'},r=window.MH30DataEngine?.day?.(k),m=window.MH30DataEngine?.month?.(k.slice(0,7)),pi=periodInfo();
     const date=$('mh30HomeDate'); if(date)date.textContent=(typeof shortY==='function'?shortY(k):k)+' · '+(typeof dow==='function'?dow(k).toUpperCase():'');
-    const today=$('mh30Today'); if(today)today.innerHTML=`<div class="mh30-big"><strong>${fmt(r.tte)}</strong><span>${d.t==='T'?'Temps de travail effectif':d.t==='NUIT'?'Service de nuit':d.t==='CP'?'Congé payé':d.t==='RC'?'Repos compensateur':d.t==='MAL'?'Maladie':'Aucune journée travaillée'}</span></div><div class="mh30-stats"><span>Amplitude <b>${fmt(r.amp)}</b></span><span>Pauses <b>${fmt(r.pz)}</b></span><span>Paniers <b>${(r.ir+r.iru)||0}</b></span></div>`;
+    const todayEl=$('mh30Today'); if(todayEl)todayEl.innerHTML=`<div class="mh30-big"><strong>${fmt(r.tte)}</strong><span>${d.t==='T'?'Temps de travail effectif':d.t==='NUIT'?'Service de nuit':d.t==='CP'?'Congé payé':d.t==='RC'?'Repos compensateur':d.t==='MAL'?'Maladie':'Aucune journée travaillée'}</span></div><div class="mh30-stats"><span>Amplitude <b>${fmt(r.amp)}</b></span><span>Pauses <b>${fmt(r.pz)}</b></span><span>Paniers <b>${(r.ir+r.iru)||0}</b></span></div>`;
     const q=pi.q,N=pi.N,period=$('mh30Period'); if(period)period.innerHTML=`<div class="mh30-period-head"><b>${fmt(q.seuil)}</b><span>${short(pi.qs)} → ${short(addD(pi.qs,13))}</span></div><div class="mh30-progress"><i style="width:${pi.pc.toFixed(1)}%"></i></div><div class="mh30-period-foot"><span>${q.seuil<N?'Marge avant HS · '+fmt(N-q.seuil):'Seuil atteint'}</span><span>${fmt(q.h25)} HS25 · ${fmt(q.h50)} HS50</span></div>`;
     const nextKeys=Object.keys(DB.days||{}).filter(x=>x>k&&['T','NUIT'].includes(DB.days[x]?.t)).sort(),next=nextKeys[0],box=$('mh30Next');
     if(box)box.innerHTML=next?`<button onclick="mhOpenDay('${next}')"><span>📅</span><div><b>${shortY(next)} · ${dow(next).toUpperCase()}</b><small>${DB.days[next].deb||'Horaire à définir'}${DB.days[next].fin?' → '+DB.days[next].fin:''}</small></div><em>›</em></button>`:`<div class="mh30-empty">Aucune journée future planifiée.</div>`;
-    safe(window.MH30Live?.render,'live');
-    refreshIntelligence();
+    safe(()=>window.MH30Live?.render?.(),'live');
   }
 
   function refreshIntelligence(){
@@ -304,6 +322,14 @@
   }
 
   function renderHome(){
+    /* V30.2.5: Smart Control owns Accueil.
+       The legacy V30 dashboard must never redraw over it. */
+    if (window.MH302 && typeof window.MH302.renderHome === 'function') {
+      window.MH302.renderHome();
+      safe(()=>window.MH30Live?.render?.(),'live');
+      return;
+    }
+
     if(activeStructure!=='home'||!$('mh30Today'))homeSkeleton();
     refreshHome();
   }
@@ -316,7 +342,7 @@
     if(t==='jour')safe(window.renderDay,'day');
     else if(t==='mois')safe(window.renderMonth,'month');
     else if(t==='paie')safe(window.renderPay,'pay');
-    else if(t==='analyse')safe(window.renderAnalysis,'analysis');
+    else if(t==='analyse')safe(window.MH30RenderAnalysis,'analysis');
     else if(t==='audit')safe(window.renderAudit,'audit');
     else if(t==='bul')safe(window.renderBulHist,'bulletins');
     else if(t==='romi')safe(window.renderRomiTab,'romi');
@@ -328,7 +354,7 @@
       safe(window.mhV30ReconciliationRefresh,'reconciliation');
       safe(window.mhV30DossierRefresh,'dossier');
     }
-    safe(window.MH30Live?.render,'live');
+    safe(()=>window.MH30Live?.render?.(),'live');
   }
 
   function activate(t){
@@ -336,7 +362,34 @@
     SECTIONS.forEach(x=>{$('s-'+x)?.classList.toggle('on',x===t);$('t-'+x)?.classList.toggle('on',x===t)});
     window.scrollTo(0,0);
   }
-  function navigation(t){activate(t);dirty.add(t);schedule('navigate');}
+  function navigation(t){
+    t=t||'home';
+    if(!SECTIONS.includes(t))t='home';
+    if(t!==(window.curTab||'home'))navHistory.push(t);
+    activate(t);
+    syncNav30();
+    try{window.MesHeuresAndroid?.setCurrentTab?.(t)}catch(e){}
+    dirty.add(t);
+    schedule('navigate');
+  }
+  function goBack(){
+    if(navHistory.length<=1){
+      if((window.curTab||'home')!=='home'){
+        navHistory=['home'];
+        navigation('home');
+        return true;
+      }
+      return false;
+    }
+    navHistory.pop();
+    const prev=navHistory[navHistory.length-1]||'home';
+    activate(prev);
+    syncNav30();
+    try{window.MesHeuresAndroid?.setCurrentTab?.(prev)}catch(e){}
+    dirty.add(prev);
+    schedule('back');
+    return true;
+  }
 
   async function notifySystem(title,body,tag){try{if('Notification' in window&&Notification.permission==='granted'){new Notification(title,{body,tag});return true}const reg=await navigator.serviceWorker?.ready;if(reg?.showNotification)return reg.showNotification(title,{body,tag});}catch(e){}return false}
 
@@ -344,10 +397,10 @@
   function liveTick(){
     liveTimer=0;
     if(document.visibilityState!=='visible')return;
-    const active=!!safe(window.MH30Live?.active,'live-active');
+    const active=!!safe(()=>window.MH30Live?.active?.(),'live-active');
     if(!active)return;
     const now=new Date(), minute=now.getMinutes();
-    safe(window.MH30Live?.render,'live-render');
+    safe(()=>window.MH30Live?.render?.(),'live-render');
     try{const r=window.MH30DataEngine?.day(today())||{};const due=!!(Number(r.tte||0)>=360&&Number(r.pz||0)<20);if(due&&!window.__mh30PauseNotified){window.__mh30PauseNotified=true;notifySystem('MesHeures — pause obligatoire','20 min de pause à prévoir : le seuil de 6 h de TTE est atteint.','mh30-pause');}if(!due)window.__mh30PauseNotified=false;}catch(e){}
     if(minute!==lastLiveMinute){ lastLiveMinute=minute; schedule('live-minute'); }
     liveTimer=setTimeout(liveTick,15000);
@@ -397,19 +450,23 @@
   function boot(){
     if(booted)return; booted=true;
     document.documentElement.dataset.mhVersion=V;
-    if($('mhVersion'))$('mhVersion').textContent='V30.0.2';
-    document.title='MesHeures V30.0';
+    if($('mhVersion'))$('mhVersion').textContent='V30.2.5';
+    document.title='MesHeures V30.2.5';
     patchSave();
-    if(window.__mh30PendingRefresh){ const pending=window.__mh30PendingRefresh; delete window.__mh30PendingRefresh; }
+    if(window.__mh30PendingRefresh){ const pending=window.__mh30PendingRefresh; delete window.__mh30PendingRefresh; schedule(pending); }
     /* V30 est l’unique propriétaire du runtime. */
     try{if(window.MH30Live?.tick){clearInterval(window.MH30Live.tick);window.MH30Live.tick=null}}catch(e){}
     window.renderHome=renderHome;
     /* Final compatibility boundary: legacy renderAll callers are routed into the
        reactive scheduler instead of executing the historical full redraw chain. */
     window.renderAll=function(reason){ return schedule(reason||'legacy-renderAll'); };
-    window.MH30={version:V,navigate:navigation,refresh:(reason)=>schedule(reason||'refresh'),invalidate:r=>window.MH30DataEngine?.invalidate?.(r),stats:()=>window.MH30DataEngine?.stats?.()};
+    window.MH30={version:V,navigate:navigation,goBack:goBack,refresh:(reason)=>schedule(reason||'refresh'),invalidate:r=>window.MH30DataEngine?.invalidate?.(r),stats:()=>window.MH30DataEngine?.stats?.()};
     window.tab=navigation;
+    buildAnalysis();
+    buildNav30();
     activate(window.curTab||'home');
+    syncNav30();
+    try{window.MesHeuresAndroid?.setCurrentTab?.(window.curTab||'home')}catch(e){}
     dirty=new Set(SECTIONS.filter(x=>$('s-'+x)));
     schedule('boot');
     startLive();
@@ -419,12 +476,34 @@
     window.addEventListener('pageshow',()=>{window.MH30DataEngine?.invalidate?.('pageshow');schedule('pageshow');startLive()});
     window.addEventListener('pagehide',stopLive);
     document.addEventListener('mh:state-changed',()=>{window.MH30DataEngine?.invalidate?.('event');schedule('event')});
+    /* V30.2.5: tactile retour de secours */
+    let touchX=0,touchY=0;
+    document.addEventListener('touchstart',e=>{
+      const t=e.touches?.[0];
+      if(!t)return;
+      touchX=t.clientX;
+      touchY=t.clientY;
+    },{passive:true});
+
+    document.addEventListener('touchend',e=>{
+      const t=e.changedTouches?.[0];
+      if(!t)return;
+      const dx=t.clientX-touchX;
+      const dy=t.clientY-touchY;
+      const target=e.target;
+      const blocked=target?.closest?.('input,textarea,select,[contenteditable="true"],.mh30-bars');
+
+      if(touchX<=42 && dx>=70 && Math.abs(dx)>Math.abs(dy)*1.35 && !blocked){
+        window.MH30?.goBack?.();
+      }
+    },{passive:true});
+
   }
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else setTimeout(boot,0);
 
 
 'use strict';
-const PDF_V='30.0.2';
+const PDF_V='30.2.5';
 function ascii(s){return String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\x20-\x7E]/g,'?')}
 function esc(s){return ascii(s).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)')}
 function snapshot(){return {format:'MesHeures Probatory Dossier',version:PDF_V,createdAt:new Date().toISOString(),data:JSON.parse(JSON.stringify(window.DB||{}))}}

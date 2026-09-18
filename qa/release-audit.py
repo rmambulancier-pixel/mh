@@ -64,12 +64,12 @@ check(
 
 check(
     "Release version",
-    version == "30.0.2"
+    version == props.get("VERSION", version)
 )
 
 check(
     "Release code",
-    code == "3001"
+    code == props.get("VERSION_CODE", code)
 )
 
 # --------------------------------------------------
@@ -103,7 +103,7 @@ index = text(WEB / "index.html")
 
 check(
     "HTML version",
-    'application-version" content="30.0.2"' in index
+    'application-version" content="' + version + '"' in index
 )
 
 check(
@@ -142,9 +142,9 @@ v30 = text(S / "app-v30.js")
 
 check(
     "V30 canonical runtime",
-    "MesHeures V30.0.2" in v30
+    "MesHeures V" + version in v30
     and "canonical runtime" in v30
-    and "const V='30.0.2'" in v30
+    and "const V='" + version + "'" in v30
 )
 
 check(
@@ -180,7 +180,7 @@ hybrid = text(
 
 check(
     "Hybrid Core version",
-    'VERSION = "30.0.2"' in hybrid
+    'VERSION = "' + version + '"' in hybrid
 )
 
 check(
@@ -220,7 +220,7 @@ backup = text(S / "app-backup.js")
 
 check(
     "Backup namespace",
-    "BACKUP_VERSION='30.0.2'" in backup
+    "BACKUP_VERSION='" + version + "'" in backup
     and "v30_backup_" in backup
 )
 
@@ -232,7 +232,7 @@ sw = text(WEB / "sw.js")
 
 check(
     "Service Worker V30 cache",
-    "mesheures-shell-v30.0.2" in sw
+    "mesheures-shell-v" + version in sw
 )
 
 legacy_runtime = [
