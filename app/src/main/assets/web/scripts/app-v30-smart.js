@@ -1,5 +1,5 @@
 /*
- * MesHeures V30.2.0 — SMART CONTROL
+ * MesHeures V30.2.2 — SMART CONTROL
  *
  * Couche cockpit / insights.
  * Le moteur existant reste la source de vérité.
@@ -8,7 +8,7 @@
 (function () {
   'use strict';
 
-  const V = '30.2.0';
+  const V = '30.2.2';
   const PRIMARY = ['home', 'jour', 'mois', 'paie', 'analyse'];
 
   const $ = id => document.getElementById(id);

@@ -1,11 +1,11 @@
-/* MesHeures V30.2.0 — canonical runtime
+/* MesHeures V30.2.2 — canonical runtime
  * One calculation engine, one UI/live runtime, one scheduler.
  * Historical V24/V25/V26/V27/V28 runtime files are removed.
  */
 (function(){
   'use strict';
 
-  const V='30.2.0';
+  const V='30.2.2';
   const SECTIONS=['home','jour','mois','paie','analyse','audit','bul','romi','reg'];
   const q=s=>document.querySelector(s);
   const el=id=>document.getElementById(id);
@@ -294,7 +294,6 @@
   function homeSkeleton(){
     const host=$('s-home'); if(!host)return;
     host.innerHTML=`<div class="mh30-shell mh30-home">
-      ${intelligenceHtml()}
       <header class="mh30-pagehead"><div><span class="mh30-kicker">MESHEURES · AUJOURD’HUI</span><h2>Tableau de bord</h2><p id="mh30HomeDate"></p></div><button class="mh30-iconbtn" onclick="tab('reg')">⚙</button></header>
       ${liveCard()}
       <div class="mh30-grid2 mh30-gap"><button class="mh30-action" onclick="tab('jour')"><span>＋</span><b>Saisir</b><small>Journée / pauses</small></button><button class="mh30-action" onclick="tab('mois')"><span>▦</span><b>Planning</b><small>Calendrier / prévision</small></button><button class="mh30-action" onclick="tab('paie')"><span>€</span><b>Paie</b><small>HS / RC / brut</small></button><button class="mh30-action" onclick="tab('analyse')"><span>◌</span><b>Analyse</b><small>Alertes / tendances</small></button></div>
@@ -314,7 +313,6 @@
     const nextKeys=Object.keys(DB.days||{}).filter(x=>x>k&&['T','NUIT'].includes(DB.days[x]?.t)).sort(),next=nextKeys[0],box=$('mh30Next');
     if(box)box.innerHTML=next?`<button onclick="mhOpenDay('${next}')"><span>📅</span><div><b>${shortY(next)} · ${dow(next).toUpperCase()}</b><small>${DB.days[next].deb||'Horaire à définir'}${DB.days[next].fin?' → '+DB.days[next].fin:''}</small></div><em>›</em></button>`:`<div class="mh30-empty">Aucune journée future planifiée.</div>`;
     safe(()=>window.MH30Live?.render?.(),'live');
-    refreshIntelligence();
   }
 
   function refreshIntelligence(){
@@ -444,8 +442,8 @@
   function boot(){
     if(booted)return; booted=true;
     document.documentElement.dataset.mhVersion=V;
-    if($('mhVersion'))$('mhVersion').textContent='V30.1';
-    document.title='MesHeures V30.2.0';
+    if($('mhVersion'))$('mhVersion').textContent='V30.2.2';
+    document.title='MesHeures V30.2.2';
     patchSave();
     if(window.__mh30PendingRefresh){ const pending=window.__mh30PendingRefresh; delete window.__mh30PendingRefresh; schedule(pending); }
     /* V30 est l’unique propriétaire du runtime. */
@@ -470,7 +468,7 @@
     window.addEventListener('pageshow',()=>{window.MH30DataEngine?.invalidate?.('pageshow');schedule('pageshow');startLive()});
     window.addEventListener('pagehide',stopLive);
     document.addEventListener('mh:state-changed',()=>{window.MH30DataEngine?.invalidate?.('event');schedule('event')});
-    /* V30.1: tactile retour de secours */
+    /* V30.2.2: tactile retour de secours */
     let touchX=0,touchY=0;
     document.addEventListener('touchstart',e=>{
       const t=e.touches?.[0];
