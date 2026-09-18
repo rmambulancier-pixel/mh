@@ -14,7 +14,7 @@ import androidx.webkit.WebViewFeature;
 public final class HybridCore {
     public static final String VERSION = "30.2.5";
     public static final String DOMAIN = "appassets.androidplatform.net";
-    public static final String ENTRY_URL = "https://" + DOMAIN + "/assets/web/index.html";
+    public static final String ENTRY_URL = "https://" + DOMAIN + "/assets/web/index.html?v=30.2.5";
     private final WebViewAssetLoader assetLoader;
     public HybridCore(Context context) {
         assetLoader = new WebViewAssetLoader.Builder().setDomain(DOMAIN)
