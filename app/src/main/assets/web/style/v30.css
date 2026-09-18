@@ -1074,3 +1074,51 @@ section.on{animation:mhPageIn 180ms var(--mh-ease)!important}
     min-height:62px!important;
   }
 }
+
+
+/* =====================================================
+   /* V30.2.4 SMART CONTROL HARDENING */
+   ===================================================== */
+
+#s-home > .mh302-shell {
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  height:auto!important;
+  min-height:0!important;
+}
+
+#s-home .mh302-head,
+#s-home .mh302-hero,
+#s-home .mh302-card {
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+}
+
+#s-home .mh302-grid {
+  display:grid!important;
+}
+
+#s-home .mh302-actions {
+  display:grid!important;
+}
+
+.mh302-fallback {
+  min-height:220px;
+}
+
+.mh302-error-card {
+  border-color:#6b3030!important;
+}
+
+.mh302-error-card p {
+  font-size:11px;
+  line-height:1.5;
+  opacity:.75;
+}
+
+.mh302-error-card button {
+  width:100%;
+  margin-top:7px;
+}

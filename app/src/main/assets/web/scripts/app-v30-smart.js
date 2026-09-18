@@ -420,263 +420,443 @@
   // COCKPIT
   // ---------------------------------------------
 
+
   function renderHome() {
     const host = $('s-home');
     if (!host) return;
 
-    const k = today();
-    const d = DB.days?.[k] || {};
-    const r = cd(k);
+    /*
+     * V30.2.4
+     * Smart Control est le propriétaire unique de l'Accueil.
+     * Chaque sous-module est isolé afin qu'une erreur métier
+     * ne puisse pas supprimer tout le cockpit.
+     */
 
-    const p = period();
-    const ins = insights();
-    const alerts = anomalies();
-    const pay = payroll();
+    try {
 
-    const watch = alerts.slice(0, 2);
+      const k = today();
+      const d = DB.days?.[k] || {};
+      const r = cd(k) || {};
 
-    host.innerHTML = `
-      <div class="mh302-shell">
+      let p = null;
+      let ins = {
+        avgTte: 0,
+        avgAmp: 0,
+        avgPause: 0,
+        avgStart: 0,
+        weekAvg: 0,
+        delta: null
+      };
 
-        <header class="mh302-head">
-          <div>
-            <span>MESHEURES · SMART CONTROL</span>
-            <h1>Pilotage</h1>
-            <small>${esc(k)}</small>
-          </div>
+      let alerts = [];
+      let pay = null;
 
-          <button
-            class="mh302-settings"
-            onclick="tab('reg')"
-            aria-label="Réglages">
-            ⚙
-          </button>
-        </header>
+      try {
+        p = period();
+      } catch (e) {
+        console.warn('SMART period:', e);
+      }
 
-        <section class="mh302-hero">
+      try {
+        ins = insights() || ins;
+      } catch (e) {
+        console.warn('SMART insights:', e);
+      }
 
-          <div class="mh302-hero-top">
+      try {
+        alerts = anomalies() || [];
+      } catch (e) {
+        console.warn('SMART anomalies:', e);
+      }
+
+      try {
+        pay = payroll();
+      } catch (e) {
+        console.warn('SMART payroll:', e);
+      }
+
+      const watch = alerts.slice(0, 2);
+
+      const worked =
+        d.t === 'T' ||
+        d.t === 'NUIT';
+
+      const gross =
+        pay && pay.gross != null
+          ? Number(pay.gross).toLocaleString(
+              'fr-FR',
+              {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+              }
+            ) + ' €'
+          : '—';
+
+      const progress =
+        p && Number(p.objective) > 0
+          ? Math.min(
+              100,
+              Math.max(
+                0,
+                Number(p.actual || 0) /
+                Number(p.objective) * 100
+              )
+            )
+          : 0;
+
+      host.innerHTML = `
+        <div class="mh302-shell">
+
+          <header class="mh302-head">
+
             <div>
-              <small>AUJOURD’HUI</small>
-              <b>${work(k) ? 'SERVICE' : 'PAS DE SERVICE'}</b>
-            </div>
-          </div>
-
-          <strong>${fmt(Number(r?.tte) || 0)}</strong>
-
-          <div class="mh302-inline">
-            <span>
-              Début
-              <b>${esc(d.deb || '—')}</b>
-            </span>
-
-            <span>
-              Fin
-              <b>${esc(d.fin || '—')}</b>
-            </span>
-
-            <span>
-              Pause
-              <b>${fmt(Number(r?.pz) || 0)}</b>
-            </span>
-
-            <span>
-              Amplitude
-              <b>${fmt(Number(r?.amp) || 0)}</b>
-            </span>
-          </div>
-
-        </section>
-
-        <section class="mh302-grid">
-
-          <article>
-            <small>QUATORZAINE</small>
-            <strong>${p ? fmt(p.actual) : '—'}</strong>
-            <span>
-              objectif ${p ? fmt(p.objective) : '—'}
-            </span>
-
-            <div class="mh302-progress">
-              <i style="width:${
-                p && p.objective
-                  ? Math.min(
-                      100,
-                      Math.max(
-                        0,
-                        p.actual / p.objective * 100
-                      )
-                    )
-                  : 0
-              }%"></i>
+              <span>MESHEURES · SMART CONTROL</span>
+              <h1>Pilotage</h1>
+              <small>${esc(k)}</small>
             </div>
 
-            <em>
-              ${
-                p
-                  ? (
-                    p.gap >= 0
-                      ? 'Reste '
-                      : 'Écart '
-                  ) + fmt(Math.abs(p.gap))
-                  : '—'
-              }
-            </em>
-          </article>
-
-          <article>
-            <small>PAIE PROJETÉE</small>
-
-            <strong>
-              ${
-                pay?.gross != null
-                  ? money(pay.gross)
-                  : '—'
-              }
-            </strong>
-
-            <span>
-              ${
-                pay
-                  ? fmt(pay.tte) +
-                    ' TTE · ' +
-                    fmt(pay.h25 + pay.h50) +
-                    ' HS'
-                  : 'Données indisponibles'
-              }
-            </span>
-
-            <em>Net estimé : —</em>
-          </article>
-
-        </section>
-
-        <section class="mh302-card">
-
-          <div class="mh302-title">
-            <b>À SURVEILLER</b>
-            <span>${watch.length}/2</span>
-          </div>
-
-          ${
-            watch.length
-              ? watch.map(a => `
-                <button
-                  class="mh302-alert ${a.level}"
-                  onclick="mhOpenDay('${esc(a.k)}')">
-
-                  <b>${
-                    a.level === 'bad'
-                      ? '🔴'
-                      : a.level === 'warn'
-                        ? '🟡'
-                        : '🔵'
-                  }</b>
-
-                  <span>
-                    <strong>${esc(a.title)}</strong>
-                    ${esc(a.text)}
-                  </span>
-
-                  <i>›</i>
-                </button>
-              `).join('')
-              : `
-                <div class="mh302-ok">
-                  ✓ Aucun point particulier à surveiller.
-                </div>
-              `
-          }
-
-          <button
-            class="mh302-detail"
-            onclick="tab('analyse')">
-            VOIR LE DÉTAIL
-          </button>
-
-        </section>
-
-        <section class="mh302-card">
-
-          <div class="mh302-title">
-            <b>MESHEURES INSIGHTS</b>
-            <button onclick="tab('analyse')">
-              Analyse ›
+            <button
+              class="mh302-settings"
+              onclick="tab('reg')"
+              aria-label="Réglages">
+              ⚙
             </button>
-          </div>
 
-          <div class="mh302-insights">
+          </header>
 
-            <div>
-              <b>${ins.avgTte ? fmt(ins.avgTte) : '—'}</b>
-              <small>TTE moyen</small>
+          <section class="mh302-hero">
+
+            <div class="mh302-hero-top">
+
+              <div>
+                <small>AUJOURD’HUI</small>
+                <b>${worked ? 'SERVICE' : 'PAS DE SERVICE'}</b>
+              </div>
+
             </div>
 
-            <div>
-              <b>${ins.avgAmp ? fmt(ins.avgAmp) : '—'}</b>
-              <small>Amplitude</small>
+            <strong>${fmt(Number(r.tte) || 0)}</strong>
+
+            <div class="mh302-inline">
+
+              <span>
+                Début
+                <b>${esc(d.deb || '—')}</b>
+              </span>
+
+              <span>
+                Fin
+                <b>${esc(d.fin || '—')}</b>
+              </span>
+
+              <span>
+                Pause
+                <b>${fmt(Number(r.pz) || 0)}</b>
+              </span>
+
+              <span>
+                Amplitude
+                <b>${fmt(Number(r.amp) || 0)}</b>
+              </span>
+
             </div>
 
-            <div>
-              <b>${ins.avgPause ? fmt(ins.avgPause) : '—'}</b>
-              <small>Pause</small>
+          </section>
+
+          <section class="mh302-grid">
+
+            <article>
+
+              <small>QUATORZAINE</small>
+
+              <strong>
+                ${p ? fmt(Number(p.actual) || 0) : '—'}
+              </strong>
+
+              <span>
+                objectif
+                ${p ? fmt(Number(p.objective) || 0) : '—'}
+              </span>
+
+              <div class="mh302-progress">
+                <i style="width:${progress.toFixed(1)}%"></i>
+              </div>
+
+              <em>
+                ${
+                  p
+                    ? (
+                        Number(p.gap) >= 0
+                          ? 'Reste '
+                          : 'Écart '
+                      ) +
+                      fmt(Math.abs(Number(p.gap) || 0))
+                    : '—'
+                }
+              </em>
+
+            </article>
+
+            <article>
+
+              <small>PAIE PROJETÉE</small>
+
+              <strong>${gross}</strong>
+
+              <span>
+                ${
+                  pay
+                    ? fmt(Number(pay.tte) || 0) +
+                      ' TTE · ' +
+                      fmt(
+                        (Number(pay.h25) || 0) +
+                        (Number(pay.h50) || 0)
+                      ) +
+                      ' HS'
+                    : 'Données indisponibles'
+                }
+              </span>
+
+              <em>Net estimé : —</em>
+
+            </article>
+
+          </section>
+
+          <section class="mh302-card">
+
+            <div class="mh302-title">
+              <b>À SURVEILLER</b>
+              <span>${watch.length}/2</span>
             </div>
 
-            <div>
-              <b>${ins.avgStart ? hhmm(ins.avgStart) : '—'}</b>
-              <small>Début moyen</small>
-            </div>
-
-          </div>
-
-          <p class="mh302-insight-line">
             ${
-              ins.delta != null
-                ? 'Cette semaine : <b>' +
-                  fmt(ins.weekAvg) +
-                  '</b>/jour, écart de <b>' +
-                  (ins.delta >= 0 ? '+' : '') +
-                  fmt(ins.delta) +
-                  '</b> avec la moyenne mensuelle.'
-                : 'Pas assez de données pour établir une comparaison.'
+              watch.length
+
+              ? watch.map(a => `
+
+                  <button
+                    class="mh302-alert ${a.level || 'warn'}"
+                    onclick="mhOpenDay('${esc(a.k)}')">
+
+                    <b>
+                      ${
+                        a.level === 'bad'
+                          ? '🔴'
+                          : a.level === 'info'
+                            ? '🔵'
+                            : '🟡'
+                      }
+                    </b>
+
+                    <span>
+
+                      <strong>
+                        ${esc(a.title || 'Contrôle')}
+                      </strong>
+
+                      ${esc(a.text || 'À vérifier.')}
+
+                    </span>
+
+                    <i>›</i>
+
+                  </button>
+
+                `).join('')
+
+              : `
+                  <div class="mh302-ok">
+                    ✓ Aucun point particulier à surveiller.
+                  </div>
+                `
             }
-          </p>
 
-        </section>
-
-        <section class="mh302-card">
-
-          <div class="mh302-title">
-            <b>CALENDRIER INTELLIGENT</b>
-            <button onclick="tab('mois')">
-              Planning ›
+            <button
+              class="mh302-detail"
+              onclick="tab('analyse')">
+              VOIR LE DÉTAIL
             </button>
-          </div>
 
-          <div class="mh302-calendar">
-            ${calendar()}
-          </div>
+          </section>
 
-        </section>
+          <section class="mh302-card">
 
-        <section class="mh302-actions">
+            <div class="mh302-title">
 
-          <button onclick="mh302OpenQuickAdd()">
-            ＋ Ajouter une journée
-          </button>
+              <b>MESHEURES INSIGHTS</b>
 
-          <button onclick="tab('paie')">
-            € Détail paie
-          </button>
+              <button onclick="tab('analyse')">
+                Analyse ›
+              </button>
 
-          <button onclick="tab('reg')">
-            💾 Sauvegarde
-          </button>
+            </div>
 
-        </section>
+            <div class="mh302-insights">
 
-      </div>
-    `;
+              <div>
+                <b>
+                  ${ins.avgTte ? fmt(ins.avgTte) : '—'}
+                </b>
+                <small>TTE moyen</small>
+              </div>
+
+              <div>
+                <b>
+                  ${ins.avgAmp ? fmt(ins.avgAmp) : '—'}
+                </b>
+                <small>Amplitude</small>
+              </div>
+
+              <div>
+                <b>
+                  ${ins.avgPause ? fmt(ins.avgPause) : '—'}
+                </b>
+                <small>Pause</small>
+              </div>
+
+              <div>
+                <b>
+                  ${ins.avgStart ? hhmm(ins.avgStart) : '—'}
+                </b>
+                <small>Début moyen</small>
+              </div>
+
+            </div>
+
+            <p class="mh302-insight-line">
+
+              ${
+                ins.delta != null
+
+                  ? 'Cette semaine : <b>' +
+                    fmt(ins.weekAvg) +
+                    '</b>/jour, écart de <b>' +
+                    (ins.delta >= 0 ? '+' : '') +
+                    fmt(ins.delta) +
+                    '</b> avec la moyenne mensuelle.'
+
+                  : 'Pas assez de données pour établir une comparaison.'
+              }
+
+            </p>
+
+          </section>
+
+          <section class="mh302-card">
+
+            <div class="mh302-title">
+
+              <b>CALENDRIER INTELLIGENT</b>
+
+              <button onclick="tab('mois')">
+                Planning ›
+              </button>
+
+            </div>
+
+            <div class="mh302-calendar">
+              ${calendar()}
+            </div>
+
+          </section>
+
+          <section class="mh302-actions">
+
+            <button onclick="mh302OpenQuickAdd()">
+              ＋ Ajouter une journée
+            </button>
+
+            <button onclick="tab('paie')">
+              € Détail paie
+            </button>
+
+            <button onclick="tab('reg')">
+              💾 Sauvegarde
+            </button>
+
+          </section>
+
+        </div>
+      `;
+
+      /*
+       * Contrôle DOM :
+       * le cockpit complet doit réellement exister.
+       */
+      const required = [
+        '.mh302-head',
+        '.mh302-hero',
+        '.mh302-grid',
+        '.mh302-card',
+        '.mh302-calendar',
+        '.mh302-actions'
+      ];
+
+      const missing =
+        required.filter(
+          selector => !host.querySelector(selector)
+        );
+
+      if (missing.length) {
+        throw new Error(
+          'SMART DOM incomplet: ' +
+          missing.join(', ')
+        );
+      }
+
+    } catch (e) {
+
+      console.error(
+        'MesHeures SMART CONTROL:',
+        e
+      );
+
+      host.innerHTML = `
+
+        <div class="mh302-shell mh302-fallback">
+
+          <header class="mh302-head">
+
+            <div>
+              <span>MESHEURES · SMART CONTROL</span>
+              <h1>Pilotage</h1>
+              <small>${esc(today())}</small>
+            </div>
+
+            <button
+              class="mh302-settings"
+              onclick="tab('reg')">
+              ⚙
+            </button>
+
+          </header>
+
+          <section
+            class="mh302-card mh302-error-card">
+
+            <b>
+              ⚠️ Affichage Smart Control interrompu
+            </b>
+
+            <p>
+              Le moteur principal reste disponible.
+              Un module du cockpit n’a pas pu être rendu.
+            </p>
+
+            <button onclick="tab('jour')">
+              Ouvrir Saisie
+            </button>
+
+            <button onclick="tab('analyse')">
+              Ouvrir Analyse
+            </button>
+
+          </section>
+
+        </div>
+      `;
+    }
   }
 
   // ---------------------------------------------
