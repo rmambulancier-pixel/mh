@@ -261,6 +261,7 @@
       next: collectNextService(now, days),
       intel: safe(() => window.mhV30IntelligenceData?.(), null),
       smart: safe(() => window.MH302?.insights?.(), null),
+      smartControl: safe(() => window.MH314?.audit?.(), null),
       anomalies: safe(() => window.MH302?.anomalies?.(), []),
       backupAge: backupAgeDays()
     };
@@ -513,15 +514,28 @@
         '<i>' + x.icon + '</i><div><b>' + esc(x.title) + '</b><small>' + esc(x.text) + '</small></div><em>›</em></button>'
     ).join('');
 
+    const smart = c.smartControl;
+    const smartNote = smart
+      ? '<div class="mh31-note">🧠 Smart Control · ' +
+        esc(smart.status?.label || 'Contrôle actif') +
+        ' · score ' + esc(String(smart.score ?? '—')) + '/100</div>'
+      : '<div class="mh31-note">🧠 Smart Control · moteur indisponible</div>';
+
     const metrics = proj && proj.avg > 0
       ? '<div class="mh31-note">Moyenne sur 12 semaines ' + fmt(proj.avg) + ' / 46' + NB + 'h · marge ' + fmt(proj.margin) + '</div>'
+      : '';
+
+    const smartPriority = smart?.priority?.[0];
+    const smartPriorityNote = smartPriority
+      ? '<div class="mh31-note">🔎 ' + esc(smartPriority.title || 'Contrôle prioritaire') +
+        ' · ' + esc(smartPriority.text || '') + '</div>'
       : '';
 
     return '<div class="mh31-card mh31-intel" data-tone="' + main.lvl + '">' +
       '<div class="mh31-card-head"><div><span class="mh31-eyebrow">INTELLIGENCE</span><b>' + esc(main.title) + '</b></div>' +
       '<i class="mh31-ico">' + main.icon + '</i></div>' +
       '<p>' + esc(main.text) + '</p>' +
-      rows + metrics +
+      rows + metrics + smartNote + smartPriorityNote +
       '<button class="mh31-link" onclick="' + main.go + '">Ouvrir le détail <em>›</em></button>' +
     '</div>';
   }
