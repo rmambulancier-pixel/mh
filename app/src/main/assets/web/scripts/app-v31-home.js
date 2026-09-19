@@ -1,5 +1,5 @@
 /*
- * MesHeures V31.2.0 · Accueil « Command Center »
+ * MesHeures V31.3.0 · Accueil « Command Center »
  *
  * Propriétaire UNIQUE de #s-home.
  * Aucun calcul métier n'est refait ici : tout provient des modules existants
@@ -16,7 +16,7 @@
 (function () {
   'use strict';
 
-  const V = '31.2.0';
+  const V = '31.3.0';
   const WORK = ['T', 'NUIT'];
   const WINDOW_DAYS = 28;
   const NB = '\u00a0';
@@ -537,7 +537,7 @@
       '<div class="mh31-count" data-tone="' + tn + '"><strong>' + n + '</strong><span>' + label + '</span></div>';
 
     const reasons = { critical: 'Critique', toComplete: 'À compléter', toCheck: 'À vérifier' };
-    const rows = s.items.slice(0, 3).map(it =>
+    const rows = s.items.slice(0, 2).map(it =>
       '<button class="mh31-row" data-tone="' + (it.kind === 'critical' ? 'bad' : 'warn') + '" onclick="' + goDay(it.k) + '">' +
         '<i>' + (it.kind === 'critical' ? '🔴' : it.kind === 'toComplete' ? '✎' : '🔎') + '</i>' +
         '<div><b>' + esc(shortDate(it.k)) + ' · ' + reasons[it.kind] + '</b><small>' + esc(it.reason) + '</small></div><em>›</em></button>'

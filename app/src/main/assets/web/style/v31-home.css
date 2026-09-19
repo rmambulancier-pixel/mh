@@ -1,5 +1,5 @@
 /*
- * MesHeures V31.2.0 · Accueil Command Center
+ * MesHeures V31.3.0 · Accueil Command Center
  * Feuille unique pour #s-home. Utilise uniquement les variables du thème
  * (--card, --line, --txt, --dim, --ok, --warn, --bad, --blue) : le thème clair suit.
  */
@@ -109,4 +109,278 @@
   .mh31-clock{font-size:44px}
   .mh31-meta{grid-template-columns:repeat(2,1fr)}
   .mh31-counts{grid-template-columns:repeat(2,1fr)}
+}
+
+/* =========================================================
+   V31.3.0 — HOME POLISH
+   Densité mobile sans modifier le moteur métier.
+   ========================================================= */
+
+.mh31-home{
+  gap:8px;
+  padding:1px 0 18px;
+}
+
+.mh31-hero{
+  padding:13px;
+  border-radius:20px;
+}
+
+.mh31-date{
+  font-size:15px;
+}
+
+.mh31-state{
+  margin-top:9px;
+  font-size:11px;
+}
+
+.mh31-clock{
+  margin-top:11px;
+  font-size:48px;
+  letter-spacing:-2.2px;
+}
+
+.mh31-caption{
+  margin-top:4px;
+  font-size:10px;
+}
+
+.mh31-meta{
+  gap:5px;
+  margin-top:10px;
+}
+
+.mh31-meta div{
+  padding:6px 3px;
+  border-radius:10px;
+}
+
+.mh31-meta span{
+  font-size:9px;
+}
+
+.mh31-meta b{
+  font-size:12px;
+}
+
+.mh31-chip{
+  margin-top:7px;
+  padding:6px 8px;
+  font-size:10px;
+}
+
+/* Actions rapides plus compactes */
+.mh31-tiles{
+  gap:6px;
+}
+
+.mh31-home button.mh31-tile{
+  min-height:58px;
+  padding:6px 3px;
+  border-radius:13px;
+  gap:3px;
+}
+
+.mh31-tile b{
+  font-size:18px;
+}
+
+.mh31-tile span{
+  font-size:11px;
+}
+
+/* Cartes */
+.mh31-card{
+  padding:12px;
+  border-radius:16px;
+}
+
+.mh31-card-head b{
+  font-size:15px;
+}
+
+.mh31-card p{
+  margin:7px 0;
+  font-size:12px;
+}
+
+.mh31-card small{
+  font-size:10px;
+}
+
+/* Pilotage : 3 colonnes sur les téléphones normaux.
+   Cela fait passer 6 métriques de 3 lignes à 2 lignes. */
+.mh31-grid{
+  grid-template-columns:repeat(3,1fr);
+  gap:6px;
+  margin-top:9px;
+}
+
+.mh31-metric{
+  padding:8px 6px;
+  border-radius:11px;
+}
+
+.mh31-metric span{
+  font-size:8px;
+  line-height:1.15;
+}
+
+.mh31-metric strong{
+  margin-top:4px;
+  font-size:17px;
+}
+
+.mh31-metric small{
+  margin-top:3px;
+  font-size:9px;
+  line-height:1.15;
+}
+
+.mh31-bar{
+  height:7px;
+  margin-top:9px;
+}
+
+.mh31-bar-cap{
+  margin-top:5px;
+  font-size:10px;
+}
+
+.mh31-quat{
+  margin-top:9px;
+  padding:9px;
+}
+
+.mh31-quat-row{
+  margin-top:7px;
+  font-size:10px;
+}
+
+.mh31-quat-pay{
+  margin-top:7px;
+  padding-top:7px;
+}
+
+.mh31-note{
+  margin-top:7px;
+  font-size:10px;
+}
+
+/* Intelligence */
+.mh31-intel .mh31-card-head{
+  align-items:center;
+}
+
+.mh31-ico{
+  width:31px;
+  height:31px;
+  border-radius:9px;
+  font-size:15px;
+}
+
+.mh31-home button.mh31-row{
+  margin-top:6px;
+  padding:8px;
+  grid-template-columns:23px 1fr 13px;
+  gap:7px;
+  border-radius:11px;
+}
+
+.mh31-row i{
+  font-size:15px;
+}
+
+.mh31-row b{
+  font-size:12px;
+}
+
+.mh31-row small{
+  font-size:10px;
+}
+
+.mh31-row em{
+  font-size:17px;
+}
+
+.mh31-home button.mh31-link{
+  margin-top:7px;
+  padding:8px 10px;
+  font-size:11px;
+}
+
+/* Dossier */
+.mh31-counts{
+  gap:5px;
+  margin-top:9px;
+}
+
+.mh31-count{
+  padding:7px 3px;
+  border-radius:10px;
+}
+
+.mh31-count strong{
+  font-size:18px;
+}
+
+.mh31-count span{
+  margin-top:3px;
+  font-size:9px;
+}
+
+/* Prochaine action */
+.mh31-home button.mh31-cta{
+  margin-top:9px;
+  padding:10px;
+}
+
+.mh31-cta b{
+  font-size:14px;
+}
+
+.mh31-cta small{
+  font-size:10px;
+}
+
+/* Footer */
+.mh31-foot{
+  gap:6px;
+}
+
+.mh31-foot button{
+  min-height:42px;
+  padding:8px;
+  font-size:12px;
+}
+
+/* Petit écran : retour 2 colonnes pour éviter les métriques trop étroites */
+@media (max-width:359px){
+  .mh31-clock{
+    font-size:43px;
+  }
+
+  .mh31-grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .mh31-meta{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .mh31-counts{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+  .mh31-home button.mh31-tile{
+    min-height:55px;
+  }
+}
+
+/* Très petits écrans : aucune largeur forcée */
+@media (min-width:360px) and (max-width:420px){
+  .mh31-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr));
+  }
 }
