@@ -1,5 +1,5 @@
 /*
- * MesHeures V31.4.0 · Accueil « Command Center »
+ * MesHeures V31.5.0 · Accueil « Command Center »
  *
  * Propriétaire UNIQUE de #s-home.
  * Aucun calcul métier n'est refait ici : tout provient des modules existants
@@ -16,7 +16,7 @@
 (function () {
   'use strict';
 
-  const V = '31.4.0';
+  const V = '31.5.0';
   const WORK = ['T', 'NUIT'];
   const WINDOW_DAYS = 28;
   const NB = '\u00a0';
@@ -360,6 +360,17 @@
 
     out.sort((a, b) => RANK[a.lvl] - RANK[b.lvl]);
 
+    const smartPriority = c.smartControl?.priority?.[0];
+    if (smartPriority) {
+      out.unshift({
+        lvl: smartPriority.level === 'bad' ? 'bad' : 'warn',
+        icon: '🧠',
+        title: smartPriority.title || 'Contrôle prioritaire',
+        text: smartPriority.text || 'Contrôle prioritaire détecté par Smart Control.',
+        go: goTab('audit')
+      });
+    }
+
     if (!out.length) {
       if (month.doneDays < 3 && !(proj && proj.avg > 0)) {
         out.push({ lvl: 'info', icon: '◌', title: 'Données insuffisantes',
@@ -401,6 +412,15 @@
     } else if (dossier.toComplete) {
       const it = dossier.items.find(x => x.kind === 'toComplete');
       main = { tone: 'warn', icon: '✎', title: 'Compléter une journée', text: shortDate(it.k) + ' · début ou fin manquant.', go: goDay(it.k) };
+    } else if (c.smartControl?.priority?.[0]) {
+      const p = c.smartControl.priority[0];
+      main = {
+        tone: p.level === 'bad' ? 'bad' : 'warn',
+        icon: '🧠',
+        title: p.title || 'Contrôle prioritaire',
+        text: p.text || 'Une priorité a été détectée par Smart Control.',
+        go: goTab('audit')
+      };
     } else if (dossier.toCheck) {
       const it = dossier.items.find(x => x.kind === 'toCheck');
       main = { tone: 'warn', icon: '🔎', title: 'Contrôler le dossier', text: shortDate(it.k) + ' · ' + it.reason, go: goTab('audit') };
@@ -525,11 +545,7 @@
       ? '<div class="mh31-note">Moyenne sur 12 semaines ' + fmt(proj.avg) + ' / 46' + NB + 'h · marge ' + fmt(proj.margin) + '</div>'
       : '';
 
-    const smartPriority = smart?.priority?.[0];
-    const smartPriorityNote = smartPriority
-      ? '<div class="mh31-note">🔎 ' + esc(smartPriority.title || 'Contrôle prioritaire') +
-        ' · ' + esc(smartPriority.text || '') + '</div>'
-      : '';
+    const smartPriorityNote = '';
 
     return '<div class="mh31-card mh31-intel" data-tone="' + main.lvl + '">' +
       '<div class="mh31-card-head"><div><span class="mh31-eyebrow">INTELLIGENCE</span><b>' + esc(main.title) + '</b></div>' +
@@ -550,12 +566,7 @@
     const count = (tn, n, label) =>
       '<div class="mh31-count" data-tone="' + tn + '"><strong>' + n + '</strong><span>' + label + '</span></div>';
 
-    const reasons = { critical: 'Critique', toComplete: 'À compléter', toCheck: 'À vérifier' };
-    const rows = s.items.slice(0, 2).map(it =>
-      '<button class="mh31-row" data-tone="' + (it.kind === 'critical' ? 'bad' : 'warn') + '" onclick="' + goDay(it.k) + '">' +
-        '<i>' + (it.kind === 'critical' ? '🔴' : it.kind === 'toComplete' ? '✎' : '🔎') + '</i>' +
-        '<div><b>' + esc(shortDate(it.k)) + ' · ' + reasons[it.kind] + '</b><small>' + esc(it.reason) + '</small></div><em>›</em></button>'
-    ).join('');
+    const rows = '';
 
     const backup = c.backupAge == null || c.backupAge >= 14
       ? '<button class="mh31-row" data-tone="warn" onclick="' + goTab('reg') + '"><i>🛡️</i><div><b>Sauvegarde externe</b><small>' +
