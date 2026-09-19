@@ -1,5 +1,5 @@
 /*
- * MesHeures V31.3.0 · Accueil « Command Center »
+ * MesHeures V31.4.0 · Accueil « Command Center »
  *
  * Propriétaire UNIQUE de #s-home.
  * Aucun calcul métier n'est refait ici : tout provient des modules existants
@@ -16,7 +16,7 @@
 (function () {
   'use strict';
 
-  const V = '31.3.0';
+  const V = '31.4.0';
   const WORK = ['T', 'NUIT'];
   const WINDOW_DAYS = 28;
   const NB = '\u00a0';

@@ -12,9 +12,9 @@ import androidx.webkit.WebViewFeature;
 
 /** V30 secure WebView boundary. */
 public final class HybridCore {
-    public static final String VERSION = "31.3.0";
+    public static final String VERSION = "31.4.0";
     public static final String DOMAIN = "appassets.androidplatform.net";
-    public static final String ENTRY_URL = "https://" + DOMAIN + "/assets/web/index.html?v=31.3.0";
+    public static final String ENTRY_URL = "https://" + DOMAIN + "/assets/web/index.html?v=31.4.0";
     private final WebViewAssetLoader assetLoader;
     public HybridCore(Context context) {
         assetLoader = new WebViewAssetLoader.Builder().setDomain(DOMAIN)
