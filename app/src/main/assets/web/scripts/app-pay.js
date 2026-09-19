@@ -309,9 +309,9 @@
     });
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
-  else boot();
-
+  /* L'observer doit exister AVANT le premier boot() : mhSafeRun() l'utilise
+     (sinon ReferenceError « Cannot access 'observer' before initialization »,
+     qui interrompait tout le script au démarrage). */
   const observer = new MutationObserver(() => {
     wrapRenderPay();
     bindInput();
@@ -324,6 +324,9 @@
     }
   });
   observer.observe(document.documentElement, {childList:true, subtree:true});
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, {once:true});
+  else boot();
 
   // L'ancien setInterval(...,1200) refaisait ce même travail toutes les
   // 1,2 s en continu, ce qui aggravait la boucle ci-dessus. Le

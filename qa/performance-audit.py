@@ -57,9 +57,11 @@ checks = {
         and "startEpoch" in v30
         and "Date.now()" in v30,
 
-    "V30 dashboard":
+    "V31 dashboard (single Home owner)":
         "renderHome" in v30
-        and "renderHomeData" in v30,
+        and "window.MH31?.renderHome" in v30
+        and (S / "app-v31-home.js").exists()
+        and "scripts/app-v31-home.js" in index,
 
     "V30 day editor":
         "renderDay" in v30

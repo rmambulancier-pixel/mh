@@ -1,669 +1,627 @@
 /*
- * MesHeures V31.1.0 — ACCUEIL PREMIUM
+ * MesHeures V31.2.0 · Accueil « Command Center »
  *
- * Nouveau renderer indépendant.
- * Le moteur V30 reste la source de vérité.
- * Smart Control n'est pas utilisé pour rendre l'Accueil.
+ * Propriétaire UNIQUE de #s-home.
+ * Aucun calcul métier n'est refait ici : tout provient des modules existants
+ *   - MH30DataEngine (journées, quatorzaines, brut)
+ *   - MH302.period / insights / anomalies (app-v30-smart.js)
+ *   - mhV30IntelligenceData (app-intelligence.js)
+ *   - MH30Live (service en direct, horloge mise à jour par le tick V30)
+ *
+ * Appelé uniquement par le scheduler V30 (renderActive), par app.js / app-ui.js
+ * via window.MH31.renderHome, et une fois au chargement. Aucun timer, aucun
+ * observer, aucun listener global : les boutons utilisent des onclick inline
+ * et les mises à jour passent par le scheduler existant.
  */
-
 (function () {
   'use strict';
 
-  const V = '31.1.0';
+  const V = '31.2.0';
+  const WORK = ['T', 'NUIT'];
+  const WINDOW_DAYS = 28;
+  const NB = '\u00a0';
 
   const $ = id => document.getElementById(id);
 
-  function esc(v) {
-    return String(v ?? '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+  }[c]));
+
+  const db = () => (typeof DB !== 'undefined' && DB && DB.days ? DB : null);
+  const isWork = d => !!d && WORK.includes(d.t);
+  const num = v => (Number.isFinite(Number(v)) ? Number(v) : 0);
+  const plural = (n, one, many) => n + NB + (n > 1 ? many : one);
+
+  function fmt(m) {
+    if (m == null || !Number.isFinite(Number(m))) return '—';
+    return typeof F === 'function'
+      ? F(Math.round(Number(m)))
+      : Math.floor(Math.abs(m) / 60) + 'h' + String(Math.round(Math.abs(m)) % 60).padStart(2, '0');
   }
 
-  function fmt(v) {
-    const n = Number(v);
-
-    if (!Number.isFinite(n))
-      return '—';
-
-    if (typeof F === 'function')
-      return F(Math.round(n));
-
-    const m = Math.max(0, Math.round(n));
-
-    return Math.floor(m / 60) +
-      'h' +
-      String(m % 60).padStart(2, '0');
+  function euro(v) {
+    if (!Number.isFinite(Number(v))) return '—';
+    return typeof EUR === 'function'
+      ? EUR(v)
+      : Number(v).toFixed(2).replace('.', ',') + NB + '€';
   }
 
-  function dateLabel(k) {
+  function engineDay(k) {
     try {
-      return typeof shortY === 'function'
-        ? shortY(k)
-        : k;
+      return window.MH30DataEngine?.day?.(k) || (typeof cd === 'function' ? cd(k) : null) || {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function shortDate(k) {
+    try {
+      return (typeof dow === 'function' ? dow(k) + ' ' : '') + short(k);
     } catch (_) {
       return k;
     }
   }
 
-  function dayLabel(k) {
+  function longDate(k) {
     try {
-      return typeof dow === 'function'
-        ? dow(k).toUpperCase()
-        : '';
+      const t = new Date(k + 'T12:00:00')
+        .toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+      return t.charAt(0).toUpperCase() + t.slice(1);
     } catch (_) {
-      return '';
+      return k;
     }
   }
 
-  function dayData(k) {
-    return window.DB?.days?.[k] || {
-      t: 'REPOS',
-      p: []
+  const goTab = t => "tab('" + t + "')";
+  const goDay = k => "mhOpenDay('" + esc(k) + "')";
+
+  /* Chaque bloc est isolé : une erreur dans un module n'emporte jamais tout l'Accueil. */
+  function block(name, fn) {
+    try {
+      return fn() || '';
+    } catch (e) {
+      console.warn('MesHeures V31 · bloc « ' + name + ' » indisponible', e);
+      return '<div class="mh31-card mh31-fail" data-tone="warn"><b>' + esc(name) +
+        '</b><small>Bloc momentanément indisponible.</small></div>';
+    }
+  }
+
+  function safe(fn, fallback) {
+    try {
+      const v = fn();
+      return v == null ? fallback : v;
+    } catch (e) {
+      console.warn('MesHeures V31', e);
+      return fallback;
+    }
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* COLLECTE : lecture unique des modules existants                     */
+  /* ------------------------------------------------------------------ */
+
+  function collectPeriod(now, days) {
+    const base = window.MH302?.period?.();
+    if (!base) return null;
+
+    const res = window.MH30DataEngine?.period?.(base.start, 1);
+    const q = res?.Q?.[0];
+    if (!q) return null;
+
+    let brut = null;
+    if (typeof brutOf === 'function') {
+      try {
+        const b = brutOf(res.G || {});
+        if (Number.isFinite(Number(b?.tot)) && Number(b.tot) > 0) brut = Number(b.tot);
+      } catch (_) { /* brut indisponible */ }
+    }
+
+    const actual = num(q.seuil ?? q.tte);
+    const objective = num(base.objective);
+
+    let planned = 0;
+    let plannedDays = 0;
+    for (let k = addD(now, 1); k <= base.end; k = addD(k, 1)) {
+      const d = days[k];
+      if (!isWork(d)) continue;
+      plannedDays++;
+      planned += num(engineDay(k).tte);
+    }
+
+    return {
+      start: base.start,
+      end: base.end,
+      actual,
+      objective,
+      gap: Math.max(0, objective - actual),
+      pct: objective > 0 ? Math.min(100, actual / objective * 100) : 0,
+      h25: num(q.h25),
+      h50: num(q.h50),
+      brut,
+      planned,
+      plannedDays
     };
   }
 
-  function dayCalc(k) {
-    try {
-      if (
-        window.MH30DataEngine &&
-        typeof window.MH30DataEngine.day === 'function'
-      ) {
-        return window.MH30DataEngine.day(k) || {};
-      }
+  function collectMonth(now, days) {
+    const ym = now.slice(0, 7);
+    const Y = Number(ym.slice(0, 4));
+    const M = Number(ym.slice(5, 7));
+    const lastDay = new Date(Y, M, 0).getDate();
 
-      if (typeof cd === 'function')
-        return cd(k) || {};
-    } catch (_) {}
+    let done = 0, doneDays = 0, ampSum = 0;
+    let planned = 0, plannedDays = 0, plannedUnknown = 0;
 
-    return {};
-  }
+    for (let n = 1; n <= lastDay; n++) {
+      const k = ym + '-' + String(n).padStart(2, '0');
+      if (!isWork(days[k])) continue;
+      const r = engineDay(k);
+      const t = num(r.tte);
 
-  function todayKey() {
-    return typeof today === 'function'
-      ? today()
-      : new Date().toISOString().slice(0, 10);
-  }
-
-  function periodInfo() {
-    try {
-      const k = todayKey();
-      const anchor = window.DB?.s?.anchor || k;
-
-      if (
-        window.MH30DataEngine &&
-        typeof window.MH30DataEngine.period === 'function'
-      ) {
-        const diff = nDays(anchor, k);
-        const start = addD(
-          anchor,
-          Math.floor(diff / 14) * 14
-        );
-
-        const result =
-          window.MH30DataEngine.period(start, 1);
-
-        const q = result?.Q?.[0] || {};
-        const objective =
-          Number(window.DB?.s?.base || 0) * 120;
-
-        return {
-          start,
-          end: addD(start, 13),
-          actual: Number(q.seuil || q.tte || 0),
-          objective,
-          h25: Number(q.h25 || 0),
-          h50: Number(q.h50 || 0)
-        };
-      }
-
-      if (typeof calcPer === 'function') {
-        const diff = nDays(anchor, k);
-        const start = addD(
-          anchor,
-          Math.floor(diff / 14) * 14
-        );
-
-        const result = calcPer(start, 1);
-        const q = result?.Q?.[0] || {};
-
-        return {
-          start,
-          end: addD(start, 13),
-          actual: Number(q.seuil || q.tte || 0),
-          objective:
-            Number(window.DB?.s?.base || 0) * 120,
-          h25: Number(q.h25 || 0),
-          h50: Number(q.h50 || 0)
-        };
-      }
-    } catch (_) {}
-
-    return null;
-  }
-
-  function monthInfo() {
-    try {
-      const k = todayKey();
-
-      if (typeof mhMonthStats === 'function')
-        return mhMonthStats(k.slice(0, 7)) || {};
-    } catch (_) {}
-
-    return {};
-  }
-
-  function nextService() {
-    const k = todayKey();
-
-    const keys = Object.keys(window.DB?.days || {})
-      .filter(x =>
-        x > k &&
-        ['T', 'NUIT'].includes(window.DB.days[x]?.t)
-      )
-      .sort();
-
-    return keys.length
-      ? {
-          k: keys[0],
-          d: window.DB.days[keys[0]]
+      if (k <= now) {
+        if (t > 0) {
+          done += t;
+          doneDays++;
+          ampSum += num(r.amp);
         }
-      : null;
-  }
-
-  function recentDays() {
-    const out = [];
-    const now = todayKey();
-
-    for (let i = 6; i >= 0; i--) {
-      const k = addD(now, -i);
-      const d = dayData(k);
-      const r = dayCalc(k);
-
-      out.push({
-        k,
-        d,
-        r
-      });
+      } else {
+        plannedDays++;
+        if (t > 0) planned += t; else plannedUnknown++;
+      }
     }
 
-    return out;
-  }
-
-
-  function weekInfo(days) {
-    const work = days.filter(x => ['T','NUIT'].includes(x.d?.t));
-    const tte = work.reduce((s,x) => s + Number(x.r?.tte || 0), 0);
-    const amp = work.reduce((s,x) => s + Number(x.r?.amp || 0), 0);
-    return {
-      days,
-      workCount: work.length,
-      tte,
-      avgAmp: work.length ? amp / work.length : 0
-    };
-  }
-
-  function homeAlerts(d, r, active) {
-    const out = [];
-
-    if (['T','NUIT'].includes(d?.t) && d.deb && !d.fin && !active)
-      out.push({
-        icon:'⚠️',
-        title:'Journée à compléter',
-        text:'Une heure de fin manque pour aujourd’hui.',
-        action:'jour'
-      });
-
-    if (['T','NUIT'].includes(d?.t) && Number(r?.amp || 0) >= 720)
-      out.push({
-        icon:'⏱',
-        title:'Amplitude élevée',
-        text:'Vérifie cette journée dans la saisie.',
-        action:'jour'
-      });
-
-    if (
-      ['T','NUIT'].includes(d?.t) &&
-      Number(r?.pz || 0) === 0 &&
-      Number(r?.tte || 0) >= 360 &&
-      !active
-    )
-      out.push({
-        icon:'☕',
-        title:'Pause à vérifier',
-        text:'Aucune pause n’est actuellement comptabilisée.',
-        action:'jour'
-      });
-
-    return out;
-  }
-
-  function serviceType(d) {
-    if (d?.t === 'T')
-      return 'SERVICE';
-
-    if (d?.t === 'NUIT')
-      return 'SERVICE DE NUIT';
-
-    if (d?.t === 'CP')
-      return 'CONGÉ';
-
-    if (d?.t === 'MAL')
-      return 'MALADIE';
-
-    if (d?.t === 'RC')
-      return 'REPOS COMPENSATEUR';
-
-    return 'REPOS';
-  }
-
-  function liveToggle() {
-    try {
-      if (window.MH30Live?.toggle)
-        window.MH30Live.toggle();
-
-      setTimeout(() => renderLive(), 60);
-    } catch (_) {}
-  }
-
-  window.mhV31ToggleLive = liveToggle;
-
-  function renderLive() {
-    const k = todayKey();
-    const d = dayData(k);
-    const r = dayCalc(k);
-
-    const active =
-      !!window.MH30Live?.active?.();
-
-    const clock =
-      active && window.MH30Live?.elapsedClock
-        ? window.MH30Live.elapsedClock()
-        : fmt(r.tte);
-
-    document
-      .querySelectorAll('[data-v31-clock]')
-      .forEach(x => x.textContent = clock);
-
-    document
-      .querySelectorAll('[data-v31-state]')
-      .forEach(x => {
-        x.textContent =
-          active
-            ? 'EN SERVICE'
-            : serviceType(d);
-      });
-
-    document
-      .querySelectorAll('[data-v31-start]')
-      .forEach(x =>
-        x.textContent = d.deb || '—'
-      );
-
-    document
-      .querySelectorAll('[data-v31-end]')
-      .forEach(x =>
-        x.textContent =
-          active
-            ? 'En cours'
-            : d.fin || '—'
-      );
-
-    document
-      .querySelectorAll('[data-v31-pause]')
-      .forEach(x =>
-        x.textContent = fmt(r.pz)
-      );
-
-    document
-      .querySelectorAll('[data-v31-amp]')
-      .forEach(x =>
-        x.textContent = fmt(r.amp)
-      );
-
-    document
-      .querySelectorAll('[data-v31-live-button]')
-      .forEach(x => {
-        x.textContent =
-          active
-            ? '■ Arrêter'
-            : '▶ Démarrer';
-        x.classList.toggle('stop', active);
-      });
-  }
-
-  function monthProjection() {
-    const now = todayKey();
-    const month = now.slice(0, 7);
-    const days = Object.keys(window.DB?.days || {})
-      .filter(k => k.slice(0, 7) === month)
-      .sort();
-
-    const past = days.filter(k => k <= now);
-    const future = days.filter(k =>
-      k > now && ['T', 'NUIT'].includes(window.DB.days[k]?.t)
-    );
-
-    const worked = past.filter(k =>
-      ['T', 'NUIT'].includes(window.DB.days[k]?.t)
-    );
-
-    const tte = worked.reduce((sum, k) =>
-      sum + Number(dayCalc(k)?.tte || 0), 0
-    );
-
-    const avg = worked.length ? tte / worked.length : 0;
-    const projected = worked.length
-      ? tte + avg * future.length
-      : 0;
+    const avg = doneDays ? done / doneDays : 0;
+    const projected = done + planned + (avg ? plannedUnknown * avg : 0);
 
     return {
-      tte,
+      label: (typeof MON !== 'undefined' ? MON[M - 1] : ym) + ' ' + Y,
+      remainingDays: lastDay - Number(now.slice(8, 10)),
+      done,
+      doneDays,
       avg,
-      worked: worked.length,
-      future: future.length,
+      avgAmp: doneDays ? ampSum / doneDays : 0,
+      planned,
+      plannedDays,
+      plannedUnknown,
       projected,
-      confidence: worked.length >= 5
-        ? 'Bonne base'
-        : worked.length > 0
-          ? 'Base partielle'
-          : 'En attente de données'
+      remaining: Math.max(0, projected - done),
+      pct: projected > 0 ? Math.min(100, done / projected * 100) : 0,
+      confidence: doneDays >= 5 ? 'Bonne base' : doneDays > 0 ? 'Base partielle' : 'En attente de données'
     };
   }
 
-  function dossierHealth() {
-    const now = todayKey();
-    const month = now.slice(0, 7);
-    let complete = 0;
-    let toCheck = 0;
-    let critical = 0;
+  /* État du dossier : réutilise MH302.anomalies() (28 derniers jours) */
+  function collectDossier(now, days, live) {
+    const anomalies = safe(() => window.MH302?.anomalies?.(), []);
+    const byDay = new Map();
 
-    Object.keys(window.DB?.days || {})
-      .filter(k => k.slice(0, 7) === month && k <= now)
-      .forEach(k => {
-        const d = dayData(k);
-        if (!['T', 'NUIT'].includes(d?.t)) return;
+    anomalies.forEach(a => {
+      if (a.level === 'info') return;
+      if (a.k === now && live) return;
+      const e = byDay.get(a.k) || { incomplete: false, bad: false, warn: false, reason: '' };
+      if (a.title === 'Journée incomplète') e.incomplete = true;
+      else if (a.level === 'bad') e.bad = true;
+      else e.warn = true;
+      e.reason = e.reason || a.text || a.title || '';
+      byDay.set(a.k, e);
+    });
 
-        const r = dayCalc(k);
-        const active = k === now && !!window.MH30Live?.active?.();
+    const out = { total: 0, complete: 0, toComplete: 0, toCheck: 0, critical: 0, items: [] };
 
-        if (d.deb && !d.fin && !active) {
-          toCheck++;
-          return;
-        }
+    for (let i = 0; i < WINDOW_DAYS; i++) {
+      const k = addD(now, -i);
+      if (!isWork(days[k])) continue;
+      if (k === now && live) continue;
+      out.total++;
 
-        if (Number(r?.amp || 0) >= 900) {
-          critical++;
-          return;
-        }
+      const e = byDay.get(k);
+      if (!e) { out.complete++; continue; }
 
-        if (d.deb && d.fin) complete++;
-      });
+      if (e.incomplete) { out.toComplete++; out.items.push({ k, kind: 'toComplete', reason: 'Horaires incomplets' }); }
+      else if (e.bad) { out.critical++; out.items.push({ k, kind: 'critical', reason: e.reason }); }
+      else { out.toCheck++; out.items.push({ k, kind: 'toCheck', reason: e.reason }); }
+    }
 
-    return { complete, toCheck, critical };
+    const rank = { critical: 0, toComplete: 1, toCheck: 2 };
+    out.items.sort((a, b) => rank[a.kind] - rank[b.kind] || (a.k < b.k ? 1 : -1));
+    out.todo = out.toComplete + out.toCheck + out.critical;
+    return out;
   }
 
-  function smartInsight(proj, health) {
+  function collectNextService(now, days) {
+    const k = Object.keys(days).filter(x => x > now && isWork(days[x])).sort()[0];
+    return k ? { k, d: days[k] } : null;
+  }
+
+  /* Dernier export réel : DB.exp, posé par app.js à chaque export (jj/mm/aaaa). */
+  function backupAgeDays() {
     try {
-      const intel = window.mhV30IntelligenceData?.();
-      const p = intel?.projection || {};
-      if (p.firstRisk) {
-        return {
-          icon: '⚠️',
-          title: 'Point de vigilance',
-          text: 'Une trajectoire à surveiller apparaît dans Intelligence.',
-          action: 'analyse'
-        };
-      }
-    } catch (_) {}
+      const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(DB.exp || ''));
+      if (!m) return null;
+      const t = new Date(Number(m[3]), Number(m[2]) - 1, Number(m[1])).getTime();
+      return Number.isFinite(t) ? Math.max(0, Math.floor((Date.now() - t) / 86400000)) : null;
+    } catch (_) {
+      return null;
+    }
+  }
 
-    if (health.critical)
-      return {
-        icon: '🔴',
-        title: 'Vérification prioritaire',
-        text: health.critical + ' journée(s) présentent une amplitude très élevée.',
-        action: 'audit'
-      };
-
-    if (health.toCheck)
-      return {
-        icon: '🟠',
-        title: 'Donnée à compléter',
-        text: health.toCheck + ' journée(s) du mois restent incomplètes.',
-        action: 'jour'
-      };
-
-    if (proj.future > 0 && proj.avg > 0)
-      return {
-        icon: '🔮',
-        title: 'Trajectoire calculée',
-        text: 'La projection utilise tes journées enregistrées et les services déjà planifiés.',
-        action: 'analyse'
-      };
+  function collect() {
+    const data = db();
+    const now = today();
+    const days = data.days;
+    const live = !!window.MH30Live?.active?.();
+    const d = days[now] || null;
+    const r = engineDay(now);
 
     return {
-      icon: '✓',
-      title: 'Dossier propre',
-      text: 'Aucune anomalie prioritaire détectée sur les données connues.',
-      action: 'audit'
+      now, days, live, d, r,
+      per: safe(() => collectPeriod(now, days), null),
+      month: collectMonth(now, days),
+      dossier: collectDossier(now, days, live),
+      next: collectNextService(now, days),
+      intel: safe(() => window.mhV30IntelligenceData?.(), null),
+      smart: safe(() => window.MH302?.insights?.(), null),
+      anomalies: safe(() => window.MH302?.anomalies?.(), []),
+      backupAge: backupAgeDays()
     };
   }
+
+  /* ------------------------------------------------------------------ */
+  /* ANALYSE : états, insights, prochaine action                         */
+  /* ------------------------------------------------------------------ */
+
+  function heroState(c) {
+    const { d, r, live } = c;
+    if (live) return { tone: 'ok', label: 'En service', sub: 'Début ' + (d?.deb || '—') + ' · amplitude ' + fmt(r.amp) };
+    if (!d) return { tone: 'mut', label: 'Non saisie', sub: 'Aucune donnée pour aujourd’hui' };
+
+    if (isWork(d)) {
+      if (d.deb && d.fin) {
+        return {
+          tone: 'ok',
+          label: d.t === 'NUIT' ? 'Service de nuit terminé' : 'Journée terminée',
+          sub: fmt(r.tte) + ' de travail effectif · amplitude ' + fmt(r.amp)
+        };
+      }
+      if (d.deb) return { tone: 'warn', label: 'À compléter', sub: 'L’heure de fin manque' };
+      return { tone: 'warn', label: 'À saisir', sub: 'Horaires non renseignés' };
+    }
+
+    const label = { CP: 'Congé payé', MAL: 'Arrêt maladie', RC: 'Repos compensateur' }[d.t] || 'Repos';
+    return { tone: 'info', label, sub: 'Aucun service aujourd’hui' };
+  }
+
+  const RANK = { bad: 0, warn: 1, info: 2, ok: 3 };
+
+  function buildInsights(c) {
+    const out = [];
+    const { live, r, dossier, per, intel, smart, anomalies, now, month } = c;
+    const proj = intel?.projection || null;
+
+    if (live && num(r.tte) >= 360 && num(r.pz) < 20) {
+      out.push({ lvl: 'bad', icon: '☕', title: 'Pause à prendre',
+        text: 'Plus de 6 h de travail sans 20 min de pause détectées.', go: goTab('jour') });
+    }
+
+    if (proj?.firstRisk) {
+      out.push({ lvl: 'bad', icon: '⚠️', title: 'Trajectoire 46 h à surveiller',
+        text: 'Une moyenne de plus de 46 h sur 12 semaines est possible vers le ' + shortY(proj.firstRisk) + '.',
+        go: goTab('analyse') });
+    }
+
+    if (dossier.critical) {
+      const it = dossier.items.find(x => x.kind === 'critical');
+      out.push({ lvl: 'bad', icon: '🔴', title: plural(dossier.critical, 'journée critique', 'journées critiques'),
+        text: shortDate(it.k) + ' · ' + it.reason, go: goDay(it.k) });
+    }
+
+    if (dossier.toComplete) {
+      const it = dossier.items.find(x => x.kind === 'toComplete');
+      out.push({ lvl: 'warn', icon: '🟠', title: plural(dossier.toComplete, 'journée à compléter', 'journées à compléter'),
+        text: 'Début ou fin manquant, par exemple le ' + shortDate(it.k) + '.', go: goDay(it.k) });
+    }
+
+    if (dossier.toCheck) {
+      const it = dossier.items.find(x => x.kind === 'toCheck');
+      out.push({ lvl: 'warn', icon: '🔎', title: plural(dossier.toCheck, 'journée à vérifier', 'journées à vérifier'),
+        text: shortDate(it.k) + ' · ' + it.reason, go: goTab('audit') });
+    }
+
+    const todayAmp = anomalies.find(a => a.k === now && a.title === 'Amplitude inhabituelle');
+    if (todayAmp) {
+      out.push({ lvl: 'info', icon: '⏱', title: 'Amplitude importante aujourd’hui', text: todayAmp.text, go: goDay(now) });
+    }
+
+    /* Pas d'objectif « en retard » tant qu'aucune journée n'est enregistrée (pas de donnée inventée). */
+    if (per && per.gap > 0 && num(smart?.count) > 0) {
+      if (per.plannedDays === 0) {
+        out.push({ lvl: 'info', icon: '🎯', title: 'Quatorzaine sans service planifié',
+          text: 'Il reste ' + fmt(per.gap) + ' pour atteindre l’objectif, aucun service prévu d’ici le ' + short(per.end) + '.',
+          go: goTab('mois') });
+      } else if (per.planned > 0 && per.planned < per.gap) {
+        out.push({ lvl: 'warn', icon: '🎯', title: 'Objectif de quatorzaine difficile',
+          text: fmt(per.planned) + ' planifiées pour ' + fmt(per.gap) + ' restantes.', go: goTab('mois') });
+      }
+    }
+
+    if (smart && smart.weekAvg && smart.monthAvg && Math.abs(num(smart.delta)) >= 45) {
+      const under = smart.delta < 0;
+      out.push({ lvl: 'info', icon: under ? '📉' : '📈', title: under ? 'Rythme en retrait cette semaine' : 'Rythme soutenu cette semaine',
+        text: 'Moyenne de la semaine ' + fmt(smart.weekAvg) + ' contre ' + fmt(smart.monthAvg) + ' sur le mois.',
+        go: goTab('analyse') });
+    }
+
+    const pattern = intel?.patterns?.[0];
+    if (pattern) {
+      out.push({ lvl: pattern.level === 'bad' ? 'bad' : 'warn', icon: '🔁', title: pattern.title || 'Motif récurrent',
+        text: pattern.text || '', go: goTab('analyse') });
+    }
+
+    out.sort((a, b) => RANK[a.lvl] - RANK[b.lvl]);
+
+    if (!out.length) {
+      if (month.doneDays < 3 && !(proj && proj.avg > 0)) {
+        out.push({ lvl: 'info', icon: '◌', title: 'Données insuffisantes',
+          text: 'Pas encore assez de journées enregistrées pour une analyse fiable.', go: goTab('jour') });
+      } else {
+        const tail = proj && proj.avg > 0
+          ? ' Moyenne hebdomadaire de ' + fmt(proj.avg) + ', marge de ' + fmt(proj.margin) + ' avant 46 h.'
+          : '';
+        out.push({ lvl: 'ok', icon: '✓', title: 'Aucune anomalie prioritaire',
+          text: 'Les données connues sont cohérentes.' + tail, go: goTab('analyse') });
+      }
+    }
+
+    return out;
+  }
+
+  function buildNextAction(c) {
+    const { d, r, live, now, dossier, next } = c;
+
+    const service = next && {
+      tone: 'info', icon: '📅', title: 'Prochain service',
+      text: shortDate(next.k) + ' · ' + (next.d.deb || 'horaire à définir') + (next.d.fin ? ' → ' + next.d.fin : ''),
+      go: goDay(next.k)
+    };
+
+    let main = null;
+
+    if (live && num(r.tte) >= 360 && num(r.pz) < 20) {
+      main = { tone: 'bad', icon: '☕', title: 'Prendre la pause', text: '20 min de pause sont dues après 6 h de travail.', go: goTab('jour') };
+    } else if (live) {
+      main = { tone: 'ok', icon: '⏱', title: 'Service en cours', text: 'Arrête le service à la fin pour figer la journée.', go: goTab('jour') };
+    } else if (isWork(d) && d.deb && !d.fin) {
+      main = { tone: 'warn', icon: '✎', title: 'Compléter la journée', text: 'L’heure de fin d’aujourd’hui manque.', go: goDay(now) };
+    } else if (!d) {
+      main = { tone: 'warn', icon: '＋', title: 'Saisir la journée', text: 'Aucune donnée pour aujourd’hui.', go: goTab('jour') };
+    } else if (dossier.critical) {
+      const it = dossier.items.find(x => x.kind === 'critical');
+      main = { tone: 'bad', icon: '🔴', title: 'Vérifier une anomalie', text: shortDate(it.k) + ' · ' + it.reason, go: goDay(it.k) };
+    } else if (dossier.toComplete) {
+      const it = dossier.items.find(x => x.kind === 'toComplete');
+      main = { tone: 'warn', icon: '✎', title: 'Compléter une journée', text: shortDate(it.k) + ' · début ou fin manquant.', go: goDay(it.k) };
+    } else if (dossier.toCheck) {
+      const it = dossier.items.find(x => x.kind === 'toCheck');
+      main = { tone: 'warn', icon: '🔎', title: 'Contrôler le dossier', text: shortDate(it.k) + ' · ' + it.reason, go: goTab('audit') };
+    } else if (service) {
+      main = service;
+    } else {
+      main = { tone: 'ok', icon: '✓', title: 'Aucune action nécessaire', text: 'Dossier à jour, aucun service planifié à venir.', go: goTab('mois') };
+    }
+
+    return { main, then: main !== service ? service : null };
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* RENDU                                                               */
+  /* ------------------------------------------------------------------ */
+
+  function heroBlock(c) {
+    const st = heroState(c);
+    const per = c.per;
+    const hs = per
+      ? (per.h25 || per.h50
+        ? 'HS quatorzaine · 25' + NB + '% ' + fmt(per.h25) + ' · 50' + NB + '% ' + fmt(per.h50)
+        : 'Aucune heure supplémentaire sur la quatorzaine')
+      : '';
+
+    return '<div class="mh31-hero">' +
+      '<div class="mh31-hero-top">' +
+        '<div><span class="mh31-eyebrow">AUJOURD’HUI</span><b class="mh31-date">' + esc(longDate(c.now)) + '</b></div>' +
+        '<button class="mh31-live" data-live-action>▶ Démarrer</button>' +
+      '</div>' +
+      '<div class="mh31-state" data-tone="' + st.tone + '"><i></i><b>' + esc(st.label) + '</b><span>' + esc(st.sub) + '</span></div>' +
+      '<div class="mh31-clock" data-live-clock>' + fmt(c.r.tte) + '</div>' +
+      '<div class="mh31-caption">Temps de travail effectif</div>' +
+      '<div class="mh31-meta">' +
+        '<div><span>Début</span><b data-live-start>—</b></div>' +
+        '<div><span>Fin</span><b data-live-end>—</b></div>' +
+        '<div><span>Pause</span><b data-live-pause>—</b></div>' +
+        '<div><span>Amplitude</span><b data-live-amp>—</b></div>' +
+      '</div>' +
+      (hs ? '<div class="mh31-chip">' + esc(hs) + '</div>' : '') +
+    '</div>';
+  }
+
+  function tilesBlock() {
+    const t = (go, ico, label) =>
+      '<button class="mh31-tile" onclick="' + go + '"><b>' + ico + '</b><span>' + label + '</span></button>';
+    return '<div class="mh31-tiles">' +
+      t(goTab('jour'), '＋', 'Saisie') +
+      t(goTab('mois'), '▦', 'Planning') +
+      t(goTab('paie'), '€', 'Paie') +
+      t(goTab('analyse'), '◌', 'Analyse') +
+    '</div>';
+  }
+
+  function metric(label, value, sub) {
+    return '<div class="mh31-metric"><span>' + label + '</span><strong>' + value + '</strong><small>' + sub + '</small></div>';
+  }
+
+  function pilotBlock(c) {
+    const m = c.month;
+    const p = c.per;
+
+    const unknown = m.plannedUnknown
+      ? ' dont ' + m.plannedUnknown + ' sans horaires'
+      : '';
+
+    let html = '<div class="mh31-card">' +
+      '<div class="mh31-card-head"><div><span class="mh31-eyebrow">PILOTAGE</span><b>' + esc(m.label) + '</b></div>' +
+      '<span class="mh31-pill">' + esc(m.confidence) + '</span></div>' +
+      '<div class="mh31-bar"><i style="width:' + m.pct.toFixed(1) + '%"></i></div>' +
+      '<div class="mh31-bar-cap"><span>' + fmt(m.done) + ' réalisées</span><span>' +
+        (m.projected ? fmt(m.projected) + ' projetées' : 'projection en attente') + '</span></div>' +
+      '<div class="mh31-grid">' +
+        metric('PROJECTION FIN DE MOIS', m.projected ? fmt(m.projected) : '—', 'réalisé + planifié') +
+        metric('RESTANT PLANIFIÉ', m.projected ? fmt(m.remaining) : '—', plural(m.plannedDays, 'service', 'services') + unknown) +
+        metric('JOURS TRAVAILLÉS', String(m.doneDays), plural(m.remainingDays, 'jour restant', 'jours restants')) +
+        metric('RYTHME MOYEN', m.avg ? fmt(m.avg) : '—', 'par journée travaillée') +
+        metric('AMPLITUDE MOYENNE', m.avgAmp ? fmt(m.avgAmp) : '—', 'par journée travaillée') +
+        metric('SERVICES À VENIR', String(m.plannedDays), 'planifiés ce mois-ci') +
+      '</div>';
+
+    if (c.live) html += '<div class="mh31-note">Service en cours non compté tant qu’il n’est pas arrêté.</div>';
+
+    if (p) {
+      html += '<div class="mh31-quat">' +
+        '<div class="mh31-quat-head"><span>QUATORZAINE · ' + short(p.start) + ' → ' + short(p.end) + '</span>' +
+        '<b>' + fmt(p.actual) + ' / ' + fmt(p.objective) + '</b></div>' +
+        '<div class="mh31-bar"><i style="width:' + p.pct.toFixed(1) + '%"></i></div>' +
+        '<div class="mh31-quat-row">' +
+          '<span>Restant <b>' + fmt(p.gap) + '</b></span>' +
+          '<span>HS' + NB + '25' + NB + '% <b>' + fmt(p.h25) + '</b></span>' +
+          '<span>HS' + NB + '50' + NB + '% <b>' + fmt(p.h50) + '</b></span>' +
+        '</div>' +
+        (p.brut != null
+          ? '<div class="mh31-quat-pay"><span>Brut estimé de la quatorzaine</span><b>' + euro(p.brut) + '</b></div>'
+          : '') +
+      '</div>';
+    }
+
+    return html + '</div>';
+  }
+
+  function intelBlock(c) {
+    const list = buildInsights(c);
+    const main = list[0];
+    const more = list.slice(1, 3);
+    const proj = c.intel?.projection;
+
+    const rows = more.map(x =>
+      '<button class="mh31-row" data-tone="' + x.lvl + '" onclick="' + x.go + '">' +
+        '<i>' + x.icon + '</i><div><b>' + esc(x.title) + '</b><small>' + esc(x.text) + '</small></div><em>›</em></button>'
+    ).join('');
+
+    const metrics = proj && proj.avg > 0
+      ? '<div class="mh31-note">Moyenne sur 12 semaines ' + fmt(proj.avg) + ' / 46' + NB + 'h · marge ' + fmt(proj.margin) + '</div>'
+      : '';
+
+    return '<div class="mh31-card mh31-intel" data-tone="' + main.lvl + '">' +
+      '<div class="mh31-card-head"><div><span class="mh31-eyebrow">INTELLIGENCE</span><b>' + esc(main.title) + '</b></div>' +
+      '<i class="mh31-ico">' + main.icon + '</i></div>' +
+      '<p>' + esc(main.text) + '</p>' +
+      rows + metrics +
+      '<button class="mh31-link" onclick="' + main.go + '">Ouvrir le détail <em>›</em></button>' +
+    '</div>';
+  }
+
+  function dossierBlock(c) {
+    const s = c.dossier;
+    const title = s.total === 0
+      ? 'Aucune journée travaillée'
+      : s.todo ? plural(s.todo, 'point à traiter', 'points à traiter') : 'Dossier cohérent';
+    const tone = s.critical ? 'bad' : s.todo ? 'warn' : 'ok';
+
+    const count = (tn, n, label) =>
+      '<div class="mh31-count" data-tone="' + tn + '"><strong>' + n + '</strong><span>' + label + '</span></div>';
+
+    const reasons = { critical: 'Critique', toComplete: 'À compléter', toCheck: 'À vérifier' };
+    const rows = s.items.slice(0, 3).map(it =>
+      '<button class="mh31-row" data-tone="' + (it.kind === 'critical' ? 'bad' : 'warn') + '" onclick="' + goDay(it.k) + '">' +
+        '<i>' + (it.kind === 'critical' ? '🔴' : it.kind === 'toComplete' ? '✎' : '🔎') + '</i>' +
+        '<div><b>' + esc(shortDate(it.k)) + ' · ' + reasons[it.kind] + '</b><small>' + esc(it.reason) + '</small></div><em>›</em></button>'
+    ).join('');
+
+    const backup = c.backupAge == null || c.backupAge >= 14
+      ? '<button class="mh31-row" data-tone="warn" onclick="' + goTab('reg') + '"><i>🛡️</i><div><b>Sauvegarde externe</b><small>' +
+        (c.backupAge == null ? 'Aucune sauvegarde exportée sur cet appareil.' : 'Dernier export il y a ' + plural(c.backupAge, 'jour', 'jours') + '.') +
+        '</small></div><em>›</em></button>'
+      : '';
+
+    return '<div class="mh31-card">' +
+      '<div class="mh31-card-head"><div><span class="mh31-eyebrow">ÉTAT DU DOSSIER · ' + WINDOW_DAYS + ' DERNIERS JOURS</span><b>' + esc(title) + '</b></div>' +
+      '<strong class="mh31-badge" data-tone="' + tone + '">' + (s.todo || '✓') + '</strong></div>' +
+      '<div class="mh31-counts">' +
+        count('ok', s.complete, 'complètes') +
+        count('warn', s.toComplete, 'à compléter') +
+        count('warn', s.toCheck, 'à vérifier') +
+        count('bad', s.critical, 'critiques') +
+      '</div>' +
+      rows + backup +
+      '<button class="mh31-link" onclick="' + goTab('audit') + '">Contrôler le dossier <em>›</em></button>' +
+    '</div>';
+  }
+
+  function nextBlock(c) {
+    const { main, then } = buildNextAction(c);
+    return '<div class="mh31-card">' +
+      '<div class="mh31-card-head"><div><span class="mh31-eyebrow">PROCHAINE ACTION</span></div>' +
+      '<button class="mh31-mini" onclick="' + goTab('mois') + '">Planning ›</button></div>' +
+      '<button class="mh31-cta" data-tone="' + main.tone + '" onclick="' + main.go + '">' +
+        '<i>' + main.icon + '</i><div><b>' + esc(main.title) + '</b><small>' + esc(main.text) + '</small></div><em>›</em></button>' +
+      (then ? '<div class="mh31-note">Ensuite · ' + esc(then.title.toLowerCase()) + ' ' + esc(then.text) + '</div>' : '') +
+    '</div>';
+  }
+
+  function footerBlock() {
+    const add = typeof window.mh302OpenQuickAdd === 'function' ? 'mh302OpenQuickAdd()' : goTab('jour');
+    return '<div class="mh31-foot">' +
+      '<button onclick="' + add + '">＋ Ajouter une journée</button>' +
+      '<button onclick="' + goTab('reg') + '">⚙ Réglages</button>' +
+    '</div>';
+  }
+
+  function build() {
+    const c = collect();
+    return '<div class="mh31-home">' +
+      block('Aujourd’hui', () => heroBlock(c)) +
+      tilesBlock() +
+      block('Pilotage', () => pilotBlock(c)) +
+      block('Intelligence', () => intelBlock(c)) +
+      block('État du dossier', () => dossierBlock(c)) +
+      block('Prochaine action', () => nextBlock(c)) +
+      footerBlock() +
+    '</div>';
+  }
+
+  let lastHtml = '';
 
   function renderHome() {
     const host = $('s-home');
-    if (!host) return;
+    if (!host || !db()) return;
 
+    let html;
     try {
-
-    const k = todayKey();
-    const d = dayData(k);
-    const r = dayCalc(k);
-    const next = nextService();
-    const proj = monthProjection();
-    const health = dossierHealth();
-    const insight = smartInsight(proj, health);
-    const active = !!window.MH30Live?.active?.();
-
-    const monthRemaining = Math.max(
-      0,
-      new Date(
-        Number(k.slice(0, 4)),
-        Number(k.slice(5, 7)),
-        0
-      ).getDate() - Number(k.slice(8, 10))
-    );
-
-    const html = [];
-
-    html.push(
-      '<div class="mh31-home">',
-
-      '<header class="mh31-head">',
-      '<div class="mh31-brand">',
-      '<div class="mh31-logo">⏱</div>',
-      '<div>',
-      '<span>MESHEURES</span><strong>V31</strong>',
-      '<h1>Tableau de bord</h1>',
-      '<small>' + esc(dateLabel(k)) + ' · ' + esc(dayLabel(k)) + '</small>',
-      '</div></div>',
-      '<button class="mh31-settings" onclick="tab(\'reg\')" aria-label="Réglages">⚙</button>',
-      '</header>',
-
-      '<section class="mh31-hero">',
-      '<div class="mh31-hero-top">',
-      '<div><span>AUJOURD’HUI</span><b data-v31-state>' +
-        esc(active ? 'EN SERVICE' : serviceType(d)) +
-      '</b></div>',
-      '<button class="mh31-live-button" data-v31-live-button onclick="mhV31ToggleLive()">' +
-        (active ? '■ Arrêter' : '▶ Démarrer') +
-      '</button>',
-      '</div>',
-      '<div class="mh31-clock" data-v31-clock>' + fmt(r.tte) + '</div>',
-      '<div class="mh31-caption">Temps de travail effectif</div>',
-      '<div class="mh31-meta">',
-      '<div><span>Début</span><b data-v31-start>' + esc(d.deb || '—') + '</b></div>',
-      '<div><span>Fin</span><b data-v31-end>' + esc(active ? 'En cours' : d.fin || '—') + '</b></div>',
-      '<div><span>Pause</span><b data-v31-pause>' + fmt(r.pz) + '</b></div>',
-      '<div><span>Amplitude</span><b data-v31-amp>' + fmt(r.amp) + '</b></div>',
-      '</div></section>',
-
-      '<section class="mh31-actions">',
-      '<button onclick="tab(\'jour\')"><b>＋</b><span>Saisie</span><small>Journée & pauses</small></button>',
-      '<button onclick="tab(\'mois\')"><b>▦</b><span>Planning</span><small>Calendrier</small></button>',
-      '<button onclick="tab(\'paie\')"><b>€</b><span>Paie</span><small>Heures & HS</small></button>',
-      '<button onclick="tab(\'analyse\')"><b>◌</b><span>Analyse</span><small>Suivi</small></button>',
-      '</section>',
-
-      '<section class="mh31-command">',
-      '<div class="mh31-command-head"><div><span>PILOTAGE</span><b>Où en est ton mois ?</b></div>',
-      '<span class="mh31-command-badge">' + monthRemaining + ' j restants</span></div>',
-      '<div class="mh31-command-grid">',
-      '<div class="mh31-command-card"><span>PROJECTION</span><strong>' +
-        (proj.projected ? fmt(proj.projected) : '—') +
-      '</strong><small>fin de mois au rythme actuel</small></div>',
-      '<div class="mh31-command-card"><span>RYTHME MOYEN</span><strong>' +
-        (proj.avg ? fmt(proj.avg) : '—') +
-      '</strong><small>par journée travaillée</small></div>',
-      '<div class="mh31-command-card"><span>SERVICES PLANIFIÉS</span><strong>' +
-        proj.future +
-      '</strong><small>restant(s) ce mois-ci</small></div>',
-      '</div>',
-      '<div class="mh31-command-foot"><span>' +
-        proj.worked + ' journée(s) comptabilisée(s)' +
-      '</span><span>' + esc(proj.confidence) + '</span></div>',
-      '</section>',
-
-      '<section class="mh31-intelligence">',
-      '<div class="mh31-intel-top"><div><span>INTELLIGENCE</span><b>' +
-        esc(insight.title) +
-      '</b></div><strong>' + insight.icon + '</strong></div>',
-      '<p>' + esc(insight.text) + '</p>',
-      '<button onclick="tab(\'' + esc(insight.action) + '\')">Ouvrir le détail <em>›</em></button>',
-      '</section>',
-
-      '<section class="mh31-health">',
-      '<div class="mh31-health-head"><div><span>ÉTAT DU DOSSIER</span><b>' +
-        ((health.toCheck || health.critical)
-          ? 'Vérification nécessaire'
-          : 'Données cohérentes') +
-      '</b></div><strong class="' +
-        ((health.toCheck || health.critical) ? 'warn' : 'ok') +
-      '">' + (health.toCheck + health.critical) + '</strong></div>',
-      '<div class="mh31-health-row">',
-      '<span>✓ ' + health.complete + ' complète(s)</span>',
-      '<span>⚠ ' + health.toCheck + ' à compléter</span>',
-      '<span>! ' + health.critical + ' critique(s)</span>',
-      '</div>',
-      '<button onclick="tab(\'audit\')">Contrôler les données <em>›</em></button>',
-      '</section>',
-
-      '<section class="mh31-next-command">',
-      '<div class="mh31-title"><div><span>PROCHAINE ACTION</span><b>' +
-        (next ? 'Service planifié' : 'Rien à préparer') +
-      '</b></div><button onclick="tab(\'mois\')">Planning ›</button></div>',
-
-      next
-        ? '<button class="mh31-next" onclick="mhOpenDay(\'' + esc(next.k) + '\')">' +
-          '<div class="mh31-next-date"><strong>' +
-          new Date(next.k + 'T12:00:00').getDate() +
-          '</strong><span>' + esc(dayLabel(next.k)) +
-          '</span></div>' +
-          '<div><b>' + esc(dateLabel(next.k)) + '</b><small>' +
-          esc(next.d?.deb || 'Horaire à définir') +
-          (next.d?.fin ? ' → ' + esc(next.d.fin) : '') +
-          '</small></div><em>›</em></button>'
-        : '<div class="mh31-empty">Aucune journée future planifiée dans les données connues.</div>',
-
-      '</section>',
-
-      '<section class="mh31-footer-actions">',
-      '<button onclick="tab(\'jour\')">＋ Ajouter une journée</button>',
-      '<button onclick="tab(\'reg\')">⚙ Réglages</button>',
-      '</section>',
-
-      '</div>'
-    );
-
-    host.innerHTML = html.join('');
-    renderLive();
-    if (window.MH30Live?.render) window.MH30Live.render();
-
+      html = build();
     } catch (e) {
-      console.error('MesHeures V31 HOME ERROR:', e);
-
-      host.innerHTML =
-        '<div class="mh31-home">' +
-        '<section class="mh31-intelligence">' +
-        '<div class="mh31-intel-top">' +
-        '<div><span>MESHEURES V31</span><b>Accueil en récupération</b></div>' +
-        '<strong>⚠️</strong>' +
-        '</div>' +
-        '<p>Le moteur V31 a rencontré une erreur au démarrage.</p>' +
-        '<button onclick="location.reload()">Recharger <em>↻</em></button>' +
-        '</section>' +
-        '</div>';
+      console.error('MesHeures V31 · Accueil', e);
+      html = '<div class="mh31-home"><div class="mh31-card" data-tone="warn"><b>Accueil indisponible</b>' +
+        '<small>' + esc(e?.message || e) + '</small>' +
+        '<button class="mh31-link" onclick="location.reload()">Recharger <em>↻</em></button></div></div>';
     }
+
+    const mounted = host.firstElementChild?.classList.contains('mh31-home');
+    if (html !== lastHtml || !mounted) {
+      host.innerHTML = html;
+      lastHtml = html;
+    }
+
+    /* Les valeurs « live » sont remplies par le module Live existant. */
+    safe(() => window.MH30Live?.render?.(), null);
   }
 
-  /*
-   * V31 devient le renderer de l'Accueil.
-   * Smart Control reste présent dans le projet,
-   * mais ne possède plus l'Accueil.
-   */
-  function install() {
+  window.MH31 = { version: V, renderHome };
 
-    window.__MH_HOME_OWNER = 'V31_HOME';
-
-    window.renderHome = renderHome;
-
-    if (window.MH302) {
-      window.MH302.renderHome = renderHome;
-    }
-
-    document.documentElement.dataset.mhVersion = V;
-
-    const version =
-      $('mhVersion');
-
-    if (version)
-      version.textContent = 'V31.1.0';
-
-    document.title =
-      'MesHeures V31.1.0';
-
-    if (
-      window.curTab === 'home' ||
-      !window.curTab
-    ) {
-      renderHome();
-    }
-  }
-
-  /*
-   * Le renderer Smart Control possède encore un timer
-   * historique de 100 ms. On installe donc V31 juste
-   * après lui, puis on devient la source définitive.
-   */
-  setTimeout(install, 250);
-  setTimeout(install, 600);
-
-  document.addEventListener(
-    'mh:state-changed',
-    () => {
-      if (
-        (window.curTab || 'home') === 'home'
-      ) {
-        setTimeout(renderHome, 30);
-      }
-    }
-  );
-
-  window.MH31 = {
-    version: V,
-    renderHome,
-    renderLive
-  };
-
+  if ((window.curTab || 'home') === 'home') renderHome();
 })();

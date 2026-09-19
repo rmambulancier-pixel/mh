@@ -1,3 +1,24 @@
+# V31.2.0 : Accueil Command Center
+
+- Cause du Home V31 « invisible » : la règle `section{display:none}` d'index.html (mécanisme
+  d'onglets) s'appliquait aussi aux `<section>` imbriquées dans #s-home. Seuls les blocs
+  qui avaient un `display` explicite dans leur CSS s'affichaient (4 cartes + pied), le reste
+  était masqué. La règle est désormais limitée aux écrans (`main>section`).
+- app-v31-home.js réécrit : propriétaire unique de #s-home, sans timer, sans observer, sans
+  listener global, sans monkey-patch. Blocs isolés (une erreur n'emporte pas l'Accueil).
+  Hero, actions rapides, Pilotage, Intelligence, État du dossier, Prochaine action, pied.
+  Tout provient des modules existants (MH30DataEngine, MH302, mhV30IntelligenceData, MH30Live).
+- Ancienne lecture de `window.DB` (inexistant : `DB` est un `let` global) supprimée.
+- Cockpit Smart Control retiré (500 lignes) : app-v30-smart.js ne garde que insights,
+  anomalies, paie, période et saisie rapide. Ancien Home statique d'index.html, rendu legacy
+  d'app.js / app-v30.js et bootstrap de secours supprimés.
+- app-intelligence.js : la projection passait de ~220 ms à ~4 ms (signature recalculée par
+  lecture, remplacée par la révision du moteur).
+- app-pay.js : `observer` utilisé avant sa déclaration (TDZ) au démarrage, corrigé.
+- Heure de fin affichée « — » (et non « En cours ») quand aucun service n'est lancé.
+- Service Worker : cache `mesheures-shell-v31.2.0-r1`, `?v=31.2.0` sur tous les assets.
+- QA : qa/v31-home-browser.py (test Chromium réel), audits adaptés au Home unique.
+
 # V30.0.0
 
 - Reactive render gateway: legacy renderAll call sites routed through MH28 scheduler.

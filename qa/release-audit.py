@@ -154,10 +154,69 @@ check(
     and "Date.now()" in v30
 )
 
+# --------------------------------------------------
+# Accueil : un seul propriétaire (app-v31-home.js)
+# --------------------------------------------------
+
+v31 = text(S / "app-v31-home.js")
+smart = text(S / "app-v30-smart.js")
+core = text(S / "app.js")
+ui = text(S / "app-ui.js")
+
 check(
-    "V30 dashboard",
+    "V30 delegates Home to MH31",
     "renderHome" in v30
-    and "renderHomeData" in v30
+    and "window.MH31?.renderHome" in v30
+    and "homeSkeleton" not in v30
+)
+
+check(
+    "V31 Home is the single owner",
+    "window.MH31 = {" in v31
+    and "MH302.renderHome" not in v31
+    and "__MH_HOME_OWNER" not in v31
+)
+
+check(
+    "No competing Home renderer",
+    "MH302.renderHome" not in v30 + core + ui
+    and "renderHome" not in smart
+    and "__MH_HOME_OWNER" not in smart + v30 + core + ui
+)
+
+check(
+    "V31 Home has no timer or global listener",
+    not re.search(r"setTimeout|setInterval|MutationObserver|document\.addEventListener", v31)
+)
+
+check(
+    "V31 Home never reads window.DB",
+    "window.DB" not in v31
+)
+
+check(
+    "Tab rule scoped to screens (nested <section> stays visible)",
+    "main>section{display:none}" in index
+    and "main>section.on{display:block}" in index
+    and not re.search(r"(?<![>\w-])section\{display:none\}", index)
+)
+
+check(
+    "Home host is empty (no static legacy Home)",
+    re.search(r'<section id="s-home"[^>]*></section>', index) is not None
+    and "homeTodayTte" not in index
+)
+
+check(
+    "No bootstrap workaround in HTML",
+    "ensureV31" not in index
+)
+
+nested_tags = re.findall(r"<section\b", v31)
+check(
+    "V31 Home uses no nested <section>",
+    not nested_tags,
+    str(len(nested_tags))
 )
 
 check(

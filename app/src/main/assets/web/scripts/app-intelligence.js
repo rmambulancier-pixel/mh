@@ -3,13 +3,14 @@
   const V='30.2.3';
   const LEGAL_WEEK=46*60;
   const WORK=['T','NUIT'];
-  let calcCache=new Map(), calcSig='';
-  function signature(){
-    const d=DB.days||{}; const keys=Object.keys(d).sort();
-    return keys.length+'|'+(keys.length?keys[0]+'|'+keys[keys.length-1]:'')+'|'+keys.reduce((n,k)=>n+(JSON.stringify(d[k]).length||0),0);
-  }
+  let calcCache=new Map(), calcRev=-1, calcDays=null;
+  /* Le cache suit la révision du moteur de données (invalidée par save()) et l'identité
+     de DB.days (remplacée par une restauration). L'ancienne signature re-sérialisait toutes
+     les journées à CHAQUE lecture (~7 000 fois par projection, ≈ 220 ms mesurées) et
+     bloquait le rendu de l'Accueil. */
   function minutesCached(k){
-    const sig=signature(); if(sig!==calcSig){calcSig=sig;calcCache.clear();}
+    const rev=window.MH30DataEngine?.stats?.().revision??0;
+    if(rev!==calcRev||calcDays!==DB.days){calcRev=rev;calcDays=DB.days;calcCache.clear();}
     if(calcCache.has(k))return calcCache.get(k);
     const m=minutesOf(k); calcCache.set(k,m); return m;
   }

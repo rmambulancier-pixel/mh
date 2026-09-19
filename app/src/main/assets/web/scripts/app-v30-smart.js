@@ -1,25 +1,18 @@
 /*
- * MesHeures V30.2.5 — SMART CONTROL
+ * MesHeures V31.2.0 — SMART CONTROL
  *
- * Couche cockpit / insights.
+ * Couche insights + saisie rapide (window.MH302).
+ * Ne rend PLUS l'Accueil : app-v31-home.js est l'unique propriétaire de #s-home.
  * Le moteur existant reste la source de vérité.
  */
 
 (function () {
   'use strict';
 
-  const V = '30.2.5';
+  const V = '31.2.0';
   const PRIMARY = ['home', 'jour', 'mois', 'paie', 'analyse'];
 
   const $ = id => document.getElementById(id);
-
-  function esc(v) {
-    return String(v ?? '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
-  }
 
   function fmt(min) {
     if (!Number.isFinite(Number(min))) return '—';
@@ -27,11 +20,6 @@
     const n = Math.max(0, Math.round(Number(min)));
     return Math.floor(n / 60) + 'h' +
       String(n % 60).padStart(2, '0');
-  }
-
-  function money(n) {
-    if (!Number.isFinite(Number(n))) return '—';
-    return Number(n).toFixed(2).replace('.', ',') + ' €';
   }
 
   function work(k) {
@@ -170,16 +158,6 @@
           ? weekAvg - monthAvg
           : null
     };
-  }
-
-  function hhmm(m) {
-    if (!Number.isFinite(Number(m))) return '—';
-
-    m = Math.round(Number(m));
-
-    return String(Math.floor(m / 60)).padStart(2, '0') +
-      ':' +
-      String(m % 60).padStart(2, '0');
   }
 
   // ---------------------------------------------
@@ -350,517 +328,6 @@
     }
   }
 
-  // ---------------------------------------------
-  // CALENDRIER
-  // ---------------------------------------------
-
-  function dayStatus(k) {
-    const d = DB.days?.[k];
-
-    if (!d)
-      return ['empty', '⚪', 'Aucune donnée'];
-
-    if (['REPOS', 'RC'].includes(d.t))
-      return ['rest', '🔵', 'Repos'];
-
-    if (['CP', 'MAL'].includes(d.t))
-      return [
-        'leave',
-        '🟡',
-        d.t === 'CP' ? 'Congé' : 'Maladie'
-      ];
-
-    if (work(k)) {
-      const r = cd(k);
-
-      if (!d.deb || !d.fin || !(Number(r?.tte) > 0))
-        return ['warn', '🟡', 'Incomplète'];
-
-      if (
-        Array.isArray(r?.al) &&
-        r.al.some(a => a?.lvl === 'b')
-      )
-        return ['bad', '🔴', 'Anomalie'];
-
-      return ['ok', '🟢', 'Complète'];
-    }
-
-    return ['empty', '⚪', 'Aucune donnée'];
-  }
-
-  function calendar() {
-    let html = '';
-
-    for (let i = 13; i >= 0; i--) {
-      const k = addD(today(), -i);
-      const [cls, icon, label] = dayStatus(k);
-
-      let tte = '';
-
-      if (work(k)) {
-        const m = minutesOf(k);
-        if (m > 0) tte = fmt(m);
-      }
-
-      html += `
-        <button
-          class="mh302-cal-day ${cls}"
-          onclick="mhOpenDay('${esc(k)}')"
-          title="${esc(label)}">
-          <b>${icon}</b>
-          <strong>${new Date(k + 'T12:00:00').getDate()}</strong>
-          <small>${tte || esc(label)}</small>
-        </button>`;
-    }
-
-    return html;
-  }
-
-  // ---------------------------------------------
-  // COCKPIT
-  // ---------------------------------------------
-
-
-  function renderHome() {
-    window.__MH_HOME_OWNER = 'SMART_CONTROL';
-    const host = $('s-home');
-    if (!host) return;
-
-    /*
-     * V30.2.4
-     * Smart Control est le propriétaire unique de l'Accueil.
-     * Chaque sous-module est isolé afin qu'une erreur métier
-     * ne puisse pas supprimer tout le cockpit.
-     */
-
-    try {
-
-      const k = today();
-      const d = DB.days?.[k] || {};
-      const r = cd(k) || {};
-
-      let p = null;
-      let ins = {
-        avgTte: 0,
-        avgAmp: 0,
-        avgPause: 0,
-        avgStart: 0,
-        weekAvg: 0,
-        delta: null
-      };
-
-      let alerts = [];
-      let pay = null;
-
-      try {
-        p = period();
-      } catch (e) {
-        console.warn('SMART period:', e);
-      }
-
-      try {
-        ins = insights() || ins;
-      } catch (e) {
-        console.warn('SMART insights:', e);
-      }
-
-      try {
-        alerts = anomalies() || [];
-      } catch (e) {
-        console.warn('SMART anomalies:', e);
-      }
-
-      try {
-        pay = payroll();
-      } catch (e) {
-        console.warn('SMART payroll:', e);
-      }
-
-      const watch = alerts.slice(0, 2);
-
-      const worked =
-        d.t === 'T' ||
-        d.t === 'NUIT';
-
-      const gross =
-        pay && pay.gross != null
-          ? Number(pay.gross).toLocaleString(
-              'fr-FR',
-              {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2
-              }
-            ) + ' €'
-          : '—';
-
-      const progress =
-        p && Number(p.objective) > 0
-          ? Math.min(
-              100,
-              Math.max(
-                0,
-                Number(p.actual || 0) /
-                Number(p.objective) * 100
-              )
-            )
-          : 0;
-
-      host.innerHTML = `
-        <div class="mh302-shell">
-
-          <header class="mh302-head">
-
-            <div>
-              <span>MESHEURES · SMART CONTROL</span>
-              <h1>Pilotage</h1>
-              <small>${esc(k)}</small>
-            </div>
-
-            <button
-              class="mh302-settings"
-              onclick="tab('reg')"
-              aria-label="Réglages">
-              ⚙
-            </button>
-
-          </header>
-
-          <section class="mh302-hero">
-
-            <div class="mh302-hero-top">
-
-              <div>
-                <small>AUJOURD’HUI</small>
-                <b>${worked ? 'SERVICE' : 'PAS DE SERVICE'}</b>
-              </div>
-
-            </div>
-
-            <strong>${fmt(Number(r.tte) || 0)}</strong>
-
-            <div class="mh302-inline">
-
-              <span>
-                Début
-                <b>${esc(d.deb || '—')}</b>
-              </span>
-
-              <span>
-                Fin
-                <b>${esc(d.fin || '—')}</b>
-              </span>
-
-              <span>
-                Pause
-                <b>${fmt(Number(r.pz) || 0)}</b>
-              </span>
-
-              <span>
-                Amplitude
-                <b>${fmt(Number(r.amp) || 0)}</b>
-              </span>
-
-            </div>
-
-          </section>
-
-          <section class="mh302-grid">
-
-            <article>
-
-              <small>QUATORZAINE</small>
-
-              <strong>
-                ${p ? fmt(Number(p.actual) || 0) : '—'}
-              </strong>
-
-              <span>
-                objectif
-                ${p ? fmt(Number(p.objective) || 0) : '—'}
-              </span>
-
-              <div class="mh302-progress">
-                <i style="width:${progress.toFixed(1)}%"></i>
-              </div>
-
-              <em>
-                ${
-                  p
-                    ? (
-                        Number(p.gap) >= 0
-                          ? 'Reste '
-                          : 'Écart '
-                      ) +
-                      fmt(Math.abs(Number(p.gap) || 0))
-                    : '—'
-                }
-              </em>
-
-            </article>
-
-            <article>
-
-              <small>PAIE PROJETÉE</small>
-
-              <strong>${gross}</strong>
-
-              <span>
-                ${
-                  pay
-                    ? fmt(Number(pay.tte) || 0) +
-                      ' TTE · ' +
-                      fmt(
-                        (Number(pay.h25) || 0) +
-                        (Number(pay.h50) || 0)
-                      ) +
-                      ' HS'
-                    : 'Données indisponibles'
-                }
-              </span>
-
-              <em>Net estimé : —</em>
-
-            </article>
-
-          </section>
-
-          <section class="mh302-card">
-
-            <div class="mh302-title">
-              <b>À SURVEILLER</b>
-              <span>${watch.length}/2</span>
-            </div>
-
-            ${
-              watch.length
-
-              ? watch.map(a => `
-
-                  <button
-                    class="mh302-alert ${a.level || 'warn'}"
-                    onclick="mhOpenDay('${esc(a.k)}')">
-
-                    <b>
-                      ${
-                        a.level === 'bad'
-                          ? '🔴'
-                          : a.level === 'info'
-                            ? '🔵'
-                            : '🟡'
-                      }
-                    </b>
-
-                    <span>
-
-                      <strong>
-                        ${esc(a.title || 'Contrôle')}
-                      </strong>
-
-                      ${esc(a.text || 'À vérifier.')}
-
-                    </span>
-
-                    <i>›</i>
-
-                  </button>
-
-                `).join('')
-
-              : `
-                  <div class="mh302-ok">
-                    ✓ Aucun point particulier à surveiller.
-                  </div>
-                `
-            }
-
-            <button
-              class="mh302-detail"
-              onclick="tab('analyse')">
-              VOIR LE DÉTAIL
-            </button>
-
-          </section>
-
-          <section class="mh302-card">
-
-            <div class="mh302-title">
-
-              <b>MESHEURES INSIGHTS</b>
-
-              <button onclick="tab('analyse')">
-                Analyse ›
-              </button>
-
-            </div>
-
-            <div class="mh302-insights">
-
-              <div>
-                <b>
-                  ${ins.avgTte ? fmt(ins.avgTte) : '—'}
-                </b>
-                <small>TTE moyen</small>
-              </div>
-
-              <div>
-                <b>
-                  ${ins.avgAmp ? fmt(ins.avgAmp) : '—'}
-                </b>
-                <small>Amplitude</small>
-              </div>
-
-              <div>
-                <b>
-                  ${ins.avgPause ? fmt(ins.avgPause) : '—'}
-                </b>
-                <small>Pause</small>
-              </div>
-
-              <div>
-                <b>
-                  ${ins.avgStart ? hhmm(ins.avgStart) : '—'}
-                </b>
-                <small>Début moyen</small>
-              </div>
-
-            </div>
-
-            <p class="mh302-insight-line">
-
-              ${
-                ins.delta != null
-
-                  ? 'Cette semaine : <b>' +
-                    fmt(ins.weekAvg) +
-                    '</b>/jour, écart de <b>' +
-                    (ins.delta >= 0 ? '+' : '') +
-                    fmt(ins.delta) +
-                    '</b> avec la moyenne mensuelle.'
-
-                  : 'Pas assez de données pour établir une comparaison.'
-              }
-
-            </p>
-
-          </section>
-
-          <section class="mh302-card">
-
-            <div class="mh302-title">
-
-              <b>CALENDRIER INTELLIGENT</b>
-
-              <button onclick="tab('mois')">
-                Planning ›
-              </button>
-
-            </div>
-
-            <div class="mh302-calendar">
-              ${calendar()}
-            </div>
-
-          </section>
-
-          <section class="mh302-actions">
-
-            <button onclick="mh302OpenQuickAdd()">
-              ＋ Ajouter une journée
-            </button>
-
-            <button onclick="tab('paie')">
-              € Détail paie
-            </button>
-
-            <button onclick="tab('reg')">
-              💾 Sauvegarde
-            </button>
-
-          </section>
-
-        </div>
-      `;
-
-      /*
-       * Contrôle DOM :
-       * le cockpit complet doit réellement exister.
-       */
-      const required = [
-        '.mh302-head',
-        '.mh302-hero',
-        '.mh302-grid',
-        '.mh302-card',
-        '.mh302-calendar',
-        '.mh302-actions'
-      ];
-
-      const missing =
-        required.filter(
-          selector => !host.querySelector(selector)
-        );
-
-      if (missing.length) {
-        throw new Error(
-          'SMART DOM incomplet: ' +
-          missing.join(', ')
-        );
-      }
-
-    } catch (e) {
-
-      console.error(
-        'MesHeures SMART CONTROL:',
-        e
-      );
-
-      host.innerHTML = `
-
-        <div class="mh302-shell mh302-fallback">
-
-          <header class="mh302-head">
-
-            <div>
-              <span>MESHEURES · SMART CONTROL</span>
-              <h1>Pilotage</h1>
-              <small>${esc(today())}</small>
-            </div>
-
-            <button
-              class="mh302-settings"
-              onclick="tab('reg')">
-              ⚙
-            </button>
-
-          </header>
-
-          <section
-            class="mh302-card mh302-error-card">
-
-            <b>
-              ⚠️ Affichage Smart Control interrompu
-            </b>
-
-            <p>
-              Le moteur principal reste disponible.
-              Un module du cockpit n’a pas pu être rendu.            <small class="mh302-diagnostic">
-              Diagnostic : ${esc(e?.message || String(e))}
-            </small>
-            </p>
-
-            <button onclick="tab('jour')">
-              Ouvrir Saisie
-            </button>
-
-            <button onclick="tab('analyse')">
-              Ouvrir Analyse
-            </button>
-
-          </section>
-
-        </div>
-      `;
-    }
-  }
 
   // ---------------------------------------------
   // QUICK ADD
@@ -1029,10 +496,9 @@
 
     window.mh302CloseQuickAdd();
 
+    /* mhRefresh passe par le scheduler V30, qui redessine l'Accueil (V31). */
     if (typeof mhRefresh === 'function')
       mhRefresh('smart-quick-add');
-
-    setTimeout(renderHome, 80);
   };
 
   // ---------------------------------------------
@@ -1126,8 +592,6 @@
 
   function boot() {
 
-    document.documentElement.dataset.mhVersion = V;
-
     ensureFab();
     ensureSwipe();
 
@@ -1137,25 +601,10 @@
       strayQuickAdd.hidden = true;
       strayQuickAdd.style.display = 'none';
     }
-
-    setTimeout(() => {
-      try {
-        if ((window.curTab || 'home') === 'home')
-          renderHome();
-      } catch (e) {
-        console.warn(
-          'MesHeures SMART CONTROL:',
-          e
-        );
-      }
-    }, 100);
   }
-
-  window.__MH_HOME_OWNER = 'SMART_CONTROL';
 
   window.MH302 = {
     version: V,
-    renderHome,
     insights,
     anomalies,
     payroll,

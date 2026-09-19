@@ -473,47 +473,9 @@ function mhYearStats(y){
 function mhOpenDay(k){curDate=k;curMonth=k.slice(0,7);tab('jour')}
 function mhClass(v,good='ok',bad='bad'){return v>0?bad:good}
 
+/* L'Accueil est rendu par window.MH31 (app-v31-home.js), seul propriétaire de #s-home. */
 function renderHome(){
-  if(window.MH302 && typeof window.MH302.renderHome==='function'){
-    return window.MH302.renderHome();
-  }
-  const now=today(),m=now.slice(0,7),month=mhMonthStats(m);
-  const diff=nDays(DB.s.anchor,now),qs=addD(DB.s.anchor,Math.floor(diff/14)*14),qData=calcPer(qs,1),q=qData.Q[0],qG=qData.G;
-  const todayData=gd(now)||{t:'REPOS'},todayR=cd(now);
-  const N=DB.s.base*120,pc=N?Math.min(100,q.seuil/N*100):0;
-  $('homeDate').textContent=shortY(now)+' · '+dow(now).toUpperCase()+' · '+MON[+m.slice(5)-1];
-  const hs=$('homeSmart'); if(hs){ const nextKeys=Object.keys(DB.days).filter(k=>k>now && ['T','NUIT'].includes(DB.days[k]?.t)).sort(); const next=nextKeys[0]; const last=Object.keys(DB.days).filter(k=>k<now && ['T','NUIT'].includes(DB.days[k]?.t)).sort().pop(); const todayTxt=todayData.t==='T'?'🟢 Journée travaillée':todayData.t==='NUIT'?'🌙 Nuit':todayData.t==='CP'?'🏖️ Congé payé':todayData.t==='RC'?'🔵 Repos compensateur':todayData.t==='MAL'?'🔴 Maladie':'⚪ Repos aujourd’hui'; hs.innerHTML=`<div><span class="smart-kicker">AUJOURD’HUI · ${shortY(now)}</span><b>${todayTxt}</b><small>${next?'Prochaine journée : '+shortY(next):'Aucune prochaine journée saisie'}</small></div>${last?`<button class="g" onclick="mhOpenDay('${last}')">Dernière journée ›</button>`:''}`; }
-  const hbs=$('homeBackupStatus'); if(hbs){ const t=localStorage.getItem(LS+'_autoAt')||localStorage.getItem(LS+'_manualAt'); hbs.innerHTML=t?`💾 Sauvegarde locale automatique · ${new Date(t).toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'})}`:'💾 Aucune sauvegarde locale automatique'; }
-
-  $('homeTodayTte').textContent=F(todayR.tte);
-  $('homeTodayCaption').textContent=todayData.t==='T'?'Journée travaillée · amplitude '+F(todayR.amp):todayData.t==='NUIT'?'Nuit · '+F(todayR.tte):'Aujourd’hui · '+(todayData.t==='CP'?'Congé payé':todayData.t==='RC'?'Repos compensateur':todayData.t==='MAL'?'Maladie':'aucune journée travaillée');
-
-  const days=[];let sum7=0;
-  for(let i=6;i>=0;i--){const k=addD(now,-i),r=cd(k);days.push({k,r});sum7+=r.tte;}
-  const max=Math.max(1,...days.map(x=>x.r.tte));
-  $('homeMiniChart').innerHTML=days.map(x=>{const h=Math.max(8,Math.round(x.r.tte/max*100));const cls=x.k===now?'today':'';return `<div class="mini-day"><i class="${cls}" style="height:${h}%"></i><span>${dOf(x.k).getDate()}</span></div>`}).join('');
-
-  const avg=month.trav?month.tte/month.trav:0, avgAmp=month.trav?month.amp/month.trav:0;
-  $('homeAvg').textContent=F(Math.round(avg));
-  $('homeAvgSub').textContent=month.trav?month.trav+' jour'+(month.trav>1?'s':'')+' travaillé'+(month.trav>1?'s':''):'Aucune journée';
-  $('homeAvgAmp').textContent=F(Math.round(avgAmp));
-  $('homeWorkSub').textContent=month.trav+' jour'+(month.trav>1?'s':'')+' travaillé'+(month.trav>1?'s':'');
-  $('homePeriod').textContent='7 derniers jours · '+F(sum7);
-
-  $('homeActivity').innerHTML=days.map(x=>{
-    const d=dOf(x.k),label=['dim','lun','mar','mer','jeu','ven','sam'][d.getDay()],r=x.r;
-    const state=r.t==='T'?'work':r.t==='NUIT'?'night':r.t==='CP'?'leave':r.t==='RC'?'rest':'empty';
-    return `<button class="activity-day ${state}" onclick="mhOpenDay('${x.k}')"><b>${label}</b><strong>${r.tte?F(r.tte):'—'}</strong><small>${d.getDate()}/${d.getMonth()+1}</small></button>`;
-  }).join('');
-
-  $('homeQuat').innerHTML=`<div class="big-inline"><b>${F(q.seuil)}</b><span>${short(qs)} → ${short(addD(qs,13))}</span></div><div class="dash-progress"><i style="width:${pc.toFixed(1)}%"></i></div><div class="dash-muted">${q.seuil<N?'Marge avant seuil : <b>'+F(N-q.seuil)+'</b>':'🔥 Seuil atteint'}</div>`;
-  const br=brutOf(qG);
-  $('homePay').innerHTML=`<div class="pay-big">${EUR(br.tot)}</div><div class="dash-muted">Brut estimé · quatorzaine courante</div><div class="pay-lines"><div><span>Normal</span><b>${F(q.nor)}</b></div><div><span>HS 25 %</span><b>${F(q.h25)}</b></div><div><span>HS 50 %</span><b>${F(q.h50)}</b></div></div>`;
-
-  const sorted=month.alerts.slice().sort((a,b)=>(a.lvl==='b'?0:1)-(b.lvl==='b'?0:1)).slice(0,5);
-  $('homeAlertCount').textContent=month.alerts.length?month.alerts.length+' alerte'+(month.alerts.length>1?'s':''):'OK';
-  $('homeAlertCount2').textContent=month.alerts.length?month.hard+' critique'+(month.hard>1?'s':'')+' · '+month.warn+' attention'+(month.warn>1?'s':''):'aucune';
-  $('homeAlerts').innerHTML=sorted.length?sorted.map(a=>`<button class="dash-alert ${a.lvl}" onclick="mhOpenDay('${a.k}')"><span>${a.lvl==='b'?'🔴':'🟠'}</span><div><b>${shortY(a.k)}</b><small>${esc(a.m)}</small></div><em>›</em></button>`).join(''):'<div class="dash-ok">✓ Aucun point critique détecté ce mois-ci.</div>';
+  return window.MH31?.renderHome?.();
 }
 
 let monthMode='calendar';

@@ -1,11 +1,11 @@
-/* MesHeures V31.1.0 — canonical runtime
+/* MesHeures V31.2.0 — canonical runtime
  * One calculation engine, one UI/live runtime, one scheduler.
  * Historical V24/V25/V26/V27/V28 runtime files are removed.
  */
 (function(){
   'use strict';
 
-  const V='31.1.0';
+  const V='31.2.0';
   const SECTIONS=['home','jour','mois','paie','analyse','audit','bul','romi','reg'];
   const q=s=>document.querySelector(s);
   const el=id=>document.getElementById(id);
@@ -59,7 +59,7 @@
       document.querySelectorAll('[data-live-amp]').forEach(x=>x.textContent=fmt(r?.amp||0));
       document.querySelectorAll('[data-live-pause]').forEach(x=>x.textContent=fmt(r?.pz||0));
       document.querySelectorAll('[data-live-start]').forEach(x=>x.textContent=d.deb||'—');
-      document.querySelectorAll('[data-live-end]').forEach(x=>x.textContent=d.fin||'En cours');
+      document.querySelectorAll('[data-live-end]').forEach(x=>x.textContent=d.fin||(live?'En cours':'—'));
       document.querySelectorAll('[data-live-action]').forEach(x=>{x.textContent=live?'■ Arrêter le service':'▶ Démarrer le service';x.classList.toggle('stop',live)});
       document.querySelectorAll('[data-live-action]').forEach(x=>{x.onclick=()=>this.toggle();});
       const note=live&&r?.pz===0&&r?.tte>=360?'Pause de 20 min à prévoir':'Calcul automatique · synchronisé avec la journée';
@@ -110,42 +110,6 @@
     const k=day(),diff=nDays(DB.s.anchor,k),qs=addD(DB.s.anchor,Math.floor(diff/14)*14);
     const q=calcPer(qs,1).Q[0],N=DB.s.base*120,pc=N?Math.min(100,q.seuil/N*100):0;
     return {qs,q,N,pc};
-  }
-
-  /* ---------- Home: one cockpit, no repeated analytics ---------- */
-  function legacyV30RenderHome() {
-    if (window.MH302 && typeof window.MH302.renderHome === 'function') {
-      window.MH302.renderHome();
-      return;
-    }
-    const host=el('s-home');if(!host)return;
-    host.innerHTML=`<div class="mh30-shell">
-      <header class="mh30-pagehead"><div><span class="mh30-kicker">MESHEURES · AUJOURD’HUI</span><h2>Tableau de bord</h2><p>${shortY(day())} · ${dow(day()).toUpperCase()}</p></div><button class="mh30-iconbtn" onclick="tab('reg')">⚙</button></header>
-      ${liveCard()}
-      <div class="mh30-grid2 mh30-gap">
-        <button class="mh30-action" onclick="tab('jour')"><span>＋</span><b>Saisir</b><small>Journée / pauses</small></button>
-        <button class="mh30-action" onclick="tab('mois')"><span>▦</span><b>Planning</b><small>Calendrier / prévision</small></button>
-        <button class="mh30-action" onclick="tab('paie')"><span>€</span><b>Paie</b><small>HS / RC / brut</small></button>
-        <button class="mh30-action" onclick="tab('analyse')"><span>◌</span><b>Analyse</b><small>Alertes / tendances</small></button>
-      </div>
-      <div class="mh30-section-title"><span>AUJOURD’HUI</span><button onclick="tab('jour')">Détails ›</button></div>
-      <div class="mh30-today" id="mh30Today"></div>
-      <div class="mh30-section-title"><span>QUATORZAINE</span><button onclick="tab('paie')">Voir la paie ›</button></div>
-      <div class="mh30-period" id="mh30Period"></div>
-      <div class="mh30-section-title"><span>PROCHAINE ÉCHÉANCE</span></div>
-      <div class="mh30-next" id="mh30Next"></div>
-    </div>`;
-    renderHomeData();Live.render();bindSmartTimeInputs(host);
-  }
-  function renderHomeData(){
-    const k=day(),d=dayData(k),r=cd(k),{qs,q,N,pc}=periodInfo();
-    const month=mhMonthStats(k.slice(0,7));
-    const todayBox=el('mh30Today');
-    if(todayBox)todayBox.innerHTML=`<div class="mh30-big"><strong>${fmt(r.tte)}</strong><span>${d.t==='T'?'Temps de travail effectif':d.t==='NUIT'?'Service de nuit':d.t==='CP'?'Congé payé':d.t==='RC'?'Repos compensateur':d.t==='MAL'?'Maladie':'Aucune journée travaillée'}</span></div><div class="mh30-stats"><span>Amplitude <b>${fmt(r.amp)}</b></span><span>Pauses <b>${fmt(r.pz)}</b></span><span>Paniers <b>${(r.ir+r.iru)||0}</b></span></div>`;
-    const period=el('mh30Period');if(period)period.innerHTML=`<div class="mh30-period-head"><b>${fmt(q.seuil)}</b><span>${short(qs)} → ${short(addD(qs,13))}</span></div><div class="mh30-progress"><i style="width:${pc.toFixed(1)}%"></i></div><div class="mh30-period-foot"><span>${q.seuil<N?'Marge avant HS · '+fmt(N-q.seuil):'Seuil atteint'}</span><span>${fmt(q.h25)} HS25 · ${fmt(q.h50)} HS50</span></div>`;
-    const nextKeys=Object.keys(DB.days||{}).filter(x=>x>k&&['T','NUIT'].includes(DB.days[x]?.t)).sort();
-    const next=nextKeys[0],nextBox=el('mh30Next');
-    if(nextBox)nextBox.innerHTML=next?`<button onclick="mhOpenDay('${next}')"><span>📅</span><div><b>${shortY(next)} · ${dow(next).toUpperCase()}</b><small>${DB.days[next].deb||'Horaire à définir'}${DB.days[next].fin?' → '+DB.days[next].fin:''}</small></div><em>›</em></button>`:`<div class="mh30-empty">Aucune journée future planifiée.</div>`;
   }
 
   /* ---------- Day: single editor, live-first ---------- */
@@ -255,7 +219,7 @@
     window.__mh30SavePatch=true;
   }
 
-  let raf=0,liveTimer=0,booted=false,activeStructure='',navHistory=['home'];
+  let raf=0,liveTimer=0,booted=false,navHistory=['home'];
   let dirty=new Set(['home']);
   function safe(fn,label){try{return typeof fn==='function'?fn():null}catch(e){console.warn('MesHeures V30 '+label,e);return null}}
   function schedule(reason){
@@ -270,68 +234,16 @@
     return {qs,q,N,pc,qG:qd.G||{}};
   }
 
-  function intelligenceHtml(){
-    let intel=null; try{intel=window.mhV30IntelligenceData?.()}catch(e){}
-    const p=intel?.projection||{}, patterns=intel?.patterns||[];
-    const avg=p.avg||0, margin=p.margin||0, projected=p.projectedAvg||0;
-    const cls=margin<0?'bad':projected>(typeof LEGAL_WEEK==='number'?LEGAL_WEEK:2760)?'bad':p.unknownDays?'warn':'ok';
-    return `<div class="card mh-v30-intel mh30-intelligence" id="mh30Intel">
-      <h2>🧠 Intelligence <span class="sub">analyse locale</span></h2>
-      <div class="mh-v30-kpis"><div><b>${fmt(Math.round(avg))}</b><span>moyenne actuelle / semaine</span></div><div><b class="${cls}">${fmt(Math.round(margin))}</b><span>marge avant 46 h</span></div><div><b>${fmt(Math.round(projected))}</b><span>trajectoire simulée</span></div></div>
-      <div class="mh-v30-intel-bar"><i style="width:${Math.min(100,Math.max(0,avg/(typeof LEGAL_WEEK==='number'?LEGAL_WEEK:2760)*100)).toFixed(1)}%"></i></div>
-      <div class="mh-v30-intel-note">12 semaines glissantes · ${p.plannedDays||0} journée(s) future(s) planifiée(s) · ${p.unknownDays||0} journée(s) future(s) inconnue(s).${p.firstRisk?` ⚠️ Risque détecté vers le ${typeof shortY==='function'?shortY(p.firstRisk):p.firstRisk}.`:' Aucun dépassement projeté sur les journées futures connues.'}</div>
-      ${p.unknownDays?'<div class="al w">🟠 Trajectoire partielle : les journées futures non planifiées ne sont pas inventées.</div>':''}
-      <details open><summary>🔁 Motifs récurrents</summary>${patterns.length?patterns.slice(0,3).map(x=>`<div class="al ${x.level||'w'}"><b>${escapeHtml(x.title||x.type||'Motif')}</b><br>${escapeHtml(x.text||x.message||'')}<small>${escapeHtml(x.detail||'')}</small></div>`).join(''):'<div class="audit-empty">Aucun motif récurrent suffisamment établi dans les données connues.</div>'}</details>
-    </div>`;
-  }
-
   function liveCard(){return `<div class="mh30-live" id="mh30Live">
     <div class="mh30-live-top"><div><span class="mh30-kicker">SERVICE · TEMPS RÉEL</span><div class="mh30-live-state" data-live-state>—</div></div><button class="mh30-live-btn" data-live-action>▶ Démarrer le service</button></div>
     <div class="mh30-live-main"><strong data-live-clock>0h00</strong><div class="mh30-live-meta"><span>TTE <b data-live-tte>0h00</b></span><span>Amplitude <b data-live-amp>0h00</b></span><span>Pause <b data-live-pause>0h00</b></span></div></div>
     <div class="mh30-live-foot"><span>Début <b data-live-start>—</b> · Fin <b data-live-end>En cours</b></span><span data-live-note>Calcul automatique · synchronisé avec la journée</span></div>
   </div>`}
 
-  function homeSkeleton(){
-    const host=$('s-home'); if(!host)return;
-    host.innerHTML=`<div class="mh30-shell mh30-home">
-      <header class="mh30-pagehead"><div><span class="mh30-kicker">MESHEURES · AUJOURD’HUI</span><h2>Tableau de bord</h2><p id="mh30HomeDate"></p></div><button class="mh30-iconbtn" onclick="tab('reg')">⚙</button></header>
-      ${liveCard()}
-      <div class="mh30-grid2 mh30-gap"><button class="mh30-action" onclick="tab('jour')"><span>＋</span><b>Saisir</b><small>Journée / pauses</small></button><button class="mh30-action" onclick="tab('mois')"><span>▦</span><b>Planning</b><small>Calendrier / prévision</small></button><button class="mh30-action" onclick="tab('paie')"><span>€</span><b>Paie</b><small>HS / RC / brut</small></button><button class="mh30-action" onclick="tab('analyse')"><span>◌</span><b>Analyse</b><small>Alertes / tendances</small></button></div>
-      <div class="mh30-section-title"><span>AUJOURD’HUI</span><button onclick="tab('jour')">Détails ›</button></div><div class="mh30-today" id="mh30Today"></div>
-      <div class="mh30-section-title"><span>QUATORZAINE</span><button onclick="tab('paie')">Voir la paie ›</button></div><div class="mh30-period" id="mh30Period"></div>
-      <div class="mh30-section-title"><span>PROCHAINE ÉCHÉANCE</span></div><div class="mh30-next" id="mh30Next"></div>
-    </div>`;
-    activeStructure='home';
-    safe(()=>window.MH30Live?.render?.(),'live');
-  }
-
-  function refreshHome(){
-    const k=today(),d=DB.days?.[k]||{t:'REPOS'},r=window.MH30DataEngine?.day?.(k),m=window.MH30DataEngine?.month?.(k.slice(0,7)),pi=periodInfo();
-    const date=$('mh30HomeDate'); if(date)date.textContent=(typeof shortY==='function'?shortY(k):k)+' · '+(typeof dow==='function'?dow(k).toUpperCase():'');
-    const todayEl=$('mh30Today'); if(todayEl)todayEl.innerHTML=`<div class="mh30-big"><strong>${fmt(r.tte)}</strong><span>${d.t==='T'?'Temps de travail effectif':d.t==='NUIT'?'Service de nuit':d.t==='CP'?'Congé payé':d.t==='RC'?'Repos compensateur':d.t==='MAL'?'Maladie':'Aucune journée travaillée'}</span></div><div class="mh30-stats"><span>Amplitude <b>${fmt(r.amp)}</b></span><span>Pauses <b>${fmt(r.pz)}</b></span><span>Paniers <b>${(r.ir+r.iru)||0}</b></span></div>`;
-    const q=pi.q,N=pi.N,period=$('mh30Period'); if(period)period.innerHTML=`<div class="mh30-period-head"><b>${fmt(q.seuil)}</b><span>${short(pi.qs)} → ${short(addD(pi.qs,13))}</span></div><div class="mh30-progress"><i style="width:${pi.pc.toFixed(1)}%"></i></div><div class="mh30-period-foot"><span>${q.seuil<N?'Marge avant HS · '+fmt(N-q.seuil):'Seuil atteint'}</span><span>${fmt(q.h25)} HS25 · ${fmt(q.h50)} HS50</span></div>`;
-    const nextKeys=Object.keys(DB.days||{}).filter(x=>x>k&&['T','NUIT'].includes(DB.days[x]?.t)).sort(),next=nextKeys[0],box=$('mh30Next');
-    if(box)box.innerHTML=next?`<button onclick="mhOpenDay('${next}')"><span>📅</span><div><b>${shortY(next)} · ${dow(next).toUpperCase()}</b><small>${DB.days[next].deb||'Horaire à définir'}${DB.days[next].fin?' → '+DB.days[next].fin:''}</small></div><em>›</em></button>`:`<div class="mh30-empty">Aucune journée future planifiée.</div>`;
-    safe(()=>window.MH30Live?.render?.(),'live');
-  }
-
-  function refreshIntelligence(){
-    const host=$('mh30Intel'); if(!host)return;
-    const wrap=document.createElement('div'); wrap.innerHTML=intelligenceHtml(); const fresh=wrap.firstElementChild;
-    if(fresh)host.replaceWith(fresh);
-  }
-
+  /* L'Accueil appartient à app-v31-home.js : ce runtime ne fait que le déclencher. */
   function renderHome(){
-    /* V31.1.0: Smart Control owns Accueil.
-       The legacy V30 dashboard must never redraw over it. */
-    if (window.MH302 && typeof window.MH302.renderHome === 'function') {
-      window.MH302.renderHome();
-      safe(()=>window.MH30Live?.render?.(),'live');
-      return;
-    }
-
-    if(activeStructure!=='home'||!$('mh30Today'))homeSkeleton();
-    refreshHome();
+    window.MH31?.renderHome?.();
+    safe(()=>window.MH30Live?.render?.(),'live');
   }
 
   function renderActive(){
@@ -430,28 +342,11 @@
   }
   function scheduleBackgroundSnapshot(){try{syncBackgroundSnapshot()}catch(e){}}
 
-  function installBackupReminder(){
-    if(window.__mh30BackupReminder)return; window.__mh30BackupReminder=true;
-    const KEY='mh30_last_external_backup';
-    function check(){
-      const last=Number(localStorage.getItem(KEY)||0), age=last?Date.now()-last:Infinity;
-      if(age>=7*86400000){
-        const host=document.getElementById('mh30Next');
-        if(host && !document.getElementById('mh30BackupReminder')){
-          const d=document.createElement('div');d.id='mh30BackupReminder';d.className='card';
-          d.innerHTML='<b>🛡️ Sauvegarde externe recommandée</b><p class="mut">Aucune sauvegarde externe depuis 7 jours. Exporte une copie chiffrée pour ne pas dépendre de ce téléphone.</p><button onclick="mhV30EncryptedBackup();localStorage.setItem(\''+KEY+'\',Date.now())">🔐 Exporter une sauvegarde</button>';
-          host.after(d);
-        }
-      }
-    }
-    check(); setInterval(check,6*60*60*1000);
-  }
-
   function boot(){
     if(booted)return; booted=true;
     document.documentElement.dataset.mhVersion=V;
-    if($('mhVersion'))$('mhVersion').textContent='V31.1.0';
-    document.title='MesHeures V31.1.0';
+    if($('mhVersion'))$('mhVersion').textContent='V31.2.0';
+    document.title='MesHeures V31.2.0';
     patchSave();
     if(window.__mh30PendingRefresh){ const pending=window.__mh30PendingRefresh; delete window.__mh30PendingRefresh; schedule(pending); }
     /* V30 est l’unique propriétaire du runtime. */
@@ -471,7 +366,6 @@
     schedule('boot');
     startLive();
     registerBackgroundChecks();
-    installBackupReminder();
     document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){window.MH30DataEngine?.invalidate?.('visibility');schedule('visibility');startLive()}else stopLive()});
     window.addEventListener('pageshow',()=>{window.MH30DataEngine?.invalidate?.('pageshow');schedule('pageshow');startLive()});
     window.addEventListener('pagehide',stopLive);
@@ -503,7 +397,7 @@
 
 
 'use strict';
-const PDF_V='31.1.0';
+const PDF_V='31.2.0';
 function ascii(s){return String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\x20-\x7E]/g,'?')}
 function esc(s){return ascii(s).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)')}
 function snapshot(){return {format:'MesHeures Probatory Dossier',version:PDF_V,createdAt:new Date().toISOString(),data:JSON.parse(JSON.stringify(window.DB||{}))}}
