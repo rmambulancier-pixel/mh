@@ -464,17 +464,6 @@
     '</div>';
   }
 
-  function tilesBlock() {
-    const t = (go, ico, label) =>
-      '<button class="mh31-tile" onclick="' + go + '"><b>' + ico + '</b><span>' + label + '</span></button>';
-    return '<div class="mh31-tiles">' +
-      t(goTab('jour'), '＋', 'Saisie') +
-      t(goTab('mois'), '▦', 'Planning') +
-      t(goTab('paie'), '€', 'Paie') +
-      t(goTab('analyse'), '◌', 'Analyse') +
-    '</div>';
-  }
-
   function metric(label, value, sub) {
     return '<div class="mh31-metric"><span>' + label + '</span><strong>' + value + '</strong><small>' + sub + '</small></div>';
   }
@@ -611,7 +600,6 @@
     const c = collect();
     return '<div class="mh31-home">' +
       block('Aujourd’hui', () => heroBlock(c)) +
-      tilesBlock() +
       block('Pilotage', () => pilotBlock(c)) +
       block('Intelligence', () => intelBlock(c)) +
       block('État du dossier', () => dossierBlock(c)) +
