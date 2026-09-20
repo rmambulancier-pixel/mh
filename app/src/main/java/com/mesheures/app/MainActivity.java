@@ -386,6 +386,17 @@ public class MainActivity extends ComponentActivity {
         @JavascriptInterface public String version() { return "30.1.0"; }
 
         @JavascriptInterface
+        public boolean isSystemDark() {
+            try {
+                int mode = getResources().getConfiguration().uiMode
+                    & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+                return mode == android.content.res.Configuration.UI_MODE_NIGHT_YES;
+            } catch (Exception ignored) {
+                return false;
+            }
+        }
+
+        @JavascriptInterface
         public void setSystemBarsLight(boolean light) {
             runOnUiThread(() -> {
                 try {

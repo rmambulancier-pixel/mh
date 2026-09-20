@@ -5,6 +5,11 @@
   let media = null;
 
   function systemDark() {
+    try {
+      if (window.MesHeuresAndroid?.isSystemDark) {
+        return window.MesHeuresAndroid.isSystemDark();
+      }
+    } catch (_) {}
     return !!(window.matchMedia &&
       window.matchMedia('(prefers-color-scheme: dark)').matches);
   }
@@ -87,6 +92,19 @@
 
   apply(getMode());
   watchSystem();
+
+  // Android WebView ne propage pas toujours immédiatement
+  // prefers-color-scheme. En mode Auto, on utilise donc le
+  // mode nuit Android natif comme source de vérité.
+  let lastSystemDark = systemDark();
+  setInterval(() => {
+    if (getMode() !== 'auto') return;
+    const now = systemDark();
+    if (now !== lastSystemDark) {
+      lastSystemDark = now;
+      apply('auto');
+    }
+  }, 1500);
 
   // renderReg est défini par app.js avant ce fichier.
   addSettings();
