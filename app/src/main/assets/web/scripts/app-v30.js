@@ -1,11 +1,11 @@
-/* MesHeures V31.5.0 — canonical runtime
+/* MesHeures V32.2.0 — canonical runtime
  * One calculation engine, one UI/live runtime, one scheduler.
  * Historical V24/V25/V26/V27/V28 runtime files are removed.
  */
 (function(){
   'use strict';
 
-  const V='31.5.0';
+  const V='32.2.0';
   const SECTIONS=['home','jour','mois','paie','analyse','audit','bul','romi','reg'];
   const q=s=>document.querySelector(s);
   const el=id=>document.getElementById(id);
@@ -346,7 +346,7 @@
     if(booted)return; booted=true;
     document.documentElement.dataset.mhVersion=V;
     if($('mhVersion'))$('mhVersion').textContent='V31.5.0';
-    document.title='MesHeures V31.5.0';
+    document.title='MesHeures V32.2.0';
     patchSave();
     if(window.__mh30PendingRefresh){ const pending=window.__mh30PendingRefresh; delete window.__mh30PendingRefresh; schedule(pending); }
     /* V30 est l’unique propriétaire du runtime. */
