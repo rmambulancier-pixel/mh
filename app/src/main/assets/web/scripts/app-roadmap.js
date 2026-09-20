@@ -27,10 +27,17 @@ function rows(s){let o=[];for(let i=0;i<7;i++){let k=add(s,i),d=DB.days[k]||{t:'
   T:'TRAVAIL',
   REPOS:'REPOS'
 }[d.t]||String(d.t||'REPOS').replaceAll('_',' '),amp,tte:work?Math.max(0,+r.tte||0):0,pause:pm(d),max:mc(d),meal:work?meal(d):null,sa:work?a+i*1440:null,ea:work?((b<=a?b+1440:b)+i*1440):null,holiday:!!d.fer,perm:d.perm||d.permanence||'',tasks:d.tasks||d.taches||d.activites||'',note:d.note||''})}return o}
+function dailyTTE(x){
+  if(!x.work)return 0;
+  return Math.max(0,+x.tte||0);
+}
+function dailyAmp(x){
+  return x.work?Math.max(0,+x.amp||0):0;
+}
 function checks(r){let a=[];r.forEach(x=>{if(!x.work)return;if(x.amp>840)a.push(["critical",x.label+" : amplitude > 14 h — dépassement à justifier."]);else if(x.amp>720)a.push(["warn",x.label+" : amplitude > 12 h — motif réglementaire/contrepartie à vérifier."]);if(x.max>=360&&x.pause<20)a.push(["warn",x.label+" : aucune pause de 20 min ou plus détectée."]);if(x.meal&&!x.meal.ok)a.push(["warn",x.label+" : pause repas d'au moins 30 min dans la plage concernée à vérifier."])});let w=r.filter(x=>x.work).sort((a,b)=>a.ea-b.ea);for(let i=1;i<w.length;i++)if(w[i].sa-w[i-1].ea<660)a.push(["warn",w[i].label+" : repos entre services < 11 h — vérifier la dérogation."]);let t=r.reduce((s,x)=>s+x.tte,0);if(t>2880)a.push(["critical","Cumul hebdomadaire TTE > 48 h — anomalie à traiter."]);return a}
 function make(s){let r=rows(s),a=checks(r),amp=r.reduce((x,y)=>x+y.amp,0),tte=r.reduce((x,y)=>x+y.tte,0),alerts=a.length?a.map(x=>`<div class="a ${x[0]}"><b>${x[0]==='critical'?'ANOMALIE':'À VÉRIFIER'}</b> · ${E(x[1])}</div>`).join(''):'<div class="a ok"><b>OK</b> · Aucun contrôle de base en anomalie.</div>';
 let d=dt(s);d.setDate(d.getDate()+3);let y=d.getFullYear(),ys=new Date(y,0,1),wn=Math.ceil((((d-ys)/86400000)+1)/7);let weekTitle=`Feuille de route — Semaine ${wn} — ${SD(s)} au ${SD(add(s,6))}`;
-let body= r.map(x=>{if(!x.work){let detail=x.note||x.tasks||'';return `<tr class="off status-${x.d.t||"REPOS"}"><td colspan="8"><div class="status-row"><span class="status-date">${E(x.label)}</span><span class="status-sep">—</span><span class="status-name">${E(x.status)}</span></div>${x.holiday?`<div class="status-note">JOUR FÉRIÉ</div>`:''}${detail?`<div class="status-detail">${E(detail)}</div>`:''}</td></tr>`}return `<tr><td><b>${E(x.label)}</b>${x.holiday?' · FÉRIÉ':''}</td><td>${x.d.deb||'—'}</td><td>${(x.d.p||[]).filter(p=>p&&(p.d||p.f)).map(p=>(p.d||'??')+'–'+(p.f||'??')+(p.ty?' · '+p.ty:'')).join('<br>')||'—'}</td><td>${x.d.fin||'—'}</td><td class=num>${x.work?H(x.amp):'—'}</td><td>${E(x.perm)||'—'}</td><td>${E(x.tasks)||(x.note?'Note : '+E(x.note):'—')}</td><td></td></tr>`}).join('');
+let body= r.map(x=>{if(!x.work){let detail=x.note||x.tasks||'';return `<tr class="off status-${x.d.t||"REPOS"}"><td colspan="8"><div class="status-row"><span class="status-date">${E(x.label)}</span><span class="status-sep">—</span><span class="status-name">${E(x.status)}</span></div>${x.holiday?`<div class="status-note">JOUR FÉRIÉ</div>`:''}${detail?`<div class="status-detail">${E(detail)}</div>`:''}</td></tr>`}return `<tr><td><b>${E(x.label)}</b>${x.holiday?' · FÉRIÉ':''}</td><td>${x.d.deb||'—'}</td><td>${(x.d.p||[]).filter(p=>p&&(p.d||p.f)).map(p=>(p.d||'??')+'–'+(p.f||'??')+(p.ty?' · '+p.ty:'')).join('<br>')||'—'}</td><td>${x.d.fin||'—'}</td><td class=num><b>${x.work?H(dailyAmp(x)):'—'}</b>${x.work?`<br><span class="tjed">TTE ${H(dailyTTE(x))}</span>`:''}</td><td>${E(x.perm)||'—'}</td><td>${E(x.tasks)||(x.note?'Note : '+E(x.note):'—')}</td><td></td></tr>`}).join('');
 return `<!doctype html><html lang=fr><meta charset=utf-8><title>${E(weekTitle)}</title><style>
 @page{size:A4;margin:8mm}
 body{font-family:Arial,Helvetica,sans-serif;color:#111;font-size:8pt;margin:0}
@@ -46,7 +53,7 @@ th{background:#e9ecef;text-align:center;font-size:7.2pt}
 th:nth-child(1){width:11%} th:nth-child(2){width:9%} th:nth-child(3){width:17%}
 th:nth-child(4){width:9%} th:nth-child(5){width:7%} th:nth-child(6){width:8%}
 th:nth-child(7){width:28%} th:nth-child(8){width:11%}
-.num{text-align:center;white-space:nowrap}
+.num{text-align:center;white-space:nowrap}.tjed{font-size:6.5pt;font-weight:600;color:#555;white-space:nowrap}
 .off td{padding:0;border-left:1px solid #222;border-right:1px solid #222;color:#111}
 .status-row{width:100%;min-height:30px;display:grid;grid-template-columns:36% 6% 58%;align-items:center;padding:5px 12px;gap:0;font-weight:700}
 .status-date{font-size:10.5pt;white-space:nowrap}
@@ -95,7 +102,7 @@ th:nth-child(7){width:28%} th:nth-child(8){width:11%}
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 </style><body>
 <div class=head><div class=g><div><div class=title>FEUILLE DE ROUTE HEBDOMADAIRE</div>Transport sanitaire · feuille individuelle</div><div><b>Entreprise</b><br>${E(C.company)}<br>${E(C.address)}<br>SIRET ${E(C.siret)}</div><div><b>Salarié</b><br>${E(C.employee)}<br>${E(C.job)}</div></div><div style="margin-top:5px"><b>Semaine n° ${wn}</b> · du <b>${SD(s)}</b> au <b>${SD(add(s,6))}</b> · Généré le ${SD(iso(new Date()))}</div></div>
-<table><thead><tr><th>Jour</th><th>Heure de prise<br>de service</th><th>Pause(s) réglementaire(s) et/ou repas<br>Début – Fin · Lieu</th><th>Heure de fin<br>de service</th><th>Amplitude<br>journalière</th><th>Permanence<br>Type 1 / 2 / 3</th><th>Tâches complémentaires<br>ou activités annexes</th><th>Signature(s)</th></tr></thead><tbody>${body}</tbody></table>
+<table><thead><tr><th>Jour</th><th>Heure de prise<br>de service</th><th>Pause(s) réglementaire(s) et/ou repas<br>Début – Fin · Lieu</th><th>Heure de fin<br>de service</th><th>Amplitude<br>journalière<br><small>+ TTE jour</small></th><th>Permanence<br>Type 1 / 2 / 3</th><th>Tâches complémentaires<br>ou activités annexes</th><th>Signature(s)</th></tr></thead><tbody>${body}</tbody></table>
 <div class=sum><div class=box><b>${r.filter(x=>x.work).length}</b>jours travaillés</div><div class=box><b>${H(amp)}</b>amplitude cumulée</div><div class=box><b>${H(tte)}</b>TTE calculé</div><div class=box><b>${a.filter(x=>x[0]==='critical').length}</b>anomalie(s)</div><div class=box><b>${a.filter(x=>x[0]==='warn').length}</b>à vérifier</div></div>
 <h3 style="margin:6px 0 3px">Contrôle MesHeures</h3>${alerts}
 <div class=sig><div class=s><b>Employeur / représentant</b><br><br>Signature :</div><div class=s><b>Salarié</b><br><br>Signature :</div></div>
