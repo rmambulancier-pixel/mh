@@ -5,11 +5,11 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/widget_background"
-    android:padding="12dp">
+    android:padding="10dp">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="28dp"
+        android:layout_height="27dp"
         android:gravity="center_vertical">
 
         <ImageView
@@ -24,7 +24,7 @@
             android:layout_marginStart="7dp"
             android:text="MesHeures"
             android:textColor="@color/widget_text_primary"
-            android:textSize="14sp"
+            android:textSize="16sp"
             android:textStyle="bold" />
 
         <TextView
@@ -45,7 +45,7 @@
         android:layout_height="16dp"
         android:text="Septembre 2026 · J13/30"
         android:textColor="@color/widget_text_secondary"
-        android:textSize="10sp"
+        android:textSize="12sp"
         android:textStyle="bold" />
 
     <TextView
@@ -54,12 +54,12 @@
         android:layout_height="9dp"
         android:text="━━━━━━━━━━━━━━━━"
         android:textColor="@color/widget_accent"
-        android:textSize="7sp"
+        android:textSize="8sp"
         android:includeFontPadding="false" />
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="28dp"
+        android:layout_height="27dp"
         android:gravity="center_vertical">
 
         <TextView
@@ -70,7 +70,7 @@
             android:gravity="center"
             android:text="6&#10;Travail"
             android:textColor="@color/widget_ok"
-            android:textSize="10sp"
+            android:textSize="12sp"
             android:textStyle="bold" />
 
         <TextView
@@ -81,7 +81,7 @@
             android:gravity="center"
             android:text="1&#10;Repos"
             android:textColor="@color/widget_text_secondary"
-            android:textSize="10sp" />
+            android:textSize="11sp" />
 
         <TextView
             android:id="@+id/widget_cp"
@@ -91,7 +91,7 @@
             android:gravity="center"
             android:text="5&#10;Congé"
             android:textColor="@color/widget_warn"
-            android:textSize="10sp"
+            android:textSize="11sp"
             android:textStyle="bold" />
 
         <TextView
@@ -102,13 +102,13 @@
             android:gravity="center"
             android:text="0&#10;Maladie"
             android:textColor="@color/widget_bad"
-            android:textSize="10sp"
+            android:textSize="11sp"
             android:textStyle="bold" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="36dp"
+        android:layout_height="34dp"
         android:gravity="center_vertical">
 
         <TextView
@@ -141,7 +141,7 @@
             android:gravity="center"
             android:text="16h00&#10;HS25"
             android:textColor="@color/widget_warn"
-            android:textSize="10sp"
+            android:textSize="11sp"
             android:textStyle="bold" />
 
         <TextView
@@ -152,13 +152,13 @@
             android:gravity="center"
             android:text="26h35&#10;HS50"
             android:textColor="@color/widget_bad"
-            android:textSize="10sp"
+            android:textSize="11sp"
             android:textStyle="bold" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="25dp"
+        android:layout_height="24dp"
         android:gravity="center_vertical">
 
         <TextView
@@ -191,7 +191,7 @@
         android:gravity="center_vertical"
         android:text="EN SERVICE"
         android:textColor="@color/widget_ok"
-        android:textSize="8sp"
+        android:textSize="10sp"
         android:textStyle="bold" />
 
     <Chronometer
@@ -208,23 +208,23 @@
     <TextView
         android:id="@+id/widget_status"
         android:layout_width="match_parent"
-        android:layout_height="15dp"
+        android:layout_height="14dp"
         android:gravity="center_vertical"
         android:text="🟢 Marge 46h : 10h33"
         android:textColor="@color/widget_text_secondary"
-        android:textSize="8sp" />
+        android:textSize="9sp" />
 
     <TextView
         android:id="@+id/widget_today"
         android:layout_width="match_parent"
-        android:layout_height="15dp"
+        android:layout_height="14dp"
         android:text="Repos aujourd'hui · 0h00"
         android:textColor="@color/widget_text_secondary"
-        android:textSize="8sp" />
+        android:textSize="9sp" />
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="28dp"
+        android:layout_height="27dp"
         android:gravity="center_vertical">
 
         <TextView
@@ -246,7 +246,7 @@
             android:gravity="center"
             android:text="Aucune journée planifiée"
             android:textColor="@color/widget_text_primary"
-            android:textSize="8sp"
+            android:textSize="9sp"
             android:textStyle="bold" />
 
         <TextView
@@ -261,7 +261,7 @@
     <TextView
         android:id="@+id/widget_period"
         android:layout_width="match_parent"
-        android:layout_height="11dp"
+        android:layout_height="10dp"
         android:gravity="center"
         android:text="Semaine 9h30 · 14j 122h05"
         android:textColor="@color/widget_text_muted"
