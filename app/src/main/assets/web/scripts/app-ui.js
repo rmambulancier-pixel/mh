@@ -111,7 +111,19 @@ function renderDay(){
   const isF=isFerie(k),isD=dowN(k)===0;
   $('dLbl').textContent=dow(k).toUpperCase()+' '+k.slice(8)+' '+MON[+k.slice(5,7)-1]+' '+k.slice(0,4)
     +(isF?' ☀️':'')+(isD&&!isF?' 🔵':'')+(k===today()?' • auj.':'');
-  const TYPES={T:'Travail',REPOS:'Repos',NUIT:'Nuit',RC:'RC',CP:'Congé',MAL:'Maladie'};
+  const TYPES={
+  T:'Travail',
+  REPOS:'Repos',
+  NUIT:'Nuit',
+  RC:'Repos compensateur',
+  CP:'Congés payés',
+  MAL:'Maladie',
+  FORMATION:'Formation',
+  MISE_A_NIVEAU:'Mise à niveau diplôme',
+  VISITE_MEDICALE:'Visite médicale',
+  REUNION:'Réunion',
+  AUTRE_ACTIVITE:'Autre activité'
+};
   $('dType').innerHTML=Object.entries(TYPES).map(([x,l])=>
     `<button class="${d.t===x?'on':''}" onclick="setD('t','${x}')">${l}</button>`).join('');
   let h='';
