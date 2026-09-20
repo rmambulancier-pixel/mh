@@ -383,7 +383,7 @@ public class MainActivity extends ComponentActivity {
             });
         }
 
-        @JavascriptInterface public String version() { return "30.1.0"; }
+        @JavascriptInterface public String version() { return "32.2.0"; }
 
         @JavascriptInterface
         public boolean isSystemDark() {

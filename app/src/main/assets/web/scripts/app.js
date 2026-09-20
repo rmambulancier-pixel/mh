@@ -690,7 +690,7 @@ function mhDecoratePages(){
   });
 }
 
-if($('mhVersion'))$('mhVersion').textContent='V30.2.5';
+if($('mhVersion'))$('mhVersion').textContent='V32.2.0';
 mhDecoratePages();
 mhAutoBackup();
 setTimeout(()=>{try{if(typeof mhRefresh==='function')mhRefresh('boot-legacy');else window.__mh30PendingRefresh='boot-legacy'}catch(e){console.error('V15 render',e)}},0);

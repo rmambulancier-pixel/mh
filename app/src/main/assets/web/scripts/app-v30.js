@@ -345,7 +345,7 @@
   function boot(){
     if(booted)return; booted=true;
     document.documentElement.dataset.mhVersion=V;
-    if($('mhVersion'))$('mhVersion').textContent='V31.5.0';
+    if($('mhVersion'))$('mhVersion').textContent='V32.2.0';
     document.title='MesHeures V32.2.0';
     patchSave();
     if(window.__mh30PendingRefresh){ const pending=window.__mh30PendingRefresh; delete window.__mh30PendingRefresh; schedule(pending); }
@@ -397,7 +397,7 @@
 
 
 'use strict';
-const PDF_V='31.5.0';
+const PDF_V='32.2.0';
 function ascii(s){return String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\x20-\x7E]/g,'?')}
 function esc(s){return ascii(s).replace(/\\/g,'\\\\').replace(/\(/g,'\\(').replace(/\)/g,'\\)')}
 function snapshot(){return {format:'MesHeures Probatory Dossier',version:PDF_V,createdAt:new Date().toISOString(),data:JSON.parse(JSON.stringify(window.DB||{}))}}
