@@ -489,8 +489,13 @@ public class MainActivity extends ComponentActivity {
                             try {
                                 PrintManager pm = (PrintManager) getSystemService(Context.PRINT_SERVICE);
                                 if (pm == null) throw new IllegalStateException("Impression indisponible");
-                                PrintDocumentAdapter adapter = view.createPrintDocumentAdapter("MesHeures-dossier");
-                                pm.print("MesHeures — Dossier", adapter, new PrintAttributes.Builder().build());
+                                String printTitle = "MesHeures";
+                                try {
+                                    String src = view.getTitle();
+                                    if (src != null && !src.trim().isEmpty()) printTitle = src.trim();
+                                } catch (Exception ignored) {}
+                                PrintDocumentAdapter adapter = view.createPrintDocumentAdapter(printTitle);
+                                pm.print(printTitle, adapter, new PrintAttributes.Builder().build());
                             } catch (Exception e) {
                                 Toast.makeText(c, "Impression impossible : " + e.getMessage(), Toast.LENGTH_LONG).show();
                             }
