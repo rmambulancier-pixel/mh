@@ -53,21 +53,21 @@ let body=r.map(x=>{
   return '<tr><td><b>'+E(x.label)+'</b>'+(x.holiday?' · FÉRIÉ':'')+'</td><td>'+(x.d.deb||'—')+'</td><td>'+ (pauseText||'—') +'</td><td>'+(x.d.fin||'—')+'</td><td class="num"><b>'+amp+'</b><br><span class="tjed">TTE '+tte+'</span></td><td>'+perm+'</td><td>'+tasks+'</td><td></td></tr>';
 }).join('');
 return `<!doctype html><html lang=fr><meta charset=utf-8><title>${E(weekTitle)}</title><style>
-@page{size:A4;margin:8mm}
-body{font-family:Arial,Helvetica,sans-serif;color:#111;font-size:8pt;margin:0}
+@page{size:A4;margin:6mm}
+body{font-family:Arial,Helvetica,sans-serif;color:#111;font-size:9pt;margin:0}
 *{box-sizing:border-box}
-.head{border:1.5px solid #111;padding:7px;margin-bottom:5px}
-.g{display:grid;grid-template-columns:1.7fr 1fr 1fr;gap:7px}
-.title{font-size:13pt;font-weight:800}
+.head{border:1.5px solid #111;padding:8px;margin-bottom:7px}
+.g{display:grid;grid-template-columns:1.7fr 1fr 1fr;gap:8px}
+.title{font-size:14pt;font-weight:800}
 table{width:100%;border-collapse:collapse;table-layout:fixed}
 thead{display:table-header-group}
 tr{break-inside:avoid;page-break-inside:avoid}
-th,td{border:1px solid #222;padding:3px;vertical-align:middle;overflow-wrap:anywhere;word-break:break-word}
-th{background:#e9ecef;text-align:center;font-size:7.2pt}
+th,td{border:1px solid #222;padding:4.5px 4px;vertical-align:middle;overflow-wrap:anywhere;word-break:break-word}
+th{background:#e9ecef;text-align:center;font-size:7.8pt;padding:5px 4px}
 th:nth-child(1){width:11%} th:nth-child(2){width:9%} th:nth-child(3){width:17%}
 th:nth-child(4){width:9%} th:nth-child(5){width:7%} th:nth-child(6){width:8%}
 th:nth-child(7){width:28%} th:nth-child(8){width:11%}
-.num{text-align:center;white-space:nowrap}.tjed{font-size:6.5pt;font-weight:600;color:#555;white-space:nowrap}
+.num{text-align:center;white-space:nowrap}.tjed{font-size:7pt;font-weight:600;color:#555;white-space:nowrap}
 .off td{padding:0;border-left:1px solid #222;border-right:1px solid #222;color:#111}
 .status-row{width:100%;min-height:30px;display:grid;grid-template-columns:36% 6% 58%;align-items:center;padding:5px 12px;gap:0;font-weight:700}
 .status-date{font-size:10.5pt;white-space:nowrap}
@@ -87,31 +87,31 @@ th:nth-child(7){width:28%} th:nth-child(8){width:11%}
  .status-note{font-size:5.5pt}
  .status-detail{font-size:5.8pt}
 }
-.sum{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-top:5px;break-inside:avoid;page-break-inside:avoid}
-.box{border:1px solid #333;padding:4px;text-align:center}
-.box b{display:block;font-size:10pt}
+.sum{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px;break-inside:avoid;page-break-inside:avoid}
+.box{border:1px solid #333;padding:6px;text-align:center}
+.box b{display:block;font-size:11pt}
 .a{border-left:4px solid #777;background:#f4f4f4;padding:4px 6px;margin:2px 0;font-size:7.2pt;overflow-wrap:anywhere;break-inside:avoid}
 .warn{border-left-color:#b36b00;background:#fff8e8}
 .critical{border-left-color:#a40000;background:#fff0f0}
 .ok{border-left-color:#287a2b;background:#eef8ee}
-.sig{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:6px;break-inside:avoid;page-break-inside:avoid}
-.s{border:1px solid #222;min-height:40px;padding:4px}
-.foot{margin-top:5px;font-size:6.4pt;color:#444;line-height:1.3;overflow-wrap:anywhere}
+.sig{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px;break-inside:avoid;page-break-inside:avoid}
+.s{border:1px solid #222;min-height:55px;padding:6px}
+.foot{margin-top:7px;font-size:7pt;color:#444;line-height:1.3;overflow-wrap:anywhere}
 @media print and (orientation:portrait){
- body{font-size:6.8pt}
- .head{padding:5px;margin-bottom:4px}
+ body{font-size:8.5pt}
+ .head{padding:7px;margin-bottom:6px}
  .g{grid-template-columns:1.4fr 1fr 1fr;gap:4px}
- .title{font-size:10pt}
- th{font-size:5.8pt;padding:2px}
- th,td{padding:2.2px}
+ .title{font-size:13pt}
+ th{font-size:7.2pt;padding:4px 3px}
+ th,td{padding:4px 3px}
  th:nth-child(1){width:12%} th:nth-child(2){width:9%} th:nth-child(3){width:19%}
  th:nth-child(4){width:9%} th:nth-child(5){width:8%} th:nth-child(6){width:9%}
  th:nth-child(7){width:23%} th:nth-child(8){width:11%}
- .a,.foot{font-size:5.7pt}
- .box{padding:2px;font-size:5.8pt}
- .box b{font-size:8pt}
+ .a,.foot{font-size:7pt}
+ .box{padding:5px;font-size:7pt}
+ .box b{font-size:10pt}
  .sig{gap:4px}
- .s{min-height:34px;padding:3px}
+ .s{min-height:58px;padding:5px}
 }
 @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 </style><body>
