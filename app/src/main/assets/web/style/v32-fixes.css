@@ -118,3 +118,35 @@ html:root:not([data-theme="light"]){--dim:#9ba5b0;--bad:#ff7b72}
 /* Saisie : la barre d'actions fixe (Aujourd'hui, Copier veille, Effacer, Imprimer) masquait ~67 px
    du bas de la page (dernière carte « Projection fin de période » inaccessible). */
 #s-jour{padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+
+/* V33.1.1 — CONTRASTE CLAIR FINAL */
+:root[data-theme="light"] #s-paie,
+:root[data-theme="light"] #s-paie .card,
+:root[data-theme="light"] #s-paie .mh-v30-card,
+:root[data-theme="light"] #s-paie .mh-v30-row,
+:root[data-theme="light"] #s-paie .mh-v30-proof,
+:root[data-theme="light"] #s-paie .mh-v30-reconciliation{
+  color:#1f2328!important;
+}
+:root[data-theme="light"] #s-paie .mut,
+:root[data-theme="light"] #s-paie small,
+:root[data-theme="light"] #s-paie label,
+:root[data-theme="light"] #s-paie .mh-v30-intel-note,
+:root[data-theme="light"] #s-paie .mh-v30-intel span,
+:root[data-theme="light"] #s-paie .mh-v30-intel small{
+  color:#57606a!important;
+}
+:root[data-theme="light"] #s-paie .mh-v30-intel .kpi b,
+:root[data-theme="light"] #s-paie .mh-v30-stat b,
+:root[data-theme="light"] #s-paie .pay-big,
+:root[data-theme="light"] #s-paie .home-value{
+  color:#1f2328!important;
+}
+:root[data-theme="light"] #s-paie .mh-v30-intel .kpi.warn b{color:#7a4b00!important}
+:root[data-theme="light"] #s-paie .mh-v30-intel .kpi.bad b{color:#b4232b!important}
+:root[data-theme="light"] #s-paie table th{
+  color:#57606a!important;background:#f8fafc!important;
+}
+:root[data-theme="light"] #s-paie table td{
+  color:#1f2328!important;background:#fff!important;border-color:#d0d7de!important;
+}

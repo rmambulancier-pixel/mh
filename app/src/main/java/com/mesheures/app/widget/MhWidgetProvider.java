@@ -16,7 +16,7 @@ import com.mesheures.app.R;
 
 import org.json.JSONObject;
 
-/** MesHeures V8 widget: ultra-safe RemoteViews mirror. No legal/pay calculations run here. */
+/** MesHeures V33.2 widget: miroir passif du moteur V33. Aucun calcul réglementaire ici. */
 public class MhWidgetProvider extends AppWidgetProvider {
     public static final String PREFS = "mh_widget";
     public static final String KEY_PAYLOAD = "payload";
@@ -43,9 +43,10 @@ public class MhWidgetProvider extends AppWidgetProvider {
         String raw = prefs.getString(KEY_PAYLOAD, null);
 
         String month="MesHeures", tteDay="—", tteMonth="—", week="—", period="—";
+        String syncVersion="V33", syncSource="Moteur V33";
         String hs25="—", hs50="—", gross="—", net="—", netLabel="Net estimé";
         String status="Synchronise MesHeures", today="Aujourd'hui", rcBalance="—", nextDay="Aucune journée planifiée", nextHours="";
-        int work=0,rest=0,cp=0,mal=0,alerts=0,day=0,days=30;
+        int work=0,rest=0,cp=0,mal=0,alerts=0,critical=0,warn=0,day=0,days=30;
         int margin=Integer.MIN_VALUE;
         int rcMinutes=0;
         boolean timerRunning=false; long timerStartEpoch=0L;
@@ -54,6 +55,7 @@ public class MhWidgetProvider extends AppWidgetProvider {
         if(raw!=null){
             try{
                 JSONObject o=new JSONObject(raw);
+                syncVersion=o.optString("version",syncVersion); syncSource=o.optString("source",syncSource);
                 month=o.optString("monthLabel",month);
                 day=o.optInt("dayIndex",0); days=Math.max(1,o.optInt("monthDays",30));
                 tteDay=formatMinutes(o.optInt("tteJourMin",0));
@@ -63,7 +65,7 @@ public class MhWidgetProvider extends AppWidgetProvider {
                 hs25=formatMinutes(o.optInt("hs25PeriodeMin",0));
                 hs50=formatMinutes(o.optInt("hs50PeriodeMin",0));
                 work=o.optInt("workCount",0); rest=o.optInt("restCount",0); cp=o.optInt("cpCount",0); mal=o.optInt("malCount",0);
-                alerts=o.optInt("alertesMois",0);
+                alerts=o.optInt("alertesMois",0); critical=o.optInt("alertesCritiques",0); warn=o.optInt("alertesAvertissements",0);
                 if(o.has("grossCents")&&!o.isNull("grossCents"))gross=formatMoneyCents(o.optInt("grossCents",0));
                 if(o.has("netCents")&&!o.isNull("netCents"))net=formatMoneyCents(o.optInt("netCents",0));
                 netLabel=o.optString("netLabel","Net estimé");
@@ -81,7 +83,8 @@ public class MhWidgetProvider extends AppWidgetProvider {
                     else if(margin<300){status="🟠 Marge 46h : "+formatMinutes(margin);dot=Color.parseColor("#9A6700");}
                     else{status="🟢 Marge 46h : "+formatMinutes(margin);dot=Color.parseColor("#16803C");}
                 }
-                if(alerts>0)status += " · "+alerts+" alerte"+(alerts>1?"s":"");
+                if(critical>0)status="🔴 "+critical+" critique"+(critical>1?"s":"")+" · "+warn+" avert."; else if(warn>0)status="🟠 "+warn+" avertissement"+(warn>1?"s":"");
+                status += " · "+syncVersion;
             }catch(Exception e){ status="Données du widget invalides"; }
         }
 
@@ -109,7 +112,7 @@ public class MhWidgetProvider extends AppWidgetProvider {
         v.setTextViewText(R.id.widget_next_day, nextDay);
         v.setTextViewText(R.id.widget_next_hours, nextHours);
         v.setTextViewText(R.id.widget_status, status);
-        v.setTextViewText(R.id.widget_period, "Semaine "+week+" · 14j "+period);
+        v.setTextViewText(R.id.widget_period, "Semaine "+week+" · 14j "+period+" · "+syncSource);
 
         Intent open=new Intent(context,MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent openPi=PendingIntent.getActivity(context,widgetId,open,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
