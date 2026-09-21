@@ -1,3 +1,28 @@
+# V32.2.1 : feuille de route, lisibilité, formulaire « Nouvelle journée »
+
+- Feuille de route (Paie > Générer le PDF) : le bouton ne faisait plus rien depuis la 32.2.0.
+  `meal()` lisait `S.panDeb` alors que `S` n'existe pas en global (`const S=DB.s` est local aux autres
+  fichiers) : ReferenceError dès qu'un jour travaillé était dans la semaine, sans aucun message.
+  Corrigé (`DB.s`), et le clic signale désormais l'erreur au lieu d'échouer en silence.
+- Feuille de route : les jours sans pause saisie dont le service couvre la plage repas affichent
+  « Repas AUTO · EXT » avec la plage (ex. 11:45–14:15) et « durée non saisie ». Aucun horaire n'est
+  inventé et le TTE n'est pas modifié.
+- style/v32-fixes.css (nouveau, chargé en dernier) : en thème clair, Analyse, Audit, barre d'état
+  « Repos » de Saisie et « Net estimé » de Paie avaient un fond sombre avec un texte sombre (≈ 1,1:1).
+  Boutons actifs verts (blanc sur #1aaf5d, 2,9:1) assombris. Balayage WCAG AA : 0 échec sur 17 vues,
+  thème clair et sombre (qa/contrast-scan.py ; l'ancien code : 91 textes sous le seuil).
+- Formulaire « Nouvelle journée » (bouton « + Ajouter une journée » de l'Accueil) : s'affichait sans
+  mise en forme. Cause : v30.css ligne 4, commentaire refermé trop tôt, ~230 règles ignorées par le
+  navigateur (dont .mh302-*). Les règles du formulaire sont reprises dans v32-fixes.css. Le bouton
+  flottant `#mh302Fab`, rendu hors flux en bas à gauche, est masqué (doublon du bouton de l'Accueil).
+  Le commentaire de v30.css n'est PAS corrigé volontairement : réactiver les 230 règles changerait
+  tout le rendu.
+- Saisie : la barre d'actions fixe masquait ~67 px du bas de la page.
+- Mois : le bloc « Dimanches & fériés travaillés » (qui liste aussi les alertes) est renommé.
+- QA : qa/roadmap-browser.py (clique réellement le bouton PDF), qa/contrast-scan.py.
+- Inchangé : moteur de paie (qa/golden-master.js identique avant/après).
+- Connu, non touché : qa/v31-home-browser.py échoue 5/30 avant comme après (attentes obsolètes).
+
 # V31.2.0 : Accueil Command Center
 
 - Cause du Home V31 « invisible » : la règle `section{display:none}` d'index.html (mécanisme
