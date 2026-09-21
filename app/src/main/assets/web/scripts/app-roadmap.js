@@ -13,7 +13,7 @@ const H=m=>m==null?'—':Math.floor(Math.round(m)/60)+"h"+String(Math.round(m)%6
 const SD=s=>{let d=dt(s);return String(d.getDate()).padStart(2,'0')+"/"+String(d.getMonth()+1).padStart(2,'0')+"/"+d.getFullYear()};
 function pm(d){let n=0;(d.p||[]).forEach(p=>{let a=min(p.d),b=min(p.f);if(a!=null&&b!=null)n+=(b<a?b+1440:b)-a});return n}
 function mc(d){let a=min(d.deb),b=min(d.fin);if(a==null||b==null)return 0;b=b<=a?b+1440:b;let cur=a,max=0,ps=(d.p||[]).map(p=>{let x=min(p.d),y=min(p.f);if(x==null||y==null)return null;if(y<=x)y+=1440;while(x<a){x+=1440;y+=1440}return{x,y}}).filter(Boolean).sort((x,y)=>x.x-y.x);ps.forEach(p=>{max=Math.max(max,p.x-cur);cur=Math.max(cur,p.y)});return Math.max(max,b-cur)}
-function meal(d){let a=min(d.deb),b=min(d.fin);if(a==null||b==null)return null;b=b<=a?b+1440:b;for(let w of [[660,870],[1110,1320]])if(a<=w[0]&&b>=w[1]){let ok=(d.p||[]).some(p=>{let x=min(p.d),y=min(p.f);if(x==null||y==null)return false;if(y<=x)y+=1440;while(x<a){x+=1440;y+=1440}return y-x>=30&&x>=w[0]&&y<=w[1]});return{ok}}return null}
+function meal(d){let a=min(d.deb),b=min(d.fin);if(a==null||b==null)return null;b=b<=a?b+1440:b;let w=[min(S.panDeb),min(S.panFin)];if(w[0]==null||w[1]==null)return null;if(w[1]<=w[0])w[1]+=1440;if(a<=w[0]&&b>=w[1]){let ok=(d.p||[]).some(p=>{let x=min(p.d),y=min(p.f);if(x==null||y==null)return false;if(y<=x)y+=1440;while(x<a){x+=1440;y+=1440}return y-x>=30&&x>=w[0]&&y<=w[1]});return{ok,auto:true,start:w[0],end:w[1]}}return null}
 function rows(s){let o=[];for(let i=0;i<7;i++){let k=add(s,i),d=DB.days[k]||{t:'REPOS',p:[]},r=typeof cd==='function'?cd(k):{tte:0},a=min(d.deb),b=min(d.fin),work=(d.t==='T'||d.t==='NUIT')&&a!=null&&b!=null,amp=work?((b<=a?b+1440:b)-a):0;o.push({k,d,r,work,label:D[i]+" "+SD(k),status:{
   CP:'CONGÉS PAYÉS',
   RC:'REPOS COMPENSATEUR',
@@ -37,7 +37,21 @@ function dailyAmp(x){
 function checks(r){let a=[];r.forEach(x=>{if(!x.work)return;if(x.amp>840)a.push(["critical",x.label+" : amplitude > 14 h — dépassement à justifier."]);else if(x.amp>720)a.push(["warn",x.label+" : amplitude > 12 h — motif réglementaire/contrepartie à vérifier."]);if(x.max>=360&&x.pause<20)a.push(["warn",x.label+" : aucune pause de 20 min ou plus détectée."]);if(x.meal&&!x.meal.ok)a.push(["warn",x.label+" : pause repas d'au moins 30 min dans la plage concernée à vérifier."])});let w=r.filter(x=>x.work).sort((a,b)=>a.ea-b.ea);for(let i=1;i<w.length;i++)if(w[i].sa-w[i-1].ea<660)a.push(["warn",w[i].label+" : repos entre services < 11 h — vérifier la dérogation."]);let t=r.reduce((s,x)=>s+x.tte,0);if(t>2880)a.push(["critical","Cumul hebdomadaire TTE > 48 h — anomalie à traiter."]);return a}
 function make(s){let r=rows(s),a=checks(r),amp=r.reduce((x,y)=>x+y.amp,0),tte=r.reduce((x,y)=>x+y.tte,0),alerts=a.length?a.map(x=>`<div class="a ${x[0]}"><b>${x[0]==='critical'?'ANOMALIE':'À VÉRIFIER'}</b> · ${E(x[1])}</div>`).join(''):'<div class="a ok"><b>OK</b> · Aucun contrôle de base en anomalie.</div>';
 let d=dt(s);d.setDate(d.getDate()+3);let y=d.getFullYear(),ys=new Date(y,0,1),wn=Math.ceil((((d-ys)/86400000)+1)/7);let weekTitle=`Feuille de route — Semaine ${wn} — ${SD(s)} au ${SD(add(s,6))}`;
-let body= r.map(x=>{if(!x.work){let detail=x.note||x.tasks||'';return `<tr class="off status-${x.d.t||"REPOS"}"><td colspan="8"><div class="status-row"><span class="status-date">${E(x.label)}</span><span class="status-sep">—</span><span class="status-name">${E(x.status)}</span></div>${x.holiday?`<div class="status-note">JOUR FÉRIÉ</div>`:''}${detail?`<div class="status-detail">${E(detail)}</div>`:''}</td></tr>`}return `<tr><td><b>${E(x.label)}</b>${x.holiday?' · FÉRIÉ':''}</td><td>${x.d.deb||'—'}</td><td>${(x.d.p||[]).filter(p=>p&&(p.d||p.f)).map(p=>(p.d||'??')+'–'+(p.f||'??')+(p.ty?' · '+p.ty:'')).join('<br>')||'—'}</td><td>${x.d.fin||'—'}</td><td class=num><b>${x.work?H(dailyAmp(x)):'—'}</b>${x.work?`<br><span class="tjed">TTE ${H(dailyTTE(x))}</span>`:''}</td><td>${E(x.perm)||'—'}</td><td>${E(x.tasks)||(x.note?'Note : '+E(x.note):'—')}</td><td></td></tr>`}).join('');
+let body=r.map(x=>{
+  if(!x.work){
+    let detail=x.note||x.tasks||'';
+    return '<tr class="off status-'+(x.d.t||'REPOS')+'"><td colspan="8"><div class="status-row"><span class="status-date">'+E(x.label)+'</span><span class="status-sep">—</span><span class="status-name">'+E(x.status)+'</span></div>'+(x.holiday?'<div class="status-note">JOUR FÉRIÉ</div>':'')+(detail?'<div class="status-detail">'+E(detail)+'</div>':'')+'</td></tr>';
+  }
+  let pauseText=(x.d.p||[]).filter(p=>p&&(p.d||p.f)).map(p=>(p.d||'??')+'–'+(p.f||'??')+(p.ty?' · '+p.ty:'')).join('<br>');
+  if(!pauseText && x.work && !x.d.panier && x.meal && x.meal.auto) pauseText='Repas AUTO · EXT';
+  else if(!pauseText && x.work && x.d.panier==='EXT') pauseText='Repas · EXT';
+  else if(!pauseText && x.work && x.d.panier==='ENT') pauseText='Repas · ENT';
+  let amp=x.work?H(dailyAmp(x)):'—';
+  let tte=x.work?H(dailyTTE(x)):'—';
+  let perm=E(x.perm)||'—';
+  let tasks=E(x.tasks)||(x.note?'Note : '+E(x.note):'—');
+  return '<tr><td><b>'+E(x.label)+'</b>'+(x.holiday?' · FÉRIÉ':'')+'</td><td>'+(x.d.deb||'—')+'</td><td>'+ (pauseText||'—') +'</td><td>'+(x.d.fin||'—')+'</td><td class="num"><b>'+amp+'</b><br><span class="tjed">TTE '+tte+'</span></td><td>'+perm+'</td><td>'+tasks+'</td><td></td></tr>';
+}).join('');
 return `<!doctype html><html lang=fr><meta charset=utf-8><title>${E(weekTitle)}</title><style>
 @page{size:A4;margin:8mm}
 body{font-family:Arial,Helvetica,sans-serif;color:#111;font-size:8pt;margin:0}
