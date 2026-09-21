@@ -73,7 +73,12 @@ jobs:
           echo "MESHEURES_KEY_ALIAS=$MESHEURES_KEY_ALIAS" >> "$GITHUB_ENV"
 
       - name: Build release APK
-        run: gradle :app:assembleRelease --no-daemon
+        shell: bash
+        run: |
+          # gradle.properties contient l'override AAPT2 ARM64 pour Termux.
+          # GitHub Actions est en x86_64 : on le retire uniquement pour CI.
+          sed -i '/^android\.aapt2FromMavenOverride=/d' gradle.properties
+          gradle :app:assembleRelease --no-daemon
 
       - name: Verify APK
         shell: bash
