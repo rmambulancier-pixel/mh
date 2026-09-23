@@ -134,7 +134,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
 
 /* =========================================================
-   V33.3.0 — SYNCHRONISATION MOTEUR CANONIQUE
+   V34.1.2 — SYNCHRONISATION MOTEUR CANONIQUE
    Une seule source : MH30DataEngine + DB.
    Le widget ne calcule jamais les règles métier.
    ========================================================= */
@@ -215,7 +215,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
     var payload={
       schema:"mesheures.widget.v33",
-      version:"33.3.0",
+      version:"34.1.2",
       revision:safe(function(){return MH30DataEngine.stats().revision},0),
       updatedAt:Date.now(),
       source:"MH30DataEngine",

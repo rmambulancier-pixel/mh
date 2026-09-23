@@ -331,40 +331,155 @@ function numsOfLineStrict(l){
 function cap(v,max){return(v!=null&&v<=max)?v:undefined}
 
 function extractRomiFields(raw){
-  const t=raw.replace(/\u00a0/g,' ');
-  const lines=t.split('\n').map(l=>l.trim()).filter(l=>l);
-  const f={};let rejected=0;
-  const setCapped=(obj,key,val,max)=>{const c=cap(val,max);if(c!=null)obj[key]=c;else rejected++;};
-  const per=t.match(/du\s+(\d{1,2})\/(\d{1,2})\/(\d{4})\s+au\s+(\d{1,2})\/(\d{1,2})\/(\d{4})/i);
+  const t=String(raw||'')
+    .replace(/\u00a0/g,' ')
+    .replace(/[–—−]/g,'-')
+    .replace(/\r/g,'\n');
+
+  const lines=t.split('\n')
+    .map(x=>x.replace(/\s+/g,' ').trim())
+    .filter(Boolean);
+
+  const f={};
+  const rejected=[];
+
+  function num(v){
+    const n=parseFloat(String(v).replace(/\s/g,'').replace(',','.'));
+    return Number.isFinite(n)?n:null;
+  }
+
+  function nums(line){
+    return (String(line||'').match(/-?\d+(?:[.,]\d+)?/g)||[])
+      .map(num).filter(v=>v!=null);
+  }
+
+  function set(k,v,min,max){
+    if(v==null||!Number.isFinite(v))return;
+    if((min!=null&&v<min)||(max!=null&&v>max)){
+      rejected.push(k+':'+v);
+      return;
+    }
+    f[k]=v;
+  }
+
+  function after(re){
+    for(let i=0;i<lines.length;i++){
+      if(re.test(lines[i])){
+        for(let j=i;j<Math.min(lines.length,i+6);j++){
+          const n=nums(lines[j]);
+          if(n.length)return n;
+        }
+      }
+    }
+    return [];
+  }
+
+  function afterExcluding(re,excluded){
+    for(let i=0;i<lines.length;i++){
+      if(re.test(lines[i])){
+        const out=[];
+        for(let j=i;j<Math.min(lines.length,i+6);j++){
+          const clean=lines[j].replace(excluded,' ');
+          nums(clean).forEach(v=>out.push(v));
+        }
+        if(out.length)return out;
+      }
+    }
+    return [];
+  }
+
+  const per=t.match(/(\d{2})[\/-](\d{2})[\/-](\d{4})[\s\S]{0,500}?(\d{2})[\/-](\d{2})[\/-](\d{4})/);
   if(per){
-    f.start=per[3]+'-'+pad(+per[2])+'-'+pad(+per[1]);
-    f.end=per[6]+'-'+pad(+per[5])+'-'+pad(+per[4]);
+    f.start=per[3]+'-'+per[2]+'-'+per[1];
+    f.end=per[6]+'-'+per[5]+'-'+per[4];
   }
-  for(const l of lines){
-    const noSlash=!/\//.test(l);
-    const ns=numsOfLineStrict(l);
-    if(/T\.?\s*T\.?\s*E\.?/i.test(l)&&noSlash&&ns.length>=2){setCapped(f,'tteH',ns[0],400);setCapped(f,'tteAnneeH',ns[1],3000);}
-    else if(/jours?\s+de\s+pr[eé]sence/i.test(l)&&ns.length>=2){setCapped(f,'joursPresence',ns[0],31);setCapped(f,'joursAnnee',ns[1],366);}
-    else if(/heures?\s+suppl[eé]mentaires?/i.test(l)&&noSlash&&!/125|150/.test(l)&&ns.length>=2){setCapped(f,'hsPeriodeH',ns[0],200);setCapped(f,'hsAnneeH',ns[1],1000);}
-    else if(/ann[eé]e\s*N-1/i.test(l)&&ns.length>=1){setCapped(f,'cpN1Solde',ns[0],60);}
-    else if(/ann[eé]e\s*N\b/i.test(l)&&!/N-1/i.test(l)&&ns.length>=1){
-      setCapped(f,'cpNSolde',ns[ns.length-1],60);
-      if(ns.length>=2)setCapped(f,'cpNAcquis',ns[1],31);
-      if(ns.length>=3)setCapped(f,'cpNPris',ns[2],31);
-    }
-    else if(/RC\s+cumul[eé]/i.test(l)&&ns.length>=2){
-      setCapped(f,'rcAvant',ns[0],1000);setCapped(f,'rcAcquis',ns[1],200);setCapped(f,'rcSolde',ns[ns.length-1],1000);
-    }
-    else if(/salaire\s+de\s+base/i.test(l)&&ns.length>=1){setCapped(f,'salaireBaseH',ns[0],400);}
-    else if(/amplitude/i.test(l)&&ns.length>=1){setCapped(f,'depAmplH',ns[0],100);}
-    else if(/125\s*%/.test(l)&&ns.length>=1){setCapped(f,'hs125EligH',ns[0],200);if(ns.length>=2)setCapped(f,'hs125PayeesH',ns[1],200);}
-    else if(/150\s*%/.test(l)&&ns.length>=1){setCapped(f,'hs150EligH',ns[0],200);if(ns.length>=2)setCapped(f,'hs150PayeesH',ns[1],200);}
-    else if(/anciennet[eé]/i.test(l)&&ns.length>=1){setCapped(f,'primeAncPct',ns[0],20);}
-    else if(/habillage/i.test(l)&&ns.length>=1){setCapped(f,'habillageMontant',ns[ns.length-1],500);}
-    else if(/repas\s+unique/i.test(l)&&ns.length>=1){setCapped(f,'indemniteRepasUniqueN',ns[0],31);}
-    else if(/indemnit[eé]\s+de\s+repas/i.test(l)&&!/unique/i.test(l)&&ns.length>=1){setCapped(f,'indemniteRepasN',ns[0],31);}
+
+  let a;
+
+  a=after(/heures?\s*T\.?\s*T\.?\s*E\.?/i);
+  if(a.length>=2){
+    set('tteH',a[0],0,400);
+    set('tteAnneeH',a[1],0,3000);
   }
+
+  a=after(/jours?\s+de\s+pr[eé]sence/i);
+  if(a.length>=2){
+    set('joursPresence',a[0],0,31);
+    set('joursAnnee',a[1],0,366);
+  }
+
+  a=after(/heures?\s+suppl[eé]mentaires?/i);
+  if(a.length>=2){
+    set('hsPeriodeH',a[0],0,200);
+    set('hsAnneeH',a[1],0,1000);
+  }
+
+  a=after(/CP\s*N-?1|cong[eé]s\s+N-?1/i);
+  if(a.length)set('cpN1Solde',a[0],0,60);
+
+  a=after(/CP\s*N\b|cong[eé]s\s+N\b/i);
+  if(a.length>=3){
+    set('cpNAcquis',a[0],0,60);
+    set('cpNPris',a[1],0,60);
+    set('cpNSolde',a[2],0,60);
+  }
+
+  a=after(/RC\s+(?:solde\s+ant[eé]rieur|ant[eé]rieur)/i);
+  if(a.length)set('rcAvant',a[0],0,1000);
+
+  a=after(/RC\s+acquis/i);
+  if(a.length)set('rcAcquis',a[0],0,500);
+
+  a=after(/RC\s+(?:cumul[eé]|solde\s+cumul[eé])/i);
+  if(a.length)set('rcSolde',a[0],0,1000);
+
+  a=after(/salaire\s+de\s+base/i);
+  if(a.length)set('salaireBaseH',a[0],0,400);
+
+  a=afterExcluding(/d[eé]passement.*amplitude|amplitude.*d[eé]passement/i,/100\s*%/i);
+  if(a.length)set('depAmplH',a[0],0,50);
+
+  a=afterExcluding(/125\s*%/i,/125\s*%/gi);
+  if(a.length>=1)set('hs125EligH',a[0],0,200);
+  if(a.length>=2)set('hs125PayeesH',a[1],0,200);
+
+  a=afterExcluding(/150\s*%/i,/150\s*%/gi);
+  if(a.length>=1)set('hs150EligH',a[0],0,200);
+  if(a.length>=2)set('hs150PayeesH',a[1],0,200);
+
+  a=after(/anciennet[eé]/i);
+  if(a.length)set('primeAncPct',a[0],0,20);
+
+  a=after(/habillage|d[eé]shabillage/i);
+  if(a.length)set('habillageMontant',a[a.length-1],0,500);
+
+  a=after(/repas\s+unique/i);
+  if(a.length)set('indemniteRepasUniqueN',a[0],0,31);
+
+  a=after(/indemnit[eé].*repas/i);
+  if(a.length)set('indemniteRepasN',a[0],0,31);
+
+  if(f.hs125EligH!=null&&f.hs125PayeesH!=null&&f.hs125PayeesH>f.hs125EligH){
+    const x=f.hs125EligH;
+    f.hs125EligH=f.hs125PayeesH;
+    f.hs125PayeesH=x;
+  }
+
+  if(f.hs150EligH!=null&&f.hs150PayeesH!=null&&f.hs150PayeesH>f.hs150EligH){
+    const x=f.hs150EligH;
+    f.hs150EligH=f.hs150PayeesH;
+    f.hs150PayeesH=x;
+  }
+
+  const required=[
+    'tteH','joursPresence','hsPeriodeH','tteAnneeH','hsAnneeH',
+    'rcAvant','rcAcquis','rcSolde','salaireBaseH','depAmplH',
+    'hs125EligH','hs125PayeesH','hs150EligH','hs150PayeesH'
+  ];
+
+  f._missing=required.filter(k=>f[k]==null);
   f._rejected=rejected;
+
   return f;
 }
 

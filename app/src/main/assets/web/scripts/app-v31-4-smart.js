@@ -1,5 +1,5 @@
 /*
- * MesHeures V31.5.0 — Smart Control
+ * MesHeures V34.1.2 — Smart Control
  * Moteur de contrôle uniquement.
  * Aucun timer / observer / listener global / renderer.
  */
@@ -7,7 +7,7 @@
 (function () {
   'use strict';
 
-  const V = '31.5.0';
+  const V = '35.8.1';
 
   function getDays() {
     return window.DB?.days || {};

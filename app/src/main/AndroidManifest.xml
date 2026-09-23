@@ -15,6 +15,5 @@
     <action android:name="com.mesheures.app.widget.REFRESH"/>
    </intent-filter>
    <meta-data android:name="android.appwidget.provider" android:resource="@xml/mh_widget_info"/>
-  </receiver>
- </application>
+  </receiver></application>
 </manifest>

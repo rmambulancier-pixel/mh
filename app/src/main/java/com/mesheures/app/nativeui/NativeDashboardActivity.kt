@@ -1,7 +1,5 @@
 package com.mesheures.app.nativeui
 
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,149 +9,138 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.mesheures.app.MainActivity
-import com.mesheures.app.widget.MhWidgetProvider
-import org.json.JSONObject
+import com.mesheures.app.core.engine.DashboardData
+import com.mesheures.app.core.engine.DashboardMetrics
+import com.mesheures.app.widget.WidgetPayloadWriter
 import java.util.Locale
+import kotlin.math.abs
 
 class NativeDashboardActivity : ComponentActivity() {
-    private var payload by mutableStateOf(JSONObject())
+    private var refresh by mutableIntStateOf(0)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        payload = readPayload(this)
         setContent {
-            MaterialTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    NativeDashboard(
-                        payload = payload,
-                        onRefresh = { payload = readPayload(this@NativeDashboardActivity) },
-                        onOpenApp = {
-                            startActivity(Intent(this@NativeDashboardActivity, MainActivity::class.java))
-                        },
-                        onOpenDay = {
-                            startActivity(Intent(this@NativeDashboardActivity, MainActivity::class.java).apply {
-                                putExtra("mh_deeplink", "jour")
-                            })
-                        }
-                    )
-                }
-            }
+            val data = remember(refresh) { DashboardMetrics.build(this@NativeDashboardActivity) }
+            NativeDashboard(data)
         }
     }
 
     override fun onResume() {
         super.onResume()
-        payload = readPayload(this)
-    }
-
-    companion object {
-        fun readPayload(context: Context): JSONObject {
-            return try {
-                val raw = context.getSharedPreferences(MhWidgetProvider.PREFS, Context.MODE_PRIVATE)
-                    .getString(MhWidgetProvider.KEY_PAYLOAD, "{}").orEmpty()
-                JSONObject(raw)
-            } catch (_: Exception) { JSONObject() }
-        }
+        WidgetPayloadWriter.write(this)
+        refresh++
     }
 }
 
 private data class Metric(val label: String, val value: String)
 
-private fun minutes(value: Int): String {
-    val h = value / 60
-    val m = value % 60
-    return String.format(Locale.FRANCE, "%dh%02d", h, m)
-}
-
-@androidx.compose.runtime.Composable
-private fun NativeDashboard(
-    payload: JSONObject,
-    onRefresh: () -> Unit,
-    onOpenApp: () -> Unit,
-    onOpenDay: () -> Unit
-) {
-    val month = payload.optString("monthLabel", "—")
+@Composable
+private fun NativeDashboard(data: DashboardData) {
     val metrics = listOf(
-        Metric("Travail", payload.optInt("workCount", 0).toString()),
-        Metric("Repos", payload.optInt("restCount", 0).toString()),
-        Metric("Congé", payload.optInt("cpCount", 0).toString()),
-        Metric("Maladie", payload.optInt("malCount", 0).toString()),
-        Metric("TTE jour", minutes(payload.optInt("tteJourMin", 0))),
-        Metric("TTE mois", minutes(payload.optInt("tteMoisMin", 0))),
-        Metric("TTE semaine", minutes(payload.optInt("tteSemaineMin", 0))),
-        Metric("TTE période", minutes(payload.optInt("ttePeriodeMin", 0))),
-        Metric("HS25 période", minutes(payload.optInt("hs25PeriodeMin", 0))),
-        Metric("HS50 période", minutes(payload.optInt("hs50PeriodeMin", 0))),
-        Metric("Marge 46 h", minutes(payload.optInt("margeAvant46hMin", 0))),
-        Metric("RC", minutes(payload.optInt("rcSoldeMin", 0)))
+        Metric("Travail", data.workCount.toString()),
+        Metric("Repos", data.restCount.toString()),
+        Metric("Congé", data.cpCount.toString()),
+        Metric("Maladie", data.malCount.toString()),
+        Metric("TTE jour", hm(data.tteJourMinutes)),
+        Metric("TTE semaine", hm(data.tteSemaineMinutes)),
+        Metric("TTE mois", hm(data.tteMoisMinutes)),
+        Metric("TTE période", hm(data.ttePeriodeMinutes)),
+        Metric("HS25 période", hm(data.hs25PeriodeMinutes)),
+        Metric("HS50 période", hm(data.hs50PeriodeMinutes)),
+        Metric("Marge avant 46h", hm(data.margeAvant46hMinutes))
     )
-    LazyColumn(
-        modifier = Modifier.fillMaxSize().padding(18.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        item {
-            Text("MesHeures", style = MaterialTheme.typography.headlineMedium)
-            Text("Dashboard natif · $month", style = MaterialTheme.typography.bodyMedium)
-            Spacer(Modifier.height(6.dp))
-        }
-        items(metrics.chunked(2)) { pair ->
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                pair.forEach { metric ->
-                    Card(modifier = Modifier.weight(1f)) {
-                        Column(modifier = Modifier.padding(14.dp)) {
-                            Text(metric.label, style = MaterialTheme.typography.labelMedium)
-                            Text(metric.value, style = MaterialTheme.typography.titleLarge)
+
+    MaterialTheme {
+        Surface(modifier = Modifier.fillMaxSize()) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+                    .padding(start = 18.dp, end = 18.dp, top = 18.dp, bottom = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                item {
+                    Text("MesHeures", style = MaterialTheme.typography.headlineMedium)
+                    Text("Dashboard natif · ${data.monthLabel}", style = MaterialTheme.typography.bodyMedium)
+                }
+
+                items(metrics.chunked(2)) { pair ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        for (metric in pair) {
+                            Card(modifier = Modifier.weight(1f)) {
+                                Column(modifier = Modifier.padding(14.dp)) {
+                                    Text(metric.label, style = MaterialTheme.typography.labelMedium)
+                                    Text(metric.value, style = MaterialTheme.typography.titleLarge)
+                                }
+                            }
+                        }
+                        if (pair.size == 1) Spacer(Modifier.weight(1f))
+                    }
+                }
+
+                item {
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Repos compensateur", style = MaterialTheme.typography.titleMedium)
+                            Text("RC ROMI1 (employeur) : ${String.format(Locale.FRANCE, "%.2f h", data.rcRomiHours)}")
+                            Text(
+                                "Équivalent RC calculé localement : ${String.format(Locale.FRANCE, "%.2f h", data.rcLocalEquivHours)}",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                            Text(
+                                "Les deux valeurs sont distinctes et ne se remplacent jamais.",
+                                style = MaterialTheme.typography.bodySmall
+                            )
                         }
                     }
                 }
-                if (pair.size == 1) Spacer(Modifier.weight(1f))
-            }
-        }
-        item {
-            val gross = payload.optInt("grossCents", 0) / 100.0
-            val net = payload.optInt("netCents", 0) / 100.0
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Paie", style = MaterialTheme.typography.titleMedium)
-                    Text(String.format(Locale.FRANCE, "Brut estimé : %.2f €", gross))
-                    Text(String.format(Locale.FRANCE, "Net estimé : %.2f €", net))
-                    Text("Source : ${payload.optString("paySource", "indisponible")}", style = MaterialTheme.typography.bodySmall)
+
+                item {
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Paie — période courante", style = MaterialTheme.typography.titleMedium)
+                            Text(String.format(Locale.FRANCE, "Brut estimé : %.2f €", data.grossEstimate))
+                            Text(String.format(Locale.FRANCE, "Net estimé : %.2f €", data.netEstimate))
+                            Text("Source : moteur natif", style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
                 }
-            }
-        }
-        item {
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Prochaine journée", style = MaterialTheme.typography.titleMedium)
-                    Text(payload.optString("nextDayLabel", "Aucune journée planifiée"))
-                    Text(payload.optString("nextDayHours", ""), style = MaterialTheme.typography.bodySmall)
+
+                item {
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Prochaine journée", style = MaterialTheme.typography.titleMedium)
+                            Text(data.nextDayLabel)
+                            Text(data.nextDayHours, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
                 }
-            }
-        }
-        item {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = onOpenDay, modifier = Modifier.weight(1f)) { Text("+ Saisir") }
-                OutlinedButton(onClick = onRefresh, modifier = Modifier.weight(1f)) { Text("Actualiser") }
-            }
-            OutlinedButton(onClick = onOpenApp, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
-                Text("Ouvrir MesHeures")
             }
         }
     }
+}
+
+private fun hm(value: Int): String {
+    val sign = if (value < 0) "-" else ""
+    val a = abs(value)
+    return "$sign${a / 60}h${"%02d".format(a % 60)}"
 }

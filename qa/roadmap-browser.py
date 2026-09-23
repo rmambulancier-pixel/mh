@@ -50,8 +50,8 @@ def main():
         check("Le bouton envoie un document à l'impression", bool(html))
         if html:
             check("Pauses saisies conservées (11:45–12:15 · EXT)", "11:45–12:15 · EXT" in html)
-            check("Repas AUTO sur les 3 jours sans pause saisie", html.count("Repas AUTO") == 3, html.count("Repas AUTO"))
-            check("TTE inchangé (11h00 le mercredi, pas de déduction)", "TTE 11h00" in html)
+            check("Repas automatiques sur les 3 jours sans pause saisie", html.count("Repas automatique · 30 min · EXT") == 3, html.count("Repas automatique · 30 min · EXT"))
+            check("TTE corrigé avec repas automatique (10h30 le mercredi)", "TTE 10h30" in html)
         page.evaluate("window.__toast=null;window.__save=DB.s;DB.s=undefined")
         page.click('#mhRoadmapPdf'); page.wait_for_timeout(300)
         check("Une erreur est signalée à l'utilisateur", "impossible" in (page.evaluate("window.__toast") or ""))

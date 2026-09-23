@@ -1,5 +1,5 @@
 /*
- * MesHeures V31.5.0 — SMART CONTROL
+ * MesHeures V34.1.2 — SMART CONTROL
  *
  * Couche insights + saisie rapide (window.MH302).
  * Ne rend PLUS l'Accueil : app-v31-home.js est l'unique propriétaire de #s-home.
@@ -9,7 +9,7 @@
 (function () {
   'use strict';
 
-  const V = '31.5.0';
+  const V = '35.8.1';
   const PRIMARY = ['home', 'jour', 'mois', 'paie', 'analyse'];
 
   const $ = id => document.getElementById(id);

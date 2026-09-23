@@ -1,6 +1,6 @@
 /* MesHeures V30 — sauvegarde locale renforcée, JSON versionné et restauration sûre */
 (function(){
-  const BACKUP_VERSION='33.3.0';
+  const BACKUP_VERSION='35.8.1';
   const PREFIX=LS+'_v30_backup_';
 
   function cloneDB(){return JSON.parse(JSON.stringify(DB));}
